@@ -1,5 +1,5 @@
 TARGET = bubbles
-LIBS =
+LIBS = -lGL -lGLU -lglut
 CC = gcc
 CFLAGS = -std=c99 -Wall
 
