@@ -1,7 +1,12 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <GL/glut.h>
+
+#include "game_object_definitions.h"
 
 #define WINDOW_WIDTH 512
 #define WINDOW_HEIGHT 432

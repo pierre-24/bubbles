@@ -8,6 +8,10 @@ void game_init() {
     
     // create screen
     game->screen = malloc(WINDOW_WIDTH * WINDOW_HEIGHT * 3 * sizeof(GLubyte));
+    
+    FILE* f = fopen("assets/test.ppm", "r");
+    Texture* tex = texture_new_from_file(f);
+    fclose(f);
 }
 
 void game_loop() {
