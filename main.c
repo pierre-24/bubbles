@@ -3,9 +3,9 @@
 #include "game.h"
 
 void changeSize(int w, int h) {
-    glViewport (0,  0,  w,  h) ;
-    glMatrixMode (GL_PROJECTION) ;
-    glLoadIdentity() ;
+    glViewport (0,  0,  WINDOW_WIDTH, WINDOW_HEIGHT);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     gluOrtho2D (0,  1,  0,  1) ;
 }
 
@@ -19,8 +19,6 @@ int main(int argc, char **argv) {
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("Bubble Bobble");
 
-	// register callbacks
-	// glutDisplayFunc(game_loop);
 	glutReshapeFunc(changeSize);
 	glutIdleFunc(game_loop);
 	
