@@ -1,6 +1,7 @@
 ## C
 
-bubbles
+CMakeLists.txt
+bubbles*
 *.o
 
 ## Python

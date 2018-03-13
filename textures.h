@@ -1,16 +1,20 @@
-#ifndef TEXTURES_H
-#define TEXTURES_H
+#ifndef BUBBLES_TEXTURES_H
+#define BUBBLES_TEXTURES_H
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "utils.h"
+
+#define TRANSPARENT {255, 0, 175};
+
 typedef struct Pixel_ {
 	// each color value is between 0 (black) and 255 (full color)
-	unsigned char red;
-	unsigned char green;
-	unsigned char blue;
+	GLubyte red;
+    GLubyte green;
+    GLubyte blue;
 	bool transparent; // "true" if the pixel is transparent 
 } Pixel;
 
@@ -23,7 +27,7 @@ typedef struct Texture_ {
 Texture* texture_new_from_file(FILE* f);
 void texture_delete(Texture* texture);
 
-Texture* texture_new_from_text(char* text, Texture* sprite_font);
+Pixel* texture_get_pixel(Texture* texture, int x, int y);
 
 typedef struct Sprite_ {
 	Texture* texture; // pointer to the texture
