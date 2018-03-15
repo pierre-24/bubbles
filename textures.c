@@ -25,6 +25,12 @@ Texture* texture_new_from_file(FILE* f)  {
 
     // then comes the width, height and maximum value
     Texture* texture = malloc(sizeof(Texture));
+
+    if (texture == NULL) {
+        write_log("! cannot alocate texture");
+        return NULL;
+    }
+
     unsigned int max;
 
     fscanf(f, "%u" MAGIC_WHITESPACE "%u" MAGIC_WHITESPACE "%u" MAGIC_WHITESPACE, &(texture->width), &(texture->height), &max);
@@ -37,16 +43,22 @@ Texture* texture_new_from_file(FILE* f)  {
     // then, the data
     texture->pixels = malloc(texture->width * texture->height * sizeof(Pixel));
 
+    if (texture->pixels == NULL) {
+        write_log("! cannot allocate pixels data (%dx%d)", texture->width, texture->height);
+        texture_delete(texture);
+        return NULL;
+    }
+
     char transp[3] = TRANSPARENT;
 
     for (int y=0; y < texture->height; y++) {
         for (int x = 0; x < texture->width; ++x) {
-            texture->pixels[y * texture->width + x].red = (GLubyte) fgetc(f);
-            texture->pixels[y * texture->width + x].green = (GLubyte) fgetc(f);
-            texture->pixels[y * texture->width + x].blue = (GLubyte) fgetc(f);
+            texture->pixels[y * texture->width + x].values[0] = (GLubyte) fgetc(f);
+            texture->pixels[y * texture->width + x].values[1] = (GLubyte) fgetc(f);
+            texture->pixels[y * texture->width + x].values[2] = (GLubyte) fgetc(f);
             texture->pixels[y * texture->width + x].transparent = false;
 
-            if(memcmp(transp, &(texture->pixels[y * texture->width + x]), 3) == 0)
+            if(memcmp(transp, texture->pixels[y * texture->width + x].values, 3) == 0)
                 texture->pixels[y * texture->width + x].transparent = true;
         }
     }
@@ -70,4 +82,57 @@ Pixel* texture_get_pixel(Texture* texture, int x, int y) {
     return &(texture->pixels[y * texture->width + x]);
 }
 
+Sprite* sprite_new(Texture *texture, int x, int y, int w, int h) {
+    if (x < 0) {
+        w += x;
+        x = 0;
+    }
+
+    if (y < 0) {
+        h += y;
+        y = 0;
+    }
+
+    if (w < 0) {
+        w = texture->width - x;
+    }
+
+    if (h < 0) {
+        h = texture->height - y;
+    }
+
+    if (x + w > texture->width) {
+        if (x >= texture->width)
+            x = texture->width;
+
+        w = texture->width - x;
+    }
+
+    if (y + h > texture->height) {
+        if (y >= texture->height)
+            y = texture->height;
+
+        h = texture->height - y;
+    }
+
+    Sprite* sprite = malloc(sizeof(Sprite));
+
+    if(sprite == NULL) {
+        write_log("! cannot allocate sprite");
+        return NULL;
+    }
+
+    sprite->x = x;
+    sprite->y = y;
+    sprite->width = w;
+    sprite->height = h;
+    sprite->texture = texture;
+
+    return sprite;
+}
+
+void sprite_delete(Sprite* sprite) {
+    if (sprite != NULL)
+        free(sprite);
+}
 

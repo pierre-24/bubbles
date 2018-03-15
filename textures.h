@@ -12,9 +12,7 @@
 
 typedef struct Pixel_ {
 	// each color value is between 0 (black) and 255 (full color)
-	GLubyte red;
-    GLubyte green;
-    GLubyte blue;
+	GLubyte values[3];
 	bool transparent; // "true" if the pixel is transparent 
 } Pixel;
 
@@ -31,13 +29,13 @@ Pixel* texture_get_pixel(Texture* texture, int x, int y);
 
 typedef struct Sprite_ {
 	Texture* texture; // pointer to the texture
-	unsigned int x;
-	unsigned int y;
-	unsigned int width;
-	unsigned int height;
+	int x;
+	int y;
+	int width;
+	int height;
 } Sprite;
 
-Sprite* sprite_new(Texture* texture, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+Sprite* sprite_new(Texture *texture, int x, int y, int w, int h);
 void sprite_delete(Sprite* sprite);
 
 #endif

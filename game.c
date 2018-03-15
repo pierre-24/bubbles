@@ -3,6 +3,7 @@
 Game* game = NULL;
 
 Texture* tex = NULL;
+Sprite* sp = NULL;
 
 void game_init() {
 	init_log();
@@ -17,6 +18,8 @@ void game_init() {
     FILE* f = fopen("assets/test.ppm", "r");
     tex = texture_new_from_file(f);
     fclose(f);
+
+    sp = sprite_new(tex, 0, 0, -1, -1);
 }
 
 void blit_texture(GLubyte *screen, int sx, int sy, Texture *texture, int tx, int ty, int tw, int th) {
@@ -38,11 +41,13 @@ void blit_texture(GLubyte *screen, int sx, int sy, Texture *texture, int tx, int
             if (pixel == NULL || pixel->transparent)
                 continue;
 
-            screen[_SR(i + sx, j + sy)] = pixel->red;
-            screen[_SG(i + sx, j + sy)] = pixel->green;
-            screen[_SB(i + sx, j + sy)] = pixel->blue;
+            memcpy(&(screen[_SR(i + sx, j + sy)]), pixel->values, 3 * sizeof(GLubyte));
         }
     }
+}
+
+void blit_sprite(GLubyte *screen, int sx, int sy, Sprite *sprite) {
+    blit_texture(screen, sx, sy, sprite->texture, sprite->x, sprite->y, sprite->width, sprite->height);
 }
 
 int pos = 0;
@@ -57,7 +62,7 @@ void game_loop() {
 
     memset(game->screen, 0, WINDOW_WIDTH * WINDOW_HEIGHT * 3); // clear game screen
 
-    blit_texture(game->screen, 175, pos, tex, 0, 0, -1, -1);
+    blit_sprite(game->screen, 175, pos, sp);
     pos = (pos + 1) % WINDOW_HEIGHT;
 	
 	glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, game->screen);
@@ -69,6 +74,7 @@ void game_quit() {
     free(game->screen);
     free(game);
 
+    sprite_delete(sp);
     texture_delete(tex);
 
     write_log("# quitting Bubbles!");
