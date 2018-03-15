@@ -2,8 +2,30 @@
 
 Game* game = NULL;
 
-Texture* tex = NULL;
 Sprite* sp = NULL;
+
+void game_exit() {
+    game_quit();
+    exit(-1);
+}
+
+Texture* load_texture(const char* image_path) {
+    FILE* f;
+
+    f = fopen(image_path, "r");
+    if (f == NULL) {
+        write_log("! cannot open texture %s", TEXTURE_ITEMS);
+        exit(0);
+    }
+
+    else
+        write_log("# load texture %s", TEXTURE_ITEMS);
+
+    Texture* tex = texture_new_from_file(f);
+    fclose(f);
+
+    return tex;
+}
 
 void game_init() {
 	init_log();
@@ -14,40 +36,57 @@ void game_init() {
     
     // create screen
     game->screen = malloc(WINDOW_WIDTH * WINDOW_HEIGHT * 3 * sizeof(GLubyte));
-    
-    FILE* f = fopen("assets/test.ppm", "r");
-    tex = texture_new_from_file(f);
+
+    // load textures
+    game->texture_items = load_texture(TEXTURE_ITEMS);
+    if (game->texture_items == NULL)
+        game_exit();
+
+    // load definition
+    FILE* f = fopen(DEFINITION_ITEMS, "r");
+    if (f == NULL) {
+        write_log("! unable to open item def file %s", DEFINITION_ITEMS);
+        game_exit();
+    }
+    else
+        write_log("# opening item def file %s", DEFINITION_ITEMS);
+
+    game->definition_items = item_defs_from_file(f, game->texture_items, &(game->num_items));
     fclose(f);
 
-    sp = sprite_new(tex, 0, 0, -1, -1);
+    // tmp:
+    sp = sprite_new(game->texture_items, 0, 0, -1, -1);
 }
 
 void blit_texture(GLubyte *screen, int sx, int sy, Texture *texture, int tx, int ty, int tw, int th) {
-    if ((tx + tw) > texture->width || tw < 0)
-        tw = texture->width - tx;
-    if ((ty + th) > texture->height || th < 0)
-        th = texture->height - ty;
+    if (screen != NULL && texture != NULL) {
+        if ((tx + tw) > texture->width || tw < 0)
+            tw = texture->width - tx;
+        if ((ty + th) > texture->height || th < 0)
+            th = texture->height - ty;
 
-    for (int j = 0; j < th; ++j) {
-        if ((j + sy) > WINDOW_HEIGHT || (j + sy) < 0)
-            continue;
-
-        for (int i = 0; i < tw; ++i) {
-            if ((i + sx) > WINDOW_WIDTH || (i + sx) < 0)
+        for (int j = 0; j < th; ++j) {
+            if ((j + sy) > WINDOW_HEIGHT || (j + sy) < 0)
                 continue;
 
-            Pixel* pixel = texture_get_pixel(texture, tx + i, ty + j);
+            for (int i = 0; i < tw; ++i) {
+                if ((i + sx) > WINDOW_WIDTH || (i + sx) < 0)
+                    continue;
 
-            if (pixel == NULL || pixel->transparent)
-                continue;
+                Pixel* pixel = texture_get_pixel(texture, tx + i, ty + j);
 
-            memcpy(&(screen[_SR(i + sx, j + sy)]), pixel->values, 3 * sizeof(GLubyte));
+                if (pixel == NULL || pixel->transparent)
+                    continue;
+
+                memcpy(&(screen[_SR(i + sx, j + sy)]), pixel->values, 3 * sizeof(GLubyte));
+            }
         }
     }
 }
 
 void blit_sprite(GLubyte *screen, int sx, int sy, Sprite *sprite) {
-    blit_texture(screen, sx, sy, sprite->texture, sprite->x, sprite->y, sprite->width, sprite->height);
+    if (sprite != NULL)
+        blit_texture(screen, sx, sy, sprite->texture, sprite->x, sprite->y, sprite->width, sprite->height);
 }
 
 int pos = 0;
@@ -55,7 +94,7 @@ int pos = 0;
 void game_loop() {
 
     // DRAWING
-	glClear(GL_COLOR_BUFFER_BIT);
+	// glClear(GL_COLOR_BUFFER_BIT);
 
 	glColor3f(1.0, 1.0, 1.0);
 	glRasterPos2i(0, 0);
@@ -71,11 +110,26 @@ void game_loop() {
 
 void game_quit() {
     // free everything
+
+    // screen
     free(game->screen);
+
+    // textures
+    texture_delete(game->texture_items);
+
+    // definitions
+    if (game->definition_items != NULL)  {
+        for (int i = 0; i < game->num_items; ++i) {
+            item_def_delete(game->definition_items[i]);
+        }
+
+        free(game->definition_items);
+    }
+
+    // and finally:
     free(game);
 
     sprite_delete(sp);
-    texture_delete(tex);
 
     write_log("# quitting Bubbles!");
 

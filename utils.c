@@ -29,6 +29,7 @@ void write_log(char* format, ...) {
         vfprintf(stdout, format, argptr);
 
     va_end(argptr);
+    fflush(log_file);
 }
 
 void close_log()  {
@@ -36,4 +37,68 @@ void close_log()  {
         fclose(log_file);
 
     log_file = NULL;
+}
+
+char* file_get_content(FILE* f) {
+
+    fseek (f, 0, SEEK_END);
+    long length = ftell (f);
+    fseek (f, 0, SEEK_SET);
+
+    char* buffer = malloc(length * sizeof(char));
+    if (buffer == NULL) {
+        write_log("! cannot allocate buffer to read file (size=%d)", length);
+        fclose(f);
+        return NULL;
+    }
+
+    fread(buffer, 1, (size_t) length, f);
+
+    return buffer;
+}
+
+char *strnextspace(char *str) {
+    if (str == NULL)
+        return NULL;
+
+    char* next = str;
+
+    while(!isspace(*next) && *next != 0)
+        next++;
+
+    if(*next == 0)
+        return NULL;
+
+    return next;
+}
+
+char *strnextline(char *str) {
+    if (str == NULL)
+        return NULL;
+
+    char* next = str;
+
+    while(*next != '\n' && *next != 0)
+        next++;
+
+    if(*next == 0)
+        return NULL;
+
+    return next;
+}
+
+
+char *strnextnspace(char *str) {
+    if (str == NULL)
+        return NULL;
+
+    char* next = str;
+
+    while(isspace(*next) && *next != 0)
+        next++;
+
+    if(*next == 0)
+        return NULL;
+
+    return next;
 }

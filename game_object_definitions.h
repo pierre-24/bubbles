@@ -2,6 +2,7 @@
 #define GAME_OBJECT_DEFINITIONS_H
 
 #include "textures.h"
+#include "datafile.h"
 
 // items
 typedef enum extra_power_t_ {

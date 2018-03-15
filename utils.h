@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <GL/glut.h>
 
@@ -17,5 +18,11 @@
 void init_log();
 void write_log(char* format, ...);
 void close_log();
+
+char* file_get_content(FILE* f);
+
+char *strnextspace(char *str);
+char *strnextline(char *str);
+char *strnextnspace(char *str);
 
 #endif //BUBBLES_UTILS_H

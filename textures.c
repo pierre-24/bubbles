@@ -83,6 +83,9 @@ Pixel* texture_get_pixel(Texture* texture, int x, int y) {
 }
 
 Sprite* sprite_new(Texture *texture, int x, int y, int w, int h) {
+    if (texture == NULL)
+        return NULL;
+
     if (x < 0) {
         w += x;
         x = 0;
