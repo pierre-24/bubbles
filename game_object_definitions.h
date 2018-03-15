@@ -20,7 +20,7 @@ typedef struct ItemDef_ {
 } ItemDef;
 
 
-ItemDef* item_def_new(unsigned int points_given, Sprite* sprite, extra_power_t extra_power);
+ItemDef *item_def_new(unsigned int points_given, extra_power_t extra_power, Sprite *sprite);
 void item_def_delete(ItemDef* item);
 
 ItemDef** item_defs_from_file(FILE* f, Texture* items_texture, unsigned int* size);

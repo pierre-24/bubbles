@@ -1,7 +1,7 @@
 TARGET = bubbles
 LIBS = -lGL -lGLU -lglut
 CC = gcc
-CFLAGS = -std=c99 -Wall
+CFLAGS = -std=c99 -Wall -g
 
 .PHONY: default all clean
 

@@ -4,7 +4,8 @@ Game* game = NULL;
 
 Sprite* sp = NULL;
 
-void game_exit() {
+void game_fail_exit() {
+    printf("something went wrong (check log), exiting ...\n");
     game_quit();
     exit(-1);
 }
@@ -15,7 +16,7 @@ Texture* load_texture(const char* image_path) {
     f = fopen(image_path, "r");
     if (f == NULL) {
         write_log("! cannot open texture %s", TEXTURE_ITEMS);
-        exit(0);
+        return NULL;
     }
 
     else
@@ -31,6 +32,10 @@ void game_init() {
 	init_log();
 
     game = malloc(sizeof(Game));
+    game->screen = NULL;
+
+    game->texture_items = NULL;
+    game->definition_items = NULL;
 
     write_log("# starting Bubbles!");
     
@@ -40,13 +45,13 @@ void game_init() {
     // load textures
     game->texture_items = load_texture(TEXTURE_ITEMS);
     if (game->texture_items == NULL)
-        game_exit();
+        game_fail_exit();
 
     // load definition
     FILE* f = fopen(DEFINITION_ITEMS, "r");
     if (f == NULL) {
         write_log("! unable to open item def file %s", DEFINITION_ITEMS);
-        game_exit();
+        game_fail_exit();
     }
     else
         write_log("# opening item def file %s", DEFINITION_ITEMS);
@@ -56,6 +61,27 @@ void game_init() {
 
     // tmp:
     sp = sprite_new(game->texture_items, 0, 0, -1, -1);
+
+    // openGL state stuffs
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DITHER);
+    glDisable(GL_FOG);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LOGIC_OP);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
+    glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
+    glPixelTransferi(GL_RED_SCALE, 1);
+    glPixelTransferi(GL_RED_BIAS, 0);
+    glPixelTransferi(GL_GREEN_SCALE, 1);
+    glPixelTransferi(GL_GREEN_BIAS, 0);
+    glPixelTransferi(GL_BLUE_SCALE, 1);
+    glPixelTransferi(GL_BLUE_BIAS, 0);
+    glPixelTransferi(GL_ALPHA_SCALE, 1);
+    glPixelTransferi(GL_ALPHA_BIAS, 0);
 }
 
 void blit_texture(GLubyte *screen, int sx, int sy, Texture *texture, int tx, int ty, int tw, int th) {
@@ -112,22 +138,25 @@ void game_quit() {
     // free everything
 
     // screen
-    free(game->screen);
+    if (game != NULL) {
+        if (game->screen != NULL)
+            free(game->screen);
 
-    // textures
-    texture_delete(game->texture_items);
+        // textures
+        texture_delete(game->texture_items);
 
-    // definitions
-    if (game->definition_items != NULL)  {
-        for (int i = 0; i < game->num_items; ++i) {
-            item_def_delete(game->definition_items[i]);
+        // definitions
+        if (game->definition_items != NULL)  {
+            for (int i = 0; i < game->num_items; ++i) {
+                item_def_delete(game->definition_items[i]);
+            }
+
+            free(game->definition_items);
         }
 
-        free(game->definition_items);
+        // and finally:
+        free(game);
     }
-
-    // and finally:
-    free(game);
 
     sprite_delete(sp);
 

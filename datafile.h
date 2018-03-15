@@ -7,6 +7,6 @@
 
 #include "utils.h"
 
-char** datafile_line_field_positions(char* text, unsigned int num_data);
+int datafile_line_field_positions(char* text, unsigned int num_data, char** positions, char** nextstart);
 
 #endif //BUBBLES_DATAFILE_H
