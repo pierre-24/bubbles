@@ -13,8 +13,8 @@ add_executable(bubbles
         game_object_definitions.h
         main.c
         Makefile
-        textures.c
-        textures.h
+        images.c
+        images.h
         utils.c
         utils.h
         game_object_definitions.h

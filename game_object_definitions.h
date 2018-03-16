@@ -1,7 +1,7 @@
 #ifndef GAME_OBJECT_DEFINITIONS_H
 #define GAME_OBJECT_DEFINITIONS_H
 
-#include "textures.h"
+#include "images.h"
 #include "datafile.h"
 
 // items

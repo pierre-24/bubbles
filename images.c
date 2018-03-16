@@ -1,4 +1,4 @@
-#include "textures.h"
+#include "images.h"
 
 #define MAGIC_WHITESPACE "%*[ \n\t]"
 
