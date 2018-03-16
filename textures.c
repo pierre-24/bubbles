@@ -41,7 +41,7 @@ Texture* texture_new_from_file(FILE* f)  {
     }
 
     // then, the data
-    texture->pixels = malloc(texture->width * texture->height * 4 * sizeof(GLubyte));
+    texture->pixels = calloc(texture->width * texture->height * 4, sizeof(GLubyte));
 
     if (texture->pixels == NULL) {
         write_log("! cannot allocate pixels data (%dx%d)", texture->width, texture->height);
@@ -63,6 +63,24 @@ Texture* texture_new_from_file(FILE* f)  {
                 texture->pixels[(y * texture->width + x) * 4 + 3] = 255;
         }
     }
+
+    glGenTextures(1, &texture->texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture->texture_id);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_DECAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_DECAL);
+
+    // when texture area is small, bilinear filter the closest mipmap
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+    // when texture area is large, bilinear filter the first mipmap
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GLubyte* x = malloc(8 * 8 * 4 * sizeof(GLubyte));
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 8, 8, /*texture->width, texture->height*/ 0, GL_RGBA, GL_UNSIGNED_BYTE, x);
+
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, 8, 8, /*texture->width, texture->height,*/ GL_RGBA, GL_UNSIGNED_BYTE, x);
+    free(x);
 
     // ok :)
     return texture;

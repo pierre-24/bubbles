@@ -6,7 +6,7 @@ void changeSize(int w, int h) {
     glViewport (0,  0,  WINDOW_WIDTH, WINDOW_HEIGHT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D (0,  1,  0,  1) ;
+    gluOrtho2D (0,  WINDOW_WIDTH,  0,  WINDOW_HEIGHT) ;
 }
 
 int main(int argc, char **argv) {
@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
 	// init GLUT and create window
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("Bubble Bobble");
 

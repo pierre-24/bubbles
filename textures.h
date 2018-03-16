@@ -14,6 +14,7 @@ typedef struct Texture_ {
 	unsigned int width;
 	unsigned int height;
 	GLubyte * pixels; // dynamically allocated
+	GLuint texture_id;
 } Texture;
 
 Texture* texture_new_from_file(FILE* f);

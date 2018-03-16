@@ -63,7 +63,7 @@ void game_init() {
     sp = sprite_new(game->texture_items, 0, 0, -1, -1);
 
     // openGL state stuffs
-    glDisable(GL_ALPHA_TEST);
+    /*glDisable(GL_ALPHA_TEST);
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
@@ -79,7 +79,7 @@ void game_init() {
     glPixelTransferi(GL_BLUE_SCALE, 1);
     glPixelTransferi(GL_BLUE_BIAS, 0);
     glPixelTransferi(GL_ALPHA_SCALE, 1);
-    glPixelTransferi(GL_ALPHA_BIAS, 0);
+    glPixelTransferi(GL_ALPHA_BIAS, 0);*/
 }
 
 void blit_texture(GLubyte *screen, int sx, int sy, Texture *texture, int tx, int ty, int tw, int th) {
@@ -115,17 +115,32 @@ int pos = 0;
 void game_loop() {
 
     // DRAWING
-	// glClear(GL_COLOR_BUFFER_BIT);
-
-	glColor3f(1.0, 1.0, 1.0);
-	glRasterPos2i(0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	/*glRasterPos2i(0, 0);
 
     memset(game->screen, 0, WINDOW_WIDTH * WINDOW_HEIGHT * 4); // clear game screen
 
     blit_sprite(game->screen, 175, pos, sp);
     pos = (pos + 1) % WINDOW_HEIGHT;
 	
-	glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, game->screen);
+	glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, game->screen);*/
+
+    glColor4f(1.0, .5, 1.0, 1.0);
+
+    glEnable(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, game->texture_items->texture_id);
+
+    glBegin(GL_QUADS);
+    // glNormal3f(0.0, 0.0, 1.0);
+    glTexCoord2d(1, 1); glVertex3f(0.0, 0.0, 0.0);
+    glTexCoord2d(1, 0); glVertex3f(0.0, 50.0, 0.0);
+    glTexCoord2d(0, 0); glVertex3f(175.0, 50.0, 0.0);
+    glTexCoord2d(0, 1); glVertex3f(175.0, 0.0, 0.0);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+
 	glutSwapBuffers();
 }
 
