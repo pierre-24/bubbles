@@ -40,7 +40,7 @@ void game_init() {
     write_log("# starting Bubbles!");
     
     // create screen
-    game->screen = malloc(WINDOW_WIDTH * WINDOW_HEIGHT * 3 * sizeof(GLubyte));
+    game->screen = malloc(WINDOW_WIDTH * WINDOW_HEIGHT * 4 * sizeof(GLubyte));
 
     // load textures
     game->texture_items = load_texture(TEXTURE_ITEMS);
@@ -71,8 +71,6 @@ void game_init() {
     glDisable(GL_LIGHTING);
     glDisable(GL_LOGIC_OP);
     glDisable(GL_STENCIL_TEST);
-    glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
     glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
     glPixelTransferi(GL_RED_SCALE, 1);
     glPixelTransferi(GL_RED_BIAS, 0);
@@ -99,12 +97,9 @@ void blit_texture(GLubyte *screen, int sx, int sy, Texture *texture, int tx, int
                 if ((i + sx) > WINDOW_WIDTH || (i + sx) < 0)
                     continue;
 
-                Pixel* pixel = texture_get_pixel(texture, tx + i, ty + j);
+                GLubyte * pixel = texture_get_pixel(texture, tx + i, ty + j);
 
-                if (pixel == NULL || pixel->transparent)
-                    continue;
-
-                memcpy(&(screen[_SR(i + sx, j + sy)]), pixel->values, 3 * sizeof(GLubyte));
+                memcpy(&(screen[_SR(i + sx, j + sy)]), pixel, 4 * sizeof(GLubyte));
             }
         }
     }
@@ -125,12 +120,12 @@ void game_loop() {
 	glColor3f(1.0, 1.0, 1.0);
 	glRasterPos2i(0, 0);
 
-    memset(game->screen, 0, WINDOW_WIDTH * WINDOW_HEIGHT * 3); // clear game screen
+    memset(game->screen, 0, WINDOW_WIDTH * WINDOW_HEIGHT * 4); // clear game screen
 
     blit_sprite(game->screen, 175, pos, sp);
     pos = (pos + 1) % WINDOW_HEIGHT;
 	
-	glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, game->screen);
+	glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, game->screen);
 	glutSwapBuffers();
 }
 

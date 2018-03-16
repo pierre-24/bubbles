@@ -10,22 +10,16 @@
 
 #define TRANSPARENT {255, 0, 175};
 
-typedef struct Pixel_ {
-	// each color value is between 0 (black) and 255 (full color)
-	GLubyte values[3];
-	bool transparent; // "true" if the pixel is transparent 
-} Pixel;
-
 typedef struct Texture_ {
 	unsigned int width;
 	unsigned int height;
-	Pixel* pixels; // dynamically allocated
+	GLubyte * pixels; // dynamically allocated
 } Texture;
 
 Texture* texture_new_from_file(FILE* f);
 void texture_delete(Texture* texture);
 
-Pixel* texture_get_pixel(Texture* texture, int x, int y);
+GLubyte* texture_get_pixel(Texture* texture, int x, int y);
 
 typedef struct Sprite_ {
 	Texture* texture; // pointer to the texture

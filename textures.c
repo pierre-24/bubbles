@@ -41,7 +41,7 @@ Texture* texture_new_from_file(FILE* f)  {
     }
 
     // then, the data
-    texture->pixels = malloc(texture->width * texture->height * sizeof(Pixel));
+    texture->pixels = malloc(texture->width * texture->height * 4 * sizeof(GLubyte));
 
     if (texture->pixels == NULL) {
         write_log("! cannot allocate pixels data (%dx%d)", texture->width, texture->height);
@@ -53,13 +53,14 @@ Texture* texture_new_from_file(FILE* f)  {
 
     for (int y=0; y < texture->height; y++) {
         for (int x = 0; x < texture->width; ++x) {
-            texture->pixels[y * texture->width + x].values[0] = (GLubyte) fgetc(f);
-            texture->pixels[y * texture->width + x].values[1] = (GLubyte) fgetc(f);
-            texture->pixels[y * texture->width + x].values[2] = (GLubyte) fgetc(f);
-            texture->pixels[y * texture->width + x].transparent = false;
+            texture->pixels[(y * texture->width + x) * 4 + 0] = (GLubyte) fgetc(f);
+            texture->pixels[(y * texture->width + x) * 4 + 1] = (GLubyte) fgetc(f);
+            texture->pixels[(y * texture->width + x) * 4 + 2] = (GLubyte) fgetc(f);
 
-            if(memcmp(transp, texture->pixels[y * texture->width + x].values, 3) == 0)
-                texture->pixels[y * texture->width + x].transparent = true;
+            if(memcmp(transp, texture->pixels + (y * texture->width + x) * 4, 3) == 0)
+                texture->pixels[(y * texture->width + x) * 4 + 3] = 0;
+            else
+                texture->pixels[(y * texture->width + x) * 4 + 3] = 255;
         }
     }
 
@@ -75,11 +76,11 @@ void texture_delete(Texture* texture) {
     }
 }
 
-Pixel* texture_get_pixel(Texture* texture, int x, int y) {
+GLubyte * texture_get_pixel(Texture* texture, int x, int y) {
     if (x >= texture->width || y >= texture->height || x < 0 || y < 0)
         return NULL;
 
-    return &(texture->pixels[y * texture->width + x]);
+    return texture->pixels+((y * texture->width + x) * 4);
 }
 
 Sprite* sprite_new(Texture *texture, int x, int y, int w, int h) {

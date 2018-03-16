@@ -15,7 +15,7 @@
 #define DEFINITION_ITEMS "data/items.txt"
 
 // macro to get pixel component position from game screen (note: invert y so that it is located above)
-#define _SR(i, j) (((WINDOW_HEIGHT - (j))*WINDOW_WIDTH+(i))*3)
+#define _SR(i, j) (((WINDOW_HEIGHT - (j))*WINDOW_WIDTH+(i))*4)
 
 typedef struct Game_ {
     // screen
