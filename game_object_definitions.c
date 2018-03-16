@@ -31,7 +31,7 @@ void item_def_delete(ItemDef* item) {
     }
 }
 
-ItemDef** item_defs_from_file(FILE* f, Texture* items_texture, unsigned int* size) {
+ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size) {
     *size = 0;
 
     if (f == NULL)

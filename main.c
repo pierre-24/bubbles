@@ -11,13 +11,13 @@ void changeSize(int w, int h) {
 
 int main(int argc, char **argv) {
 
-    game_init();
-
 	// init GLUT and create window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("Bubble Bobble");
+
+    game_init();
 
 	glutReshapeFunc(changeSize);
 	glutIdleFunc(game_loop);

@@ -10,27 +10,25 @@
 
 #define TRANSPARENT {255, 0, 175};
 
-typedef struct Texture_ {
+typedef struct Image_ {
 	unsigned int width;
 	unsigned int height;
 	GLubyte * pixels; // dynamically allocated
-	GLuint texture_id;
-} Texture;
+} Image;
 
-Texture* texture_new_from_file(FILE* f);
-void texture_delete(Texture* texture);
-
-GLubyte* texture_get_pixel(Texture* texture, int x, int y);
+Image* image_new_from_file(FILE *f);
+void image_delete(Image *image);
 
 typedef struct Sprite_ {
-	Texture* texture; // pointer to the texture
+	Image* image; // pointer to the image
 	int x;
 	int y;
 	int width;
 	int height;
+	GLuint texture_id;
 } Sprite;
 
-Sprite* sprite_new(Texture *texture, int x, int y, int w, int h);
+Sprite* sprite_new(Image *image, int x, int y, int w, int h);
 void sprite_delete(Sprite* sprite);
 
 #endif

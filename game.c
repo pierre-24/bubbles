@@ -10,19 +10,19 @@ void game_fail_exit() {
     exit(-1);
 }
 
-Texture* load_texture(const char* image_path) {
+Image* load_texture(const char* image_path) {
     FILE* f;
 
     f = fopen(image_path, "r");
     if (f == NULL) {
-        write_log("! cannot open texture %s", TEXTURE_ITEMS);
+        write_log("! cannot open image %s", TEXTURE_ITEMS);
         return NULL;
     }
 
     else
-        write_log("# load texture %s", TEXTURE_ITEMS);
+        write_log("# load image %s", TEXTURE_ITEMS);
 
-    Texture* tex = texture_new_from_file(f);
+    Image* tex = image_new_from_file(f);
     fclose(f);
 
     return tex;
@@ -62,52 +62,25 @@ void game_init() {
     // tmp:
     sp = sprite_new(game->texture_items, 0, 0, -1, -1);
 
-    // openGL state stuffs
-    /*glDisable(GL_ALPHA_TEST);
-    glDisable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_DITHER);
-    glDisable(GL_FOG);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_LOGIC_OP);
-    glDisable(GL_STENCIL_TEST);
-    glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
-    glPixelTransferi(GL_RED_SCALE, 1);
-    glPixelTransferi(GL_RED_BIAS, 0);
-    glPixelTransferi(GL_GREEN_SCALE, 1);
-    glPixelTransferi(GL_GREEN_BIAS, 0);
-    glPixelTransferi(GL_BLUE_SCALE, 1);
-    glPixelTransferi(GL_BLUE_BIAS, 0);
-    glPixelTransferi(GL_ALPHA_SCALE, 1);
-    glPixelTransferi(GL_ALPHA_BIAS, 0);*/
+    // openGL
+    glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void blit_texture(GLubyte *screen, int sx, int sy, Texture *texture, int tx, int ty, int tw, int th) {
-    if (screen != NULL && texture != NULL) {
-        if ((tx + tw) > texture->width || tw < 0)
-            tw = texture->width - tx;
-        if ((ty + th) > texture->height || th < 0)
-            th = texture->height - ty;
+void blit_sprite(Sprite *sprite, int sx, int sy) {
+    if (sprite != NULL) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, sp->texture_id);
 
-        for (int j = 0; j < th; ++j) {
-            if ((j + sy) > WINDOW_HEIGHT || (j + sy) < 0)
-                continue;
+        glBegin(GL_QUADS);
+        glTexCoord2d(0.0, 1.0); glVertex2i(sx,sy);
+        glTexCoord2d(0.0, 0.0); glVertex2i(sx, sy+sprite->height);
+        glTexCoord2d(1.0, 0.0); glVertex2i(sx + sprite->width, sy+sprite->height);
+        glTexCoord2d(1.0, 1.0); glVertex2i(sx + sprite->width, sy);
+        glEnd();
 
-            for (int i = 0; i < tw; ++i) {
-                if ((i + sx) > WINDOW_WIDTH || (i + sx) < 0)
-                    continue;
-
-                GLubyte * pixel = texture_get_pixel(texture, tx + i, ty + j);
-
-                memcpy(&(screen[_SR(i + sx, j + sy)]), pixel, 4 * sizeof(GLubyte));
-            }
-        }
+        glDisable(GL_TEXTURE_2D);
     }
-}
 
-void blit_sprite(GLubyte *screen, int sx, int sy, Sprite *sprite) {
-    if (sprite != NULL)
-        blit_texture(screen, sx, sy, sprite->texture, sprite->x, sprite->y, sprite->width, sprite->height);
 }
 
 int pos = 0;
@@ -116,30 +89,11 @@ void game_loop() {
 
     // DRAWING
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	/*glRasterPos2i(0, 0);
 
-    memset(game->screen, 0, WINDOW_WIDTH * WINDOW_HEIGHT * 4); // clear game screen
+    glColor4f(1.0, 1.0, 1.0, 1.0);
 
-    blit_sprite(game->screen, 175, pos, sp);
-    pos = (pos + 1) % WINDOW_HEIGHT;
-	
-	glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, game->screen);*/
-
-    glColor4f(1.0, .5, 1.0, 1.0);
-
-    glEnable(GL_TEXTURE_2D);
-
-    glBindTexture(GL_TEXTURE_2D, game->texture_items->texture_id);
-
-    glBegin(GL_QUADS);
-    // glNormal3f(0.0, 0.0, 1.0);
-    glTexCoord2d(1, 1); glVertex3f(0.0, 0.0, 0.0);
-    glTexCoord2d(1, 0); glVertex3f(0.0, 50.0, 0.0);
-    glTexCoord2d(0, 0); glVertex3f(175.0, 50.0, 0.0);
-    glTexCoord2d(0, 1); glVertex3f(175.0, 0.0, 0.0);
-    glEnd();
-
-    glDisable(GL_TEXTURE_2D);
+    blit_sprite(sp, 0, pos);
+    pos = (pos +1) % WINDOW_HEIGHT;
 
 	glutSwapBuffers();
 }
@@ -153,7 +107,7 @@ void game_quit() {
             free(game->screen);
 
         // textures
-        texture_delete(game->texture_items);
+        image_delete(game->texture_items);
 
         // definitions
         if (game->definition_items != NULL)  {

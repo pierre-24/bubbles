@@ -2,7 +2,7 @@
 
 #define MAGIC_WHITESPACE "%*[ \n\t]"
 
-Texture* texture_new_from_file(FILE* f)  {
+Image* image_new_from_file(FILE *f)  {
     // read a PPM (see http://netpbm.sourceforge.net/doc/ppm.html)
     if (f == NULL)
         return NULL;
@@ -24,16 +24,16 @@ Texture* texture_new_from_file(FILE* f)  {
     }
 
     // then comes the width, height and maximum value
-    Texture* texture = malloc(sizeof(Texture));
+    Image* image = malloc(sizeof(Image));
 
-    if (texture == NULL) {
-        write_log("! cannot alocate texture");
+    if (image == NULL) {
+        write_log("! cannot alocate image");
         return NULL;
     }
 
     unsigned int max;
 
-    fscanf(f, "%u" MAGIC_WHITESPACE "%u" MAGIC_WHITESPACE "%u" MAGIC_WHITESPACE, &(texture->width), &(texture->height), &max);
+    fscanf(f, "%u" MAGIC_WHITESPACE "%u" MAGIC_WHITESPACE "%u" MAGIC_WHITESPACE, &(image->width), &(image->height), &max);
 
     if (max != 255) {
         write_log("weird color space: %d", max);
@@ -41,68 +41,43 @@ Texture* texture_new_from_file(FILE* f)  {
     }
 
     // then, the data
-    texture->pixels = calloc(texture->width * texture->height * 4, sizeof(GLubyte));
+    image->pixels = calloc(image->width * image->height * 4, sizeof(GLubyte));
 
-    if (texture->pixels == NULL) {
-        write_log("! cannot allocate pixels data (%dx%d)", texture->width, texture->height);
-        texture_delete(texture);
+    if (image->pixels == NULL) {
+        write_log("! cannot allocate pixels data (%dx%d)", image->width, image->height);
+        image_delete(image);
         return NULL;
     }
 
     char transp[3] = TRANSPARENT;
 
-    for (int y=0; y < texture->height; y++) {
-        for (int x = 0; x < texture->width; ++x) {
-            texture->pixels[(y * texture->width + x) * 4 + 0] = (GLubyte) fgetc(f);
-            texture->pixels[(y * texture->width + x) * 4 + 1] = (GLubyte) fgetc(f);
-            texture->pixels[(y * texture->width + x) * 4 + 2] = (GLubyte) fgetc(f);
+    for (int y=0; y < image->height; y++) {
+        for (int x = 0; x < image->width; ++x) {
+            image->pixels[(y * image->width + x) * 4 + 0] = (GLubyte) fgetc(f);
+            image->pixels[(y * image->width + x) * 4 + 1] = (GLubyte) fgetc(f);
+            image->pixels[(y * image->width + x) * 4 + 2] = (GLubyte) fgetc(f);
 
-            if(memcmp(transp, texture->pixels + (y * texture->width + x) * 4, 3) == 0)
-                texture->pixels[(y * texture->width + x) * 4 + 3] = 0;
+            if(memcmp(transp, image->pixels + (y * image->width + x) * 4, 3) == 0)
+                image->pixels[(y * image->width + x) * 4 + 3] = 0;
             else
-                texture->pixels[(y * texture->width + x) * 4 + 3] = 255;
+                image->pixels[(y * image->width + x) * 4 + 3] = 255;
         }
     }
 
-    glGenTextures(1, &texture->texture_id);
-    glBindTexture(GL_TEXTURE_2D, texture->texture_id);
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_DECAL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_DECAL);
-
-    // when texture area is small, bilinear filter the closest mipmap
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-    // when texture area is large, bilinear filter the first mipmap
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GLubyte* x = malloc(8 * 8 * 4 * sizeof(GLubyte));
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 8, 8, /*texture->width, texture->height*/ 0, GL_RGBA, GL_UNSIGNED_BYTE, x);
-
-    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, 8, 8, /*texture->width, texture->height,*/ GL_RGBA, GL_UNSIGNED_BYTE, x);
-    free(x);
-
     // ok :)
-    return texture;
+    return image;
 }
 
-void texture_delete(Texture* texture) {
-    if (texture != NULL) {
-        if (texture->pixels != NULL)
-            free(texture->pixels);
-        free(texture);
+void image_delete(Image *image) {
+    if (image != NULL) {
+        if (image->pixels != NULL)
+            free(image->pixels);
+        free(image);
     }
 }
 
-GLubyte * texture_get_pixel(Texture* texture, int x, int y) {
-    if (x >= texture->width || y >= texture->height || x < 0 || y < 0)
-        return NULL;
-
-    return texture->pixels+((y * texture->width + x) * 4);
-}
-
-Sprite* sprite_new(Texture *texture, int x, int y, int w, int h) {
-    if (texture == NULL)
+Sprite* sprite_new(Image *image, int x, int y, int w, int h) {
+    if (image == NULL)
         return NULL;
 
     if (x < 0) {
@@ -116,25 +91,25 @@ Sprite* sprite_new(Texture *texture, int x, int y, int w, int h) {
     }
 
     if (w < 0) {
-        w = texture->width - x;
+        w = image->width - x;
     }
 
     if (h < 0) {
-        h = texture->height - y;
+        h = image->height - y;
     }
 
-    if (x + w > texture->width) {
-        if (x >= texture->width)
-            x = texture->width;
+    if (x + w > image->width) {
+        if (x >= image->width)
+            x = image->width;
 
-        w = texture->width - x;
+        w = image->width - x;
     }
 
-    if (y + h > texture->height) {
-        if (y >= texture->height)
-            y = texture->height;
+    if (y + h > image->height) {
+        if (y >= image->height)
+            y = image->height;
 
-        h = texture->height - y;
+        h = image->height - y;
     }
 
     Sprite* sprite = malloc(sizeof(Sprite));
@@ -148,8 +123,22 @@ Sprite* sprite_new(Texture *texture, int x, int y, int w, int h) {
     sprite->y = y;
     sprite->width = w;
     sprite->height = h;
-    sprite->texture = texture;
+    sprite->image = image;
 
+    // create data buffer and fill it with sub image
+    GLubyte* data = malloc(sprite->width * sprite->height * 4 * sizeof(GLubyte));
+
+    for (int i = 0; i < sprite->height; ++i)
+        memcpy(data + (i*sprite->width) * 4, image->pixels + ((sprite->y+i) * image->width + sprite->x) * 4, (size_t) sprite->width * 4);
+
+    // create the opengl texture
+    glGenTextures(1, &(sprite->texture_id));
+    glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sprite->width, sprite->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    free(data);
     return sprite;
 }
 
