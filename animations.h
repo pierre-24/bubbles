@@ -17,7 +17,8 @@ Animation* animation_new();
 void animation_delete(Animation* animation);
 
 Animation * animation_add_frame(Animation *animation, Sprite *frame);
-Sprite* animation_get_frame(Animation *animation);
 Animation * animation_next(Animation *animation);
+
+Animation* animation_copy(Animation* src);
 
 #endif //BUBBLES_ANIMATIONS_H

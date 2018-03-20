@@ -5,6 +5,8 @@
 #ifndef BUBBLES_UTILS_H
 #define BUBBLES_UTILS_H
 
+// #define VERBOSE_MEM 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>

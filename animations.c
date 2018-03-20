@@ -12,19 +12,40 @@ Animation* animation_new() {
         return NULL;
     }
 
+#ifdef VERBOSE_MEM
+    printf("+animation %p\n", a);
+#endif
+
     a->frame = NULL;
     a->next_frame = a;
+
+    return a;
 }
 
 void animation_delete(Animation* animation) {
     if (animation != NULL) {
-        Animation* beg = animation->next_frame;
-        Animation* current = animation;
-        while (current != beg && current != NULL) {
-            Animation* n = current->next_frame;
-            sprite_delete(current->frame);
-            free(current);
-            current = n;
+        Animation* p = animation, *n = NULL;
+
+        while (p->frame != NULL)
+            p = p->next_frame;
+
+        p = p->next_frame;
+        bool was_last = false;
+
+        while (!was_last) {
+            n = p->next_frame;
+
+            if (p->frame == NULL)
+                was_last = true;
+            else
+                sprite_delete(p->frame);
+
+            free(p);
+
+#ifdef VERBOSE_MEM
+            printf("-animation %p\n", p);
+#endif
+            p = n;
         }
     }
 }
@@ -32,7 +53,7 @@ void animation_delete(Animation* animation) {
 Animation * animation_add_frame(Animation *animation, Sprite *frame) {
     // find end
     Animation* p = animation, *q = NULL;
-    while (p->next_frame->frame != NULL)
+    while (p->frame != NULL)
         p = p->next_frame;
 
     q = p->next_frame;
@@ -40,6 +61,10 @@ Animation * animation_add_frame(Animation *animation, Sprite *frame) {
     Animation* nx = malloc(sizeof(Animation));
     if (nx != NULL) {
         nx->frame = sprite_copy(frame);
+
+#ifdef VERBOSE_MEM
+        printf("+animation %p (by add)\n", nx);
+#endif
 
         if (nx->frame == NULL)
             return NULL;
@@ -50,12 +75,8 @@ Animation * animation_add_frame(Animation *animation, Sprite *frame) {
         return nx;
     }
 
-    write_log("! unable to alocate new animation");
+    write_log("! unable to allocate new animation");
     return NULL;
-}
-
-Sprite* animation_get_frame(Animation *animation) {
-    return animation->frame;
 }
 
 Animation * animation_next(Animation *animation) {
@@ -70,4 +91,26 @@ Animation * animation_next(Animation *animation) {
         return n->next_frame;
 
     return n;
+}
+
+Animation* animation_copy(Animation* src) {
+    Animation* p = src;
+    Animation* dest = animation_new();
+
+    if (dest == NULL) {
+        write_log("! unable to allocate animation for copy");
+        return NULL;
+    }
+
+    while (p->frame != NULL)
+        p = p->next_frame;
+
+    p = p->next_frame;
+
+    while (p->frame != NULL) {
+        dest = animation_add_frame(dest, p->frame);
+        p = p->next_frame;
+    }
+
+    return dest;
 }

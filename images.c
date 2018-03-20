@@ -27,9 +27,13 @@ Image* image_new_from_file(FILE *f)  {
     Image* image = malloc(sizeof(Image));
 
     if (image == NULL) {
-        write_log("! cannot alocate image");
+        write_log("! cannot allocate image");
         return NULL;
     }
+
+#ifdef VERBOSE_MEM
+    printf("+image %p\n", image);
+#endif
 
     unsigned int max;
 
@@ -73,6 +77,10 @@ void image_delete(Image *image) {
         if (image->pixels != NULL)
             free(image->pixels);
         free(image);
+
+#ifdef VERBOSE_MEM
+        printf("-image %p\n", image);
+#endif
     }
 }
 
@@ -121,6 +129,10 @@ Sprite* sprite_new(Image *image, int x, int y, int w, int h) {
         return NULL;
     }
 
+#ifdef VERBOSE_MEM
+    printf("+sprite %p\n", sprite);
+#endif
+
     sprite->x = x;
     sprite->y = y;
     sprite->width = w;
@@ -145,8 +157,13 @@ Sprite* sprite_new(Image *image, int x, int y, int w, int h) {
 }
 
 void sprite_delete(Sprite* sprite) {
-    if (sprite != NULL)
+    if (sprite != NULL) {
         free(sprite);
+
+#ifdef VERBOSE_MEM
+        printf("-sprite %p\n", sprite);
+#endif
+    }
 }
 
 Sprite* sprite_copy(Sprite* origin) {
@@ -156,6 +173,10 @@ Sprite* sprite_copy(Sprite* origin) {
         write_log("! unable to copy Sprite");
         return NULL;
     }
+
+#ifdef VERBOSE_MEM
+    printf("+sprite %p (by copy)\n", dest);
+#endif
 
     memcpy(dest, origin, sizeof(Sprite));
     return dest;

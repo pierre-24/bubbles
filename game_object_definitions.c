@@ -15,6 +15,10 @@ ItemDef *item_def_new(unsigned int points_given, extra_power_t extra_power, Spri
         return NULL;
     }
 
+#ifdef VERBOSE_MEM
+    printf("+ItemDef %p\n", def);
+#endif
+
     def->points_given = points_given;
     def->extra_power = extra_power;
     def->sprite = sprite_copy(sprite);
@@ -26,8 +30,11 @@ void item_def_delete(ItemDef* item) {
     if (item != NULL) {
         if (item->sprite != NULL)
             sprite_delete(item->sprite);
-
         free(item);
+
+#ifdef VERBOSE_MEM
+        printf("-ItemDef %p\n", item);
+#endif
     }
 }
 

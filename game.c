@@ -59,9 +59,12 @@ void game_init() {
     }
     fclose(f);
 
-    animation = animation_new();
-    animation = animation_add_frame(animation, game->definition_items[0]->sprite);
-    animation = animation_add_frame(animation, game->definition_items[1]->sprite);
+    Animation* tmp = animation_new();
+    tmp = animation_add_frame(tmp, game->definition_items[0]->sprite);
+    tmp = animation_add_frame(tmp, game->definition_items[1]->sprite);
+
+    animation = animation_copy(tmp);
+    animation_delete(tmp);
 
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -87,7 +90,7 @@ void blit_sprite(Sprite *sprite, int sx, int sy) {
 }
 
 void blit_animation(Animation* animation, int sx, int sy) {
-    if (animation != NULL) {
+    if (animation != NULL && animation->frame != NULL) {
         blit_sprite(animation->frame, sx, sy);
     }
 }
