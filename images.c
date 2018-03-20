@@ -149,3 +149,15 @@ void sprite_delete(Sprite* sprite) {
         free(sprite);
 }
 
+Sprite* sprite_copy(Sprite* origin) {
+    Sprite* dest = malloc(sizeof(Sprite));
+
+    if (dest == NULL) {
+        write_log("! unable to copy Sprite");
+        return NULL;
+    }
+
+    memcpy(dest, origin, sizeof(Sprite));
+    return dest;
+}
+

@@ -31,4 +31,6 @@ typedef struct Sprite_ {
 Sprite* sprite_new(Image *image, int x, int y, int w, int h);
 void sprite_delete(Sprite* sprite);
 
+Sprite* sprite_copy(Sprite* origin);
+
 #endif

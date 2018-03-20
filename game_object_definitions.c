@@ -17,7 +17,7 @@ ItemDef *item_def_new(unsigned int points_given, extra_power_t extra_power, Spri
 
     def->points_given = points_given;
     def->extra_power = extra_power;
-    def->sprite = sprite;
+    def->sprite = sprite_copy(sprite);
 
     return def;
 }
@@ -122,6 +122,7 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
             // printf("→ %ld %ld %ld %ld %ld %ld\n", points_given, extra_power, sx, sy, sw, sh);
 
             definitions[index] = item_def_new((unsigned int) points_given, (extra_power_t) extra_power, sprite);
+            sprite_delete(sprite);
             index++;
         }
     }
@@ -130,4 +131,20 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
     free(positions);
 
     return definitions;
+}
+
+MonsterDef* monster_def_new(Animation *sprite_animation, unsigned int speed) {
+    return NULL;
+}
+
+void monster_def_delete(MonsterDef* item) {
+    if (item != NULL) {
+        animation_delete(item->animation);
+        free(item);
+    }
+}
+
+MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int* size) {
+    *size = 0;
+    return NULL;
 }

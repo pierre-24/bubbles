@@ -1,6 +1,7 @@
 #include "game.h"
 
 Game* game = NULL;
+Animation* animation;
 
 void game_fail_exit() {
     printf("something went wrong (check log), exiting ...\n");
@@ -32,7 +33,7 @@ void game_init() {
     game = malloc(sizeof(Game));
 
     game->texture_items = NULL;
-    game->num_items = NULL;
+    game->num_items = 0;
     game->definition_items = NULL;
 
     write_log("# starting Bubbles!");
@@ -58,6 +59,10 @@ void game_init() {
     }
     fclose(f);
 
+    animation = animation_new();
+    animation = animation_add_frame(animation, game->definition_items[0]->sprite);
+    animation = animation_add_frame(animation, game->definition_items[1]->sprite);
+
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -81,6 +86,12 @@ void blit_sprite(Sprite *sprite, int sx, int sy) {
 
 }
 
+void blit_animation(Animation* animation, int sx, int sy) {
+    if (animation != NULL) {
+        blit_sprite(animation->frame, sx, sy);
+    }
+}
+
 int pos = 0;
 
 void game_loop() {
@@ -90,10 +101,13 @@ void game_loop() {
 
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
-    blit_sprite(game->definition_items[1]->sprite, 0, pos);
+    blit_animation(animation, 0, pos);
     pos = (pos +1) % WINDOW_HEIGHT;
 
-	glutSwapBuffers();
+    if (pos % 25 == 0)
+        animation = animation_next(animation);
+
+    glutSwapBuffers();
 }
 
 void game_quit() {
@@ -117,6 +131,8 @@ void game_quit() {
         free(game);
     }
 
+    // tmp
+    animation_delete(animation);
 
     write_log("# quitting Bubbles!");
 
