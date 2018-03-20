@@ -112,6 +112,8 @@ Sprite* sprite_new(Image *image, int x, int y, int w, int h) {
         h = image->height - y;
     }
 
+    // printf("→ %d %d %d %d\n", x, y, w, h);
+
     Sprite* sprite = malloc(sizeof(Sprite));
 
     if(sprite == NULL) {

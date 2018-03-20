@@ -3,7 +3,7 @@
 #include "game.h"
 
 void changeSize(int w, int h) {
-    glViewport (0,  0,  WINDOW_WIDTH, WINDOW_HEIGHT);
+    glViewport (0,  0,  w,  h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D (0,  WINDOW_WIDTH,  0,  WINDOW_HEIGHT) ;

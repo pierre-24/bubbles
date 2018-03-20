@@ -40,7 +40,10 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
     char* buffer = file_get_content(f);
     char** positions = malloc(6 * sizeof(char*));
     char* nextstart = buffer;
+    char* next;
     int err = 0;
+
+    long points_given, extra_power, sx, sy, sw, sh;
 
     // catch number of items
     do {
@@ -64,12 +67,64 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
     while(nextstart != NULL && index < *size) {
         err = datafile_line_field_positions(nextstart, 6, positions, &nextstart);
         if (err == 0) {
-            definitions[index] = NULL;
+            write_log("# - adding item %d", index);
+            points_given = strtoul(positions[0], &next, 0);
+            if (next == positions[0]) {
+                write_log("error while converting number #0");
+                continue;
+            }
+
+            extra_power = strtoul(positions[1], &next, 0);
+            if (next == positions[1]) {
+                write_log("error while converting number #1");
+                continue;
+            }
+
+            sx = strtoul(positions[2], &next, 0);
+            if (next == positions[2]) {
+                write_log("error while converting number #2");
+                continue;
+            }
+
+            sy = strtoul(positions[3], &next, 0);
+            if (next == positions[3]) {
+                write_log("error while converting number #3");
+                continue;
+            }
+
+            sw = strtoul(positions[4], &next, 0);
+            if (next == positions[4]) {
+                write_log("error while converting number #4");
+                continue;
+            }
+
+            sh = strtoul(positions[5], &next, 0);
+            if (next == positions[5]) {
+                write_log("error while converting number #5");
+                continue;
+            }
+
+            if (points_given < 0) {
+                write_log("! negative amount of points");
+                continue;
+            }
+
+            if (extra_power < 0 || extra_power >= EP_NUMBER) {
+                write_log("! unknown extra power");
+                continue;
+            }
+
+            Sprite* sprite = sprite_new(items_texture, (int) sx, (int) sy, (int) sw, (int) sh);
+
+            if (sprite == NULL)
+                continue;
+
+            // printf("→ %ld %ld %ld %ld %ld %ld\n", points_given, extra_power, sx, sy, sw, sh);
+
+            definitions[index] = item_def_new((unsigned int) points_given, (extra_power_t) extra_power, sprite);
             index++;
         }
     }
-
-    printf("%d\n", index);
 
     free(buffer);
     free(positions);

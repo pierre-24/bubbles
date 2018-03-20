@@ -32,7 +32,7 @@ typedef struct MonsterDef_ {
 } MonsterDef;
 
 MonsterDef* monster_def_new(Sprite* sprite_animation[2], unsigned int speed);
-void imonster_def_delete(MonsterDef* item);
+void monster_def_delete(MonsterDef* item);
 
 MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int* size);
 

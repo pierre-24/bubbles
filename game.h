@@ -10,7 +10,7 @@
 #define WINDOW_WIDTH 512
 #define WINDOW_HEIGHT 432
 
-#define TEXTURE_ITEMS "assets/test.ppm"
+#define TEXTURE_ITEMS "assets/items.ppm"
 
 #define DEFINITION_ITEMS "data/items.txt"
 
@@ -18,8 +18,6 @@
 #define _SR(i, j) (((WINDOW_HEIGHT - (j))*WINDOW_WIDTH+(i))*4)
 
 typedef struct Game_ {
-    // screen
-    GLubyte* screen;
 
     // Image
     Image* texture_items;

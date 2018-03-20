@@ -2,8 +2,6 @@
 
 Game* game = NULL;
 
-Sprite* sp = NULL;
-
 void game_fail_exit() {
     printf("something went wrong (check log), exiting ...\n");
     game_quit();
@@ -32,15 +30,12 @@ void game_init() {
 	init_log();
 
     game = malloc(sizeof(Game));
-    game->screen = NULL;
 
     game->texture_items = NULL;
+    game->num_items = NULL;
     game->definition_items = NULL;
 
     write_log("# starting Bubbles!");
-    
-    // create screen
-    game->screen = malloc(WINDOW_WIDTH * WINDOW_HEIGHT * 4 * sizeof(GLubyte));
 
     // load textures
     game->texture_items = load_texture(TEXTURE_ITEMS);
@@ -57,19 +52,22 @@ void game_init() {
         write_log("# opening item def file %s", DEFINITION_ITEMS);
 
     game->definition_items = item_defs_from_file(f, game->texture_items, &(game->num_items));
+    if (game->definition_items == NULL || game->num_items == 0) {
+        write_log("! no game items, exiting");
+        game_fail_exit();
+    }
     fclose(f);
-
-    // tmp:
-    sp = sprite_new(game->texture_items, 0, 0, -1, -1);
 
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    write_log("# READY TO PLAY !");
 }
 
 void blit_sprite(Sprite *sprite, int sx, int sy) {
     if (sprite != NULL) {
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, sp->texture_id);
+        glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
 
         glBegin(GL_QUADS);
         glTexCoord2d(0.0, 1.0); glVertex2i(sx,sy);
@@ -92,7 +90,7 @@ void game_loop() {
 
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
-    blit_sprite(sp, 0, pos);
+    blit_sprite(game->definition_items[1]->sprite, 0, pos);
     pos = (pos +1) % WINDOW_HEIGHT;
 
 	glutSwapBuffers();
@@ -103,9 +101,6 @@ void game_quit() {
 
     // screen
     if (game != NULL) {
-        if (game->screen != NULL)
-            free(game->screen);
-
         // textures
         image_delete(game->texture_items);
 
@@ -122,7 +117,6 @@ void game_quit() {
         free(game);
     }
 
-    sprite_delete(sp);
 
     write_log("# quitting Bubbles!");
 
