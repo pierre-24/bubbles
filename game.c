@@ -1,7 +1,6 @@
 #include "game.h"
 
 Game* game = NULL;
-Animation* animation;
 
 void game_fail_exit() {
     printf("something went wrong (check log), exiting ...\n");
@@ -30,21 +29,31 @@ Image* load_texture(const char* image_path) {
 void game_init() {
 	init_log();
 
-    game = malloc(sizeof(Game));
+    FILE* f = NULL;
 
-    game->texture_items = NULL;
-    game->num_items = 0;
-    game->definition_items = NULL;
+    game = malloc(sizeof(Game));
 
     write_log("# starting Bubbles!");
 
     // load textures
+    game->texture_items = NULL;
+    game->texture_monsters = NULL;
+
     game->texture_items = load_texture(TEXTURE_ITEMS);
     if (game->texture_items == NULL)
         game_fail_exit();
 
+    game->texture_monsters = load_texture(TEXTURE_MONSTERS);
+    if (game->texture_monsters == NULL)
+        game_fail_exit();
+
     // load definition
-    FILE* f = fopen(DEFINITION_ITEMS, "r");
+    game->num_items = 0;
+    game->definition_items = NULL;
+    game->num_monsters = 0;
+    game->definition_monsters = NULL;
+
+    f = fopen(DEFINITION_ITEMS, "r");
     if (f == NULL) {
         write_log("! unable to open item def file %s", DEFINITION_ITEMS);
         game_fail_exit();
@@ -59,12 +68,20 @@ void game_init() {
     }
     fclose(f);
 
-    Animation* tmp = animation_new();
-    tmp = animation_add_frame(tmp, game->definition_items[0]->sprite);
-    tmp = animation_add_frame(tmp, game->definition_items[1]->sprite);
+    f = fopen(DEFINITION_MONSTERS, "r");
+    if (f == NULL) {
+        write_log("! unable to open monster def file %s", DEFINITION_MONSTERS);
+        game_fail_exit();
+    }
+    else
+        write_log("# opening monster def file %s", DEFINITION_MONSTERS);
 
-    animation = animation_copy(tmp);
-    animation_delete(tmp);
+    game->definition_monsters = monster_defs_from_file(f, game->texture_monsters, &(game->num_monsters));
+    if (game->definition_monsters == NULL || game->num_monsters == 0) {
+        write_log("! no game monsters, exiting");
+        game_fail_exit();
+    }
+    fclose(f);
 
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -86,7 +103,6 @@ void blit_sprite(Sprite *sprite, int sx, int sy) {
 
         glDisable(GL_TEXTURE_2D);
     }
-
 }
 
 void blit_animation(Animation* animation, int sx, int sy) {
@@ -104,11 +120,12 @@ void game_loop() {
 
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
-    blit_animation(animation, 0, pos);
-    pos = (pos +1) % WINDOW_HEIGHT;
+    blit_animation(game->definition_monsters[1]->animation, WINDOW_WIDTH - pos, 0);
+    pos = (pos +1) % WINDOW_WIDTH;
 
-    if (pos % 25 == 0)
-        animation = animation_next(animation);
+    if (pos % 10 == 0) {
+        game->definition_monsters[1]->animation = animation_next(game->definition_monsters[1]->animation);
+    }
 
     glutSwapBuffers();
 }
@@ -120,6 +137,7 @@ void game_quit() {
     if (game != NULL) {
         // textures
         image_delete(game->texture_items);
+        image_delete(game->texture_monsters);
 
         // definitions
         if (game->definition_items != NULL)  {
@@ -130,12 +148,17 @@ void game_quit() {
             free(game->definition_items);
         }
 
+        if (game->definition_monsters != NULL)  {
+            for (int i = 0; i < game->num_monsters; ++i) {
+                monster_def_delete(game->definition_monsters[i]);
+            }
+
+            free(game->definition_monsters);
+        }
+
         // and finally:
         free(game);
     }
-
-    // tmp
-    animation_delete(animation);
 
     write_log("# quitting Bubbles!");
 

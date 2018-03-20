@@ -95,6 +95,7 @@ Animation * animation_next(Animation *animation) {
 
 Animation* animation_copy(Animation* src) {
     Animation* p = src;
+
     Animation* dest = animation_new();
 
     if (dest == NULL) {

@@ -22,6 +22,9 @@ typedef struct ItemDef_ {
 ItemDef *item_def_new(unsigned int points_given, extra_power_t extra_power, Sprite *sprite);
 void item_def_delete(ItemDef* item);
 
+#define SPRITE_ITEM_WIDTH 32
+#define SPRITE_ITEM_HEIGHT 32
+
 ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size);
 
 // monsters
@@ -32,6 +35,9 @@ typedef struct MonsterDef_ {
 
 MonsterDef* monster_def_new(Animation *sprite_animation, unsigned int speed);
 void monster_def_delete(MonsterDef* item);
+
+#define SPRITE_MONSTER_WIDTH 32
+#define SPRITE_MONSTER_HEIGHT 32
 
 MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int* size);
 
