@@ -13,12 +13,12 @@ Image* load_texture(const char* image_path) {
 
     f = fopen(image_path, "r");
     if (f == NULL) {
-        write_log("! cannot open image %s", TEXTURE_ITEMS);
+        write_log("! cannot open image %s", image_path);
         return NULL;
     }
 
     else
-        write_log("# load image %s", TEXTURE_ITEMS);
+        write_log("# load image %s", image_path);
 
     Image* tex = image_new_from_file(f);
     fclose(f);
