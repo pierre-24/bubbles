@@ -38,6 +38,7 @@ void game_init() {
     // load textures
     game->texture_items = NULL;
     game->texture_monsters = NULL;
+    game->texture_levels = NULL;
 
     game->texture_items = load_texture(TEXTURE_ITEMS);
     if (game->texture_items == NULL)
@@ -45,6 +46,10 @@ void game_init() {
 
     game->texture_monsters = load_texture(TEXTURE_MONSTERS);
     if (game->texture_monsters == NULL)
+        game_fail_exit();
+
+    game->texture_levels = load_texture(TEXTURE_LEVELS);
+    if (game->texture_levels == NULL)
         game_fail_exit();
 
     // load definition
@@ -62,11 +67,11 @@ void game_init() {
         write_log("# opening item def file %s", DEFINITION_ITEMS);
 
     game->definition_items = item_defs_from_file(f, game->texture_items, &(game->num_items));
+    fclose(f);
     if (game->definition_items == NULL || game->num_items == 0) {
         write_log("! no game items, exiting");
         game_fail_exit();
     }
-    fclose(f);
 
     f = fopen(DEFINITION_MONSTERS, "r");
     if (f == NULL) {
@@ -77,11 +82,31 @@ void game_init() {
         write_log("# opening monster def file %s", DEFINITION_MONSTERS);
 
     game->definition_monsters = monster_defs_from_file(f, game->texture_monsters, &(game->num_monsters));
+    fclose(f);
     if (game->definition_monsters == NULL || game->num_monsters == 0) {
         write_log("! no game monsters, exiting");
         game_fail_exit();
     }
+
+    // levels
+    game->levels = NULL;
+    game->num_levels = 0;
+
+    f = fopen(FILE_LEVELS, "r");
+    if (f == NULL) {
+        write_log("! unable to level file %s", FILE_LEVELS);
+        game_fail_exit();
+    }
+    else
+        write_log("# opening level file %s", FILE_LEVELS);
+
+    game->levels = levels_new_from_file(f, game->definition_monsters, &(game->num_levels));
     fclose(f);
+
+    if (game->levels == NULL || game->num_levels == 0) {
+        write_log("! no levels, exiting");
+        game_fail_exit();
+    }
 
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -138,6 +163,7 @@ void game_quit() {
         // textures
         image_delete(game->texture_items);
         image_delete(game->texture_monsters);
+        image_delete(game->texture_levels);
 
         // definitions
         if (game->definition_items != NULL)  {
@@ -155,6 +181,9 @@ void game_quit() {
 
             free(game->definition_monsters);
         }
+
+        // levels
+        level_delete(game->levels);
 
         // and finally:
         free(game);
