@@ -27,7 +27,7 @@ typedef struct Level_ {
 Level* level_new(bool** map, Position bubble_endpoint, Sprite* fill_tile, unsigned int num_monsters, MonsterDef** monsters, Position* monster_positions);
 void level_delete(Level* level);
 
-Level* level_new_from_string(char* buffer, unsigned int position, MonsterDef** base_monster_defs);
+Level* level_new_from_string(char* buffer, int* position, MonsterDef** base_monster_defs);
 Level *levels_new_from_file(FILE *f, MonsterDef **base_monster_defs, unsigned int *num_levels);
 
 #endif //BUBBLES_LEVELS_H
