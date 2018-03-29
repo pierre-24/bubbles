@@ -82,25 +82,25 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
             write_log("# - adding item %d", index);
             points_given = strtoul(positions[0], &next, 0);
             if (next == positions[0]) {
-                write_log("error while converting number #0");
+                write_log("! error while converting number #0");
                 continue;
             }
 
             extra_power = strtoul(positions[1], &next, 0);
             if (next == positions[1]) {
-                write_log("error while converting number #1");
+                write_log("! error while converting number #1");
                 continue;
             }
 
             sx = strtoul(positions[2], &next, 0);
             if (next == positions[2]) {
-                write_log("error while converting number #2");
+                write_log("! error while converting number #2");
                 continue;
             }
 
             sy = strtoul(positions[3], &next, 0);
             if (next == positions[3]) {
-                write_log("error while converting number #3");
+                write_log("! error while converting number #3");
                 continue;
             }
 
@@ -216,31 +216,31 @@ MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int*
 
             speed = strtoul(positions[0], &next, 0);
             if (next == positions[0]) {
-                write_log("error while converting number #0");
+                write_log("! error while converting number #0");
                 continue;
             }
 
             s1x = strtoul(positions[1], &next, 0);
             if (next == positions[1]) {
-                write_log("error while converting number #1");
+                write_log("! error while converting number #1");
                 continue;
             }
 
             s1y = strtoul(positions[2], &next, 0);
             if (next == positions[2]) {
-                write_log("error while converting number #2");
+                write_log("! error while converting number #2");
                 continue;
             }
 
             s2x = strtoul(positions[3], &next, 0);
             if (next == positions[3]) {
-                write_log("error while converting number #3");
+                write_log("! error while converting number #3");
                 continue;
             }
 
             s2y = strtoul(positions[4], &next, 0);
             if (next == positions[4]) {
-                write_log("error while converting number #4");
+                write_log("! error while converting number #4");
                 continue;
             }
 

@@ -100,7 +100,8 @@ void game_init() {
     else
         write_log("# opening level file %s", FILE_LEVELS);
 
-    game->levels = levels_new_from_file(f, game->definition_monsters, &(game->num_levels));
+    game->levels = levels_new_from_file(f, game->texture_levels, game->definition_monsters, game->num_monsters,
+                                        &(game->num_levels));
     fclose(f);
 
     if (game->levels == NULL || game->num_levels == 0) {
@@ -136,6 +137,18 @@ void blit_animation(Animation* animation, int sx, int sy) {
     }
 }
 
+void blit_level(Level* level) {
+    if (level != NULL) {
+        for (unsigned int y = 0; y < MAP_HEIGHT; ++y) {
+            for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
+                if (level->map[position_index((Position) {x, y})]) {
+                    blit_sprite(level->fill_tile, x * SPRITE_LEVEL_WIDTH, y * SPRITE_LEVEL_HEIGHT);
+                }
+            }
+        }
+    }
+}
+
 int pos = 0;
 
 void game_loop() {
@@ -144,6 +157,8 @@ void game_loop() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glColor4f(1.0, 1.0, 1.0, 1.0);
+
+    blit_level(game->levels);
 
     blit_animation(game->definition_monsters[1]->animation, WINDOW_WIDTH - pos, 0);
     pos = (pos +1) % WINDOW_WIDTH;
