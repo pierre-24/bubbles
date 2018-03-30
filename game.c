@@ -172,7 +172,7 @@ void game_loop() {
     blit_level(game->levels);
 
     animation_animate(&(game->bub->animations[DA_NORMAL]));
-    blit_animation(game->bub->animations[DA_NORMAL], WINDOW_WIDTH - pos, 0);
+    blit_animation(game->bub->animations[DA_NORMAL], WINDOW_WIDTH - pos, 12);
     pos = (pos +1) % WINDOW_WIDTH;
 
     glutSwapBuffers();
