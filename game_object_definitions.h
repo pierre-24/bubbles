@@ -38,6 +38,7 @@ void monster_def_delete(MonsterDef* item);
 
 #define SPRITE_MONSTER_WIDTH 32
 #define SPRITE_MONSTER_HEIGHT 32
+#define MONSTER_FRAMERATE 10
 
 MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int* size);
 

@@ -160,12 +160,9 @@ void game_loop() {
 
     blit_level(game->levels);
 
+    animation_animate(&(game->definition_monsters[1]->animation));
     blit_animation(game->definition_monsters[1]->animation, WINDOW_WIDTH - pos, 0);
     pos = (pos +1) % WINDOW_WIDTH;
-
-    if (pos % 10 == 0) {
-        game->definition_monsters[1]->animation = animation_next(game->definition_monsters[1]->animation);
-    }
 
     glutSwapBuffers();
 }

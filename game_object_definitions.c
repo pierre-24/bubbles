@@ -249,7 +249,7 @@ MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int*
                 continue;
             }
 
-            animation = animation_new();
+            animation = animation_new(MONSTER_FRAMERATE);
             if (animation == NULL)
                 continue;
 

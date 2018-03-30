@@ -11,13 +11,16 @@
 typedef struct Animation_ {
     Sprite* frame;
     struct Animation_* next_frame;
+    int framerate;
+    int counter;
 } Animation;
 
-Animation* animation_new();
+Animation *animation_new(int framerate);
 void animation_delete(Animation* animation);
 
 Animation * animation_add_frame(Animation *animation, Sprite *frame);
 Animation * animation_next(Animation *animation);
+void animation_animate(Animation **animation);
 
 Animation* animation_copy(Animation* src);
 

@@ -4,7 +4,7 @@
 
 #include "animations.h"
 
-Animation* animation_new() {
+Animation *animation_new(int framerate) {
     Animation* a = malloc(sizeof(Animation));
 
     if (a == NULL) {
@@ -18,6 +18,8 @@ Animation* animation_new() {
 
     a->frame = NULL;
     a->next_frame = a;
+    a->framerate = framerate;
+    a->counter = framerate;
 
     return a;
 }
@@ -69,6 +71,9 @@ Animation * animation_add_frame(Animation *animation, Sprite *frame) {
         if (nx->frame == NULL)
             return NULL;
 
+        nx->framerate = p->framerate;
+        nx->counter = p->framerate;
+
         nx->next_frame = q;
         p->next_frame = nx;
 
@@ -93,10 +98,21 @@ Animation * animation_next(Animation *animation) {
     return n;
 }
 
+void animation_animate(Animation **animation) {
+    if ((*(animation))->framerate > 0) {
+        if ((*(animation))->counter < 1) {
+            *animation = animation_next(*animation);
+            (*(animation))->counter = (*(animation))->framerate - 1;
+        }
+
+        else
+            (*(animation))->counter--;
+    }
+}
+
 Animation* animation_copy(Animation* src) {
     Animation* p = src;
-
-    Animation* dest = animation_new();
+    Animation* dest = animation_new(src->framerate);
 
     if (dest == NULL) {
         write_log("! unable to allocate animation for copy");
