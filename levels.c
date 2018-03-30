@@ -53,22 +53,30 @@ Level* level_new(bool *map, Position bubble_endpoint, Sprite *fill_tile, unsigne
     memcpy(level->monster_positions, monster_positions, num_monsters * sizeof(Position));
     memcpy(level->monsters, monsters, num_monsters * sizeof(MonsterDef*));
 
+    level->next = NULL;
+
     return level;
 }
 void level_delete(Level* level) {
-    if (level != NULL) {
-        sprite_delete(level->fill_tile);
-        if (level->monster_positions != NULL)
-            free(level->monster_positions);
+    Level* next = level, *t = NULL;
+    while (next != NULL) {
+        t = next->next;
 
-        if (level->monsters != NULL)
-            free(level->monsters);
+        sprite_delete(next->fill_tile);
 
-        free(level);
+        if (next->monster_positions != NULL)
+            free(next->monster_positions);
+
+        if (next->monsters != NULL)
+            free(next->monsters);
+
+        free(next);
 
 #ifdef VERBOSE_MEM
         printf("-Level %p\n", level);
 #endif
+
+        next = t;
     }
 }
 
@@ -275,7 +283,6 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
     }
 
     int num = (int) strtol(positions[0], &next, 0);
-    free(positions);
 
     if (num <= 0 || next == positions[0])
         return NULL;
@@ -289,13 +296,14 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
         Level* level = level_new_from_string(buffer, &position_in_buffer, image_level, base_monster_defs, num_monster_defs);
         if (level != NULL) {
             write_log("# - adding level %d", index);
-            if (prev != NULL) {
+            if (beg != NULL) {
                 prev->next = level;
+                prev = prev->next;
             }
 
             else {
                 prev = level;
-                beg = level;
+                beg = prev;
             }
 
             index++;
@@ -307,6 +315,7 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
         return NULL;
     }
 
+    free(positions);
     free(buffer);
 
     return beg;
