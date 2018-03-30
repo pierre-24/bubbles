@@ -39,6 +39,7 @@ void game_init() {
     game->texture_items = NULL;
     game->texture_monsters = NULL;
     game->texture_levels = NULL;
+    game->texture_dragons = NULL;
 
     game->texture_items = load_texture(TEXTURE_ITEMS);
     if (game->texture_items == NULL)
@@ -50,6 +51,10 @@ void game_init() {
 
     game->texture_levels = load_texture(TEXTURE_LEVELS);
     if (game->texture_levels == NULL)
+        game_fail_exit();
+
+    game->texture_dragons = load_texture(TEXTURE_DRAGONS);
+    if (game->texture_dragons == NULL)
         game_fail_exit();
 
     // load definition
@@ -109,6 +114,12 @@ void game_init() {
         game_fail_exit();
     }
 
+    // dragons
+    game->bub = create_bub(game->texture_dragons, 0);
+
+    if (game->bub == NULL)
+        game_fail_exit();
+
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -160,8 +171,8 @@ void game_loop() {
 
     blit_level(game->levels);
 
-    animation_animate(&(game->definition_monsters[1]->animation));
-    blit_animation(game->definition_monsters[1]->animation, WINDOW_WIDTH - pos, 0);
+    animation_animate(&(game->bub->animations[DA_NORMAL]));
+    blit_animation(game->bub->animations[DA_NORMAL], WINDOW_WIDTH - pos, 0);
     pos = (pos +1) % WINDOW_WIDTH;
 
     glutSwapBuffers();
@@ -176,6 +187,7 @@ void game_quit() {
         image_delete(game->texture_items);
         image_delete(game->texture_monsters);
         image_delete(game->texture_levels);
+        image_delete(game->texture_dragons);
 
         // definitions
         if (game->definition_items != NULL)  {
@@ -196,6 +208,9 @@ void game_quit() {
 
         // levels
         level_delete(game->levels);
+
+        // dragons
+        dragon_delete(game->bub);
 
         // and finally:
         free(game);

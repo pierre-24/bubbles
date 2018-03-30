@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "game_object_definitions.h"
 #include "levels.h"
+#include "game_objects.h"
 
 #define WINDOW_WIDTH 512
 #define WINDOW_HEIGHT 432
@@ -14,6 +15,7 @@
 #define TEXTURE_ITEMS "assets/items.ppm"
 #define TEXTURE_MONSTERS "assets/monsters.ppm"
 #define TEXTURE_LEVELS "assets/levels.ppm"
+#define TEXTURE_DRAGONS "assets/dragons.ppm"
 
 #define DEFINITION_ITEMS "data/items.txt"
 #define DEFINITION_MONSTERS "data/monsters.txt"
@@ -29,6 +31,7 @@ typedef struct Game_ {
     Image* texture_items;
     Image* texture_monsters;
     Image* texture_levels;
+    Image* texture_dragons;
 
     // definitions
     ItemDef** definition_items;
@@ -39,6 +42,9 @@ typedef struct Game_ {
     // levels
     Level* levels;
     unsigned int num_levels;
+
+    // dragons
+    Dragon* bub;
 } Game;
 
 void game_init();

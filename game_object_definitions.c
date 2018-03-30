@@ -114,7 +114,7 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
                 continue;
             }
 
-            Sprite* sprite = sprite_new(items_texture, (int) sx, (int) sy, SPRITE_ITEM_WIDTH, SPRITE_ITEM_HEIGHT);
+            Sprite* sprite = sprite_new(items_texture, (int) sx, (int) sy, ITEM_WIDTH, ITEM_HEIGHT);
 
             if (sprite == NULL)
                 continue;
@@ -253,8 +253,8 @@ MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int*
             if (animation == NULL)
                 continue;
 
-            animation_frames[0] = sprite_new(items_texture, (int) s1x, (int) s1y, SPRITE_MONSTER_WIDTH, SPRITE_MONSTER_HEIGHT);
-            animation_frames[1] = sprite_new(items_texture, (int) s2x, (int) s2y, SPRITE_MONSTER_WIDTH, SPRITE_MONSTER_HEIGHT);
+            animation_frames[0] = sprite_new(items_texture, (int) s1x, (int) s1y, MONSTER_WIDTH, MONSTER_HEIGHT);
+            animation_frames[1] = sprite_new(items_texture, (int) s2x, (int) s2y, MONSTER_WIDTH, MONSTER_HEIGHT);
 
             if (animation_frames[0] == NULL || animation_frames[1] == NULL)
                 continue;
