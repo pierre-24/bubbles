@@ -102,7 +102,7 @@ void animation_animate(Animation **animation) {
     if ((*(animation))->framerate > 0) {
         if ((*(animation))->counter < 1) {
             *animation = animation_next(*animation);
-            (*(animation))->counter = (*(animation))->framerate - 1;
+            (*(animation))->counter = (*(animation))->framerate;
         }
 
         else
