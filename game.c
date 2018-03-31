@@ -126,25 +126,25 @@ void game_init() {
     write_log("# READY TO PLAY !");
 }
 
-void blit_sprite(Sprite *sprite, int sx, int sy) {
+void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y) {
     if (sprite != NULL) {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
 
         glBegin(GL_QUADS);
-        glTexCoord2d(0.0, 1.0); glVertex2i(sx,sy);
-        glTexCoord2d(0.0, 0.0); glVertex2i(sx, sy+sprite->height);
-        glTexCoord2d(1.0, 0.0); glVertex2i(sx + sprite->width, sy+sprite->height);
-        glTexCoord2d(1.0, 1.0); glVertex2i(sx + sprite->width, sy);
+        glTexCoord2d(0.0, 1.0); glVertex2i(sx + (flip_x ? sprite->width : 0),sy + ((flip_y) ? sprite->height : 0));
+        glTexCoord2d(0.0, 0.0); glVertex2i(sx + (flip_x ? sprite->width : 0), sy + ((flip_y) ? 0 : sprite->height));
+        glTexCoord2d(1.0, 0.0); glVertex2i(sx + (flip_x ? 0 : sprite->width), sy + ((flip_y) ? 0 : sprite->height));
+        glTexCoord2d(1.0, 1.0); glVertex2i(sx + (flip_x ? 0 : sprite->width), sy + ((flip_y) ? sprite->height : 0));
         glEnd();
 
         glDisable(GL_TEXTURE_2D);
     }
 }
 
-void blit_animation(Animation* animation, int sx, int sy) {
+void blit_animation(Animation *animation, int sx, int sy, bool flip_x, bool flip_y) {
     if (animation != NULL && animation->frame != NULL) {
-        blit_sprite(animation->frame, sx, sy);
+        blit_sprite(animation->frame, sx, sy, flip_x, flip_y);
     }
 }
 
@@ -153,14 +153,12 @@ void blit_level(Level* level) {
         for (unsigned int y = 0; y < MAP_HEIGHT; ++y) {
             for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
                 if (level->map[position_index((Position) {x, y})]) {
-                    blit_sprite(level->fill_tile, x * SPRITE_LEVEL_WIDTH, y * SPRITE_LEVEL_HEIGHT);
+                    blit_sprite(level->fill_tile, x * SPRITE_LEVEL_WIDTH, y * SPRITE_LEVEL_HEIGHT, 0, 0);
                 }
             }
         }
     }
 }
-
-int pos = 0;
 
 void game_loop() {
 
@@ -172,8 +170,7 @@ void game_loop() {
     blit_level(game->levels);
 
     animation_animate(&(game->bub->animations[DA_NORMAL]));
-    blit_animation(game->bub->animations[DA_NORMAL], WINDOW_WIDTH - pos, 12);
-    pos = (pos +1) % WINDOW_WIDTH;
+    blit_animation(game->bub->animations[DA_NORMAL], 16, 16, true, false);
 
     glutSwapBuffers();
 }
