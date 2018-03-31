@@ -71,9 +71,9 @@ bool map_object_test_right(MapObject *representation, Level* level);
 bool map_object_test_up(MapObject *representation, Level* level);
 bool map_object_test_down(MapObject *representation, Level* level);
 
-void map_object_move_left(MapObject *representation, Level* level);
-void map_object_move_right(MapObject *representation, Level* level);
-void map_object_jump(MapObject *representation, Level* level, int jump);
+bool map_object_move_left(MapObject *representation, Level *level);
+bool map_object_move_right(MapObject *representation, Level *level);
+bool map_object_jump(MapObject *representation, Level *level, int jump);
 void map_object_adjust(MapObject *representation, Level* level);
 
 #endif //BUBBLES_LEVELS_H

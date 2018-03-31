@@ -455,7 +455,7 @@ bool map_object_test_down(MapObject *representation, Level* level) {
     return false;
 }
 
-void map_object_move_left(MapObject *representation, Level* level) {
+bool map_object_move_left(MapObject *representation, Level *level) {
     if (representation->alive) {
         representation->look_right = false;
 
@@ -465,11 +465,15 @@ void map_object_move_left(MapObject *representation, Level* level) {
 
             if (representation->jumping_counter > 2 * JUMP_EVERY)
                 representation->jumping_counter -= 2 * JUMP_EVERY;
+
+            return true;
         }
     }
+
+    return false;
 }
 
-void map_object_move_right(MapObject *representation, Level* level) {
+bool map_object_move_right(MapObject *representation, Level *level) {
     if (representation->alive) {
         representation->look_right = true;
 
@@ -479,17 +483,24 @@ void map_object_move_right(MapObject *representation, Level* level) {
 
             if (representation->jumping_counter > 2 * JUMP_EVERY)
                 representation->jumping_counter -= 2 * JUMP_EVERY;
+
+            return true;
         }
     }
+
+    return false;
 }
 
-void map_object_jump(MapObject *representation, Level* level, int jump) {
+bool map_object_jump(MapObject *representation, Level *level, int jump) {
     if (representation->alive) {
         if (representation->jumping_counter == 0 && !representation->is_falling &&
             map_object_test_up(representation, level)) {
             representation->jumping_counter = jump * JUMP_EVERY;
+            return true;
         }
     }
+
+    return false;
 }
 
 void map_object_adjust(MapObject *representation, Level* level) {

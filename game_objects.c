@@ -137,6 +137,8 @@ Monster* monster_new(MapObject* representation, MonsterDef* definition) {
     monster->angry = false;
     monster->invincible = false;
     monster->definition = definition;
+    monster->stupidity = 6;
+
     monster->next = NULL;
 
     return monster;
