@@ -9,8 +9,8 @@
 #include "images.h"
 #include "game_object_definitions.h"
 
-#define LEVEL_WIDTH 16
-#define LEVEL_HEIGHT 16
+#define TILE_WIDTH 16
+#define TILE_HEIGHT 16
 
 #define MAP_WIDTH 32 // cases
 #define MAP_HEIGHT 24 // cases
@@ -41,9 +41,36 @@ Level *level_new_from_string(char *buffer, int *position, Image *image_level, Mo
 Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monster_defs, int num_monster_defs,
                             unsigned int *num_levels);
 
-bool can_go_left(Level* level, Position current_position, int cwidth, int cheight);
-bool can_go_right(Level* level, Position current_position, int cwidth, int cheight);
-bool can_go_top(Level* level, Position current_position, int cwidth, int cheight);
-bool can_go_bottom(Level* level, Position current_position, int cwidth, int cheight);
+#define MAX_MOVING_COUNTER 4
+
+typedef struct MapObject_ {
+    Position position;
+    int width;
+    int height;
+    bool alive;
+
+    // if alive:
+    bool look_right;
+    int moving_counter;
+    int jumping_counter;
+    bool is_falling;
+} MapObject;
+
+MapObject* map_object_new(Position position, int width, int height, bool alive);
+void map_object_delete(MapObject *map_object);
+
+void map_object_update(MapObject* object);
+
+MapObject* map_object_copy(MapObject *src);
+
+bool map_object_test_left(MapObject *representation, Level* level);
+bool map_object_test_right(MapObject *representation, Level* level);
+bool map_object_test_up(MapObject *representation, Level* level);
+bool map_object_test_down(MapObject *representation, Level* level);
+
+void map_object_move_left(MapObject *representation, Level* level);
+void map_object_move_right(MapObject *representation, Level* level);
+void map_object_jump(MapObject *representation, Level* level, int jump);
+void map_object_adjust(MapObject *representation, Level* level);
 
 #endif //BUBBLES_LEVELS_H

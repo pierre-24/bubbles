@@ -161,7 +161,7 @@ Level *level_new_from_string(char *buffer, int *position_in_buff, Image *image_l
         return NULL;
     }
 
-    Sprite* sprite_tile = sprite_new(image_level, (int) sx, (int) sy, LEVEL_WIDTH, LEVEL_HEIGHT);
+    Sprite* sprite_tile = sprite_new(image_level, (int) sx, (int) sy, TILE_WIDTH, TILE_HEIGHT);
 
     if (sprite_tile == NULL) {
         *position_in_buff = -1;
@@ -321,65 +321,187 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
     return beg;
 }
 
-bool can_go_left(Level* level, Position current_position, int cwidth, int cheight) {
-    Position n =  {current_position.x - 1, current_position.y};
+MapObject* map_object_new(Position position, int width, int height, bool alive) {
+    MapObject* obj = malloc(sizeof(MapObject));
 
-    if (n.x < 0)
-        return false;
-
-    for (int i = 0; i < cheight; ++i) {
-        if (level->map[position_index(n)])
-            return false;
-        n.y += 1;
+    if (obj == NULL) {
+        write_log("! can not allocate MapObject");
+        return NULL;
     }
 
-    return true;
+#ifdef VERBOSE_MEM
+    printf("+MapObject %p\n", obj);
+#endif
 
-}
+    obj->position.x = position.x;
+    obj->position.y = position.y;
 
-bool can_go_right(Level* level, Position current_position, int cwidth, int cheight) {
-    Position n =  {current_position.x + cwidth, current_position.y};
+    obj->width = width;
+    obj->height = height;
+    obj->alive = alive;
 
-    if (n.x >= MAP_WIDTH)
-        return false;
-
-    for (int i = 0; i < cheight; ++i) {
-        if (level->map[position_index(n)])
-            return false;
-        n.y += 1;
+    if (alive) {
+        obj->jumping_counter = 0;
+        obj->moving_counter = 0;
+        obj->is_falling = false;
+        obj->look_right = false;
     }
 
-    return true;
+    return obj;
 }
 
-
-bool can_go_top(Level* level, Position current_position, int cwidth, int cheight) {
-    Position n =  {current_position.x, current_position.y + cheight};
-
-    if (n.y >= MAP_HEIGHT)
-        return false;
-
-    /*for (int i = 0; i < cwidth; ++i) {
-        if (level->map[position_index(n)])
-            return false;
-        n.x += 1;
-    }*/
-
-    return true;
+void map_object_delete(MapObject *map_object) {
+    if (map_object != NULL)
+        free(map_object);
 }
 
-bool can_go_bottom(Level* level, Position current_position, int cwidth, int cheight) {
-    Position n =  {current_position.x, current_position.y -1};
+MapObject* map_object_copy(MapObject *src) {
+    if (src == NULL)
+        return NULL;
 
-    if (n.y < 0)
-        return false;
+    MapObject* obj = malloc(sizeof(MapObject));
 
-    for (int i = 0; i < cwidth; ++i) {
-        if (level->map[position_index(n)])
-            return false;
-        n.x += 1;
+    if (obj == NULL) {
+        write_log("! can not allocate MapObject");
+        return NULL;
     }
 
-    return true;
+#ifdef VERBOSE_MEM
+    printf("+MapObject %p (by copy)\n", obj);
+#endif
+
+    memcpy(obj, src, sizeof(MapObject));
+    return obj;
+}
+
+void map_object_update(MapObject* object) {
+    if (object->alive) {
+        if(object->moving_counter > 0)
+            object->moving_counter--;
+        if (object->jumping_counter > 0)
+            object->jumping_counter--;
+    }
+}
+
+bool map_object_test_left(MapObject *representation, Level* level) {
+    if (representation->alive) {
+        Position n = {representation->position.x - 1, representation->position.y};
+
+        if (n.x < 0)
+            return false;
+
+        for (int i = 0; i < representation->height; ++i) {
+            if (level->map[position_index(n)])
+                return false;
+            n.y += 1;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+bool map_object_test_right(MapObject *representation, Level* level) {
+    if (representation->alive) {
+        Position n = {representation->position.x + representation->width, representation->position.y};
+
+        if (n.x >= MAP_WIDTH)
+            return false;
+
+        for (int i = 0; i < representation->height; ++i) {
+            if (level->map[position_index(n)])
+                return false;
+            n.y += 1;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+
+bool map_object_test_up(MapObject *representation, Level* level) {
+    if (representation->alive) {
+        Position n = {representation->position.x, representation->position.y + representation->height};
+
+        if (n.y >= MAP_HEIGHT)
+            return false;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool map_object_test_down(MapObject *representation, Level* level) {
+    if (representation->alive) {
+        Position n = {representation->position.x, representation->position.y - 1};
+
+        if (n.y < 0)
+            return false;
+
+        for (int i = 0; i < representation->width; ++i) {
+            if (level->map[position_index(n)])
+                return false;
+            n.x += 1;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+void map_object_move_left(MapObject *representation, Level* level) {
+    if (representation->alive) {
+        representation->look_right = false;
+
+        if (map_object_test_left(representation, level) && representation->moving_counter == 0) {
+            representation->position.x -= 1;
+            representation->moving_counter = MAX_MOVING_COUNTER;
+        }
+    }
+}
+
+void map_object_move_right(MapObject *representation, Level* level) {
+    if (representation->alive) {
+        representation->look_right = true;
+
+        if (map_object_test_right(representation, level) && representation->moving_counter == 0) {
+            representation->position.x += 1;
+            representation->moving_counter = MAX_MOVING_COUNTER;
+        }
+    }
+}
+
+void map_object_jump(MapObject *representation, Level* level, int jump) {
+    if (representation->alive) {
+        if (representation->jumping_counter == 0 && !representation->is_falling &&
+            map_object_test_up(representation, level)) {
+            representation->jumping_counter = jump - 1;
+            representation->position.y += 1;
+        }
+    }
+}
+
+void map_object_adjust(MapObject *representation, Level* level) {
+    if (representation->alive) {
+        if (representation->jumping_counter > 0) {
+            if (map_object_test_up(representation, level)) {
+                representation->position.y += 1;
+                representation->jumping_counter--;
+            } else
+                representation->jumping_counter = 0;
+        } else if (representation->is_falling) {
+            if (map_object_test_down(representation, level)) {
+                representation->position.y -= 1;
+            } else
+                representation->is_falling = false;
+        } else if (map_object_test_down(representation, level)) {
+            representation->is_falling = true;
+        }
+    }
 }
 

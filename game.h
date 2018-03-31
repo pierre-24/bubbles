@@ -28,8 +28,8 @@ enum {
     E_NONE,
     E_LEFT,
     E_RIGHT,
-    E_TOP,
-    E_BOTTOM,
+    E_UP,
+    E_DOWN,
     E_ACTION_1, // i.e. "jump"
     E_ACTION_2, // i.e. "blow"
     E_PAUSE,

@@ -4,7 +4,7 @@
 
 #include "game_objects.h"
 
-Dragon* dragon_new(Position position, bool is_bub, Animation* animation[DA_NUMBER]) {
+Dragon* dragon_new(MapObject *representation, bool is_bub, Animation **animation) {
     Dragon* dragon = malloc(sizeof(Dragon));
 
     if (dragon == NULL) {
@@ -16,19 +16,19 @@ Dragon* dragon_new(Position position, bool is_bub, Animation* animation[DA_NUMBE
     printf("+Dragon %p\n", dragon);
 #endif
 
-    dragon->current_position.x = position.x;
-    dragon->current_position.y = position.y;
+    dragon->representation = map_object_copy(representation);
+
+    if (dragon->representation == NULL) {
+        dragon_delete(dragon);
+        return NULL;
+    }
 
     dragon->score = 0;
     dragon->life = DRAGON_LIFE;
     dragon->max_life = DRAGON_LIFE;
-    dragon->invicible = false;
+    dragon->invincible = false;
     dragon->invincibility_counter = 0;
     dragon->is_bub = is_bub;
-    dragon->look_right = is_bub;
-    dragon->is_moving = 0;
-    dragon->is_jumping = 0;
-    dragon->is_falling = false;
 
     for (int i = 0; i < DA_NUMBER; ++i) {
         dragon->animations[i] = animation_copy(animation[i]);
@@ -48,6 +48,8 @@ void dragon_delete(Dragon* dragon) {
             if (dragon->animations[i] != NULL)
                 animation_delete(dragon->animations[i]);
         }
+
+        map_object_delete(dragon->representation);
 
         free(dragon);
 
@@ -84,10 +86,17 @@ Dragon* create_bub(Image* texture, int y) {
         sprite_delete(sprite2);
     }
 
-    Dragon* dragon = dragon_new((Position) POSITION_BUB , true, animations);
+    MapObject* obj = map_object_new(REPRESENTATION_BUB);
+
+    if (obj == NULL)
+        return NULL;
+
+    Dragon* dragon = dragon_new(obj, true, animations);
 
     for (int j = 0; j < DA_NUMBER; ++j)
         animation_delete(animations[j]);
+
+    map_object_delete(obj);
 
     if (dragon == NULL)
         return NULL;
@@ -96,5 +105,9 @@ Dragon* create_bub(Image* texture, int y) {
 }
 
 Dragon* create_bob(Image* texture, int y) {
-    return NULL;
+    Dragon* dragon = create_bub(texture, y);
+    if (dragon != NULL)
+        dragon->is_bub = false;
+
+    return dragon;
 }

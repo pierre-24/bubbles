@@ -136,7 +136,7 @@ void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y) {
         glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
 
         glBegin(GL_QUADS);
-        glTexCoord2d(0.0, 1.0); glVertex2i(sx + (flip_x ? sprite->width : 0),sy + ((flip_y) ? sprite->height : 0));
+        glTexCoord2d(0.0, 1.0); glVertex2i(sx + (flip_x ? sprite->width : 0), sy + ((flip_y) ? sprite->height : 0));
         glTexCoord2d(0.0, 0.0); glVertex2i(sx + (flip_x ? sprite->width : 0), sy + ((flip_y) ? 0 : sprite->height));
         glTexCoord2d(1.0, 0.0); glVertex2i(sx + (flip_x ? 0 : sprite->width), sy + ((flip_y) ? 0 : sprite->height));
         glTexCoord2d(1.0, 1.0); glVertex2i(sx + (flip_x ? 0 : sprite->width), sy + ((flip_y) ? sprite->height : 0));
@@ -157,7 +157,7 @@ void blit_level(Level* level) {
         for (unsigned int y = 0; y < MAP_HEIGHT; ++y) {
             for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
                 if (level->map[position_index((Position) {x, y})]) {
-                    blit_sprite(level->fill_tile, x * LEVEL_WIDTH, y * LEVEL_HEIGHT, 0, 0);
+                    blit_sprite(level->fill_tile, x * TILE_WIDTH, y * TILE_HEIGHT, 0, 0);
                 }
             }
         }
@@ -165,81 +165,41 @@ void blit_level(Level* level) {
 }
 
 void blit_dragon(Dragon *dragon) {
-
     Animation** animation = &(dragon->animations[DA_NORMAL]);
 
-    if (dragon->is_moving > 0) {
-        dragon->is_moving--;
+    if (dragon->representation->moving_counter > 0) {
         animation = &(dragon->animations[DA_MOVE]);
     }
 
     animation_animate(animation);
-    blit_animation(*animation, dragon->current_position.x * LEVEL_WIDTH, dragon->current_position.y * LEVEL_HEIGHT, dragon->look_right, false);
+    blit_animation(
+            *animation,
+            dragon->representation->position.x * TILE_WIDTH + ((int) ((float) dragon->representation->moving_counter / MAX_MOVING_COUNTER * TILE_WIDTH) * (dragon->representation->look_right ? -1 : 1)),
+            dragon->representation->position.y * TILE_HEIGHT,
+            dragon->representation->look_right,
+            false);
 }
 
 void game_loop() {
     // KEY MANAGEMENT:
     key_update_interval();
 
-    if (game->key_pressed[E_QUIT]) {
+    if (game->key_pressed[E_QUIT])
         exit(EXIT_SUCCESS);
-    }
 
-    if (game->key_pressed[E_LEFT] && game->key_pressed_interval[E_LEFT] == 0) {
-        game->bub->look_right = false;
+    // eventually move bub:
+    map_object_update(game->bub->representation);
 
-        if (can_go_left(game->levels, game->bub->current_position, 2, 2)) {
-            game->bub->current_position.x -= 1;
-            game->bub->is_moving = 3;
-        }
-    }
+    if (game->key_pressed[E_LEFT] && game->key_pressed_interval[E_LEFT] == 0)
+        map_object_move_left(game->bub->representation, game->levels);
 
-    else if (game->key_pressed[E_RIGHT] && game->key_pressed_interval[E_RIGHT] == 0) {
-        game->bub->look_right = true;
+    else if (game->key_pressed[E_RIGHT] && game->key_pressed_interval[E_RIGHT] == 0)
+        map_object_move_right(game->bub->representation, game->levels);
 
-        if (can_go_right(game->levels, game->bub->current_position, 2, 2)) {
-            game->bub->current_position.x += 1;
-            game->bub->is_moving = 3;
-        }
-    }
+    if (game->key_pressed[E_ACTION_1] && game->key_pressed_interval[E_ACTION_1] == 0)
+        map_object_jump(game->bub->representation, game->levels, DRAGON_JUMP);
 
-    if (game->bub->is_jumping == 0 && !game->bub->is_falling && game->key_pressed[E_ACTION_1] && game->key_pressed_interval[E_ACTION_1] == 0) {
-        if (can_go_top(game->levels, game->bub->current_position, 2, 2)) {
-            game->bub->is_jumping = DRAGON_JUMP - 1;
-            game->bub->current_position.y += 1;
-        }
-    }
-
-    if (game->bub->is_jumping > 0) {
-
-        if (can_go_top(game->levels, game->bub->current_position, 2, 2)) {
-            game->bub->current_position.y += 1;
-            game->bub->is_jumping--;
-
-            if (game->bub->is_jumping == 0) {
-                game->bub->is_falling = true;
-            }
-        }
-
-        else {
-            game->bub->is_jumping = 0;
-            game->bub->is_falling = true;
-        }
-
-    }
-
-    else if(game->bub->is_falling) {
-        if (can_go_bottom(game->levels, game->bub->current_position, 2, 2)) {
-            game->bub->current_position.y -= 1;
-        }
-        else
-            game->bub->is_falling = false;
-    }
-
-    else if (can_go_bottom(game->levels, game->bub->current_position, 2, 2)) {
-        game->bub->is_falling = true;
-    }
-
+    map_object_adjust(game->bub->representation, game->levels);
 
     // DRAWING:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -319,10 +279,10 @@ void game_special_key_down(int key, int x, int y) {
 
     switch (key) {
         case GLUT_KEY_DOWN:
-            keyp = E_BOTTOM;
+            keyp = E_DOWN;
             break;
         case GLUT_KEY_UP:
-            keyp = E_TOP;
+            keyp = E_UP;
             break;
         case GLUT_KEY_LEFT:
             keyp = E_LEFT;
@@ -345,10 +305,10 @@ void game_special_key_up(int key, int x, int y) {
 
     switch (key) {
         case GLUT_KEY_DOWN:
-            keyp = E_BOTTOM;
+            keyp = E_DOWN;
             break;
         case GLUT_KEY_UP:
-            keyp = E_TOP;
+            keyp = E_UP;
             break;
         case GLUT_KEY_LEFT:
             keyp = E_LEFT;
