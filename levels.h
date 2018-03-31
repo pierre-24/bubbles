@@ -42,6 +42,8 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
                             unsigned int *num_levels);
 
 #define MAX_MOVING_COUNTER 4
+#define JUMP_EVERY 4
+#define FALL_EVERY 4
 
 typedef struct MapObject_ {
     Position position;
@@ -53,6 +55,7 @@ typedef struct MapObject_ {
     bool look_right;
     int moving_counter;
     int jumping_counter;
+    int falling_counter;
     bool is_falling;
 } MapObject;
 

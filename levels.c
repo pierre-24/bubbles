@@ -343,6 +343,7 @@ MapObject* map_object_new(Position position, int width, int height, bool alive) 
     if (alive) {
         obj->jumping_counter = 0;
         obj->moving_counter = 0;
+        obj->falling_counter = 0;
         obj->is_falling = false;
         obj->look_right = false;
     }
@@ -461,6 +462,9 @@ void map_object_move_left(MapObject *representation, Level* level) {
         if (map_object_test_left(representation, level) && representation->moving_counter == 0) {
             representation->position.x -= 1;
             representation->moving_counter = MAX_MOVING_COUNTER;
+
+            if (representation->jumping_counter > JUMP_EVERY)
+                representation->jumping_counter -= JUMP_EVERY;
         }
     }
 }
@@ -472,6 +476,9 @@ void map_object_move_right(MapObject *representation, Level* level) {
         if (map_object_test_right(representation, level) && representation->moving_counter == 0) {
             representation->position.x += 1;
             representation->moving_counter = MAX_MOVING_COUNTER;
+
+            if (representation->jumping_counter > JUMP_EVERY)
+                representation->jumping_counter -= JUMP_EVERY;
         }
     }
 }
@@ -480,8 +487,7 @@ void map_object_jump(MapObject *representation, Level* level, int jump) {
     if (representation->alive) {
         if (representation->jumping_counter == 0 && !representation->is_falling &&
             map_object_test_up(representation, level)) {
-            representation->jumping_counter = jump - 1;
-            representation->position.y += 1;
+            representation->jumping_counter = jump * JUMP_EVERY;
         }
     }
 }
@@ -490,17 +496,23 @@ void map_object_adjust(MapObject *representation, Level* level) {
     if (representation->alive) {
         if (representation->jumping_counter > 0) {
             if (map_object_test_up(representation, level)) {
-                representation->position.y += 1;
+                if (representation->jumping_counter % JUMP_EVERY == 0)
+                    representation->position.y += 1;
                 representation->jumping_counter--;
             } else
                 representation->jumping_counter = 0;
         } else if (representation->is_falling) {
             if (map_object_test_down(representation, level)) {
-                representation->position.y -= 1;
+                if (representation->falling_counter == 0) {
+                    representation->position.y -= 1;
+                    representation->falling_counter = FALL_EVERY - 1;
+                } else
+                    representation->falling_counter--;
             } else
                 representation->is_falling = false;
         } else if (map_object_test_down(representation, level)) {
             representation->is_falling = true;
+            representation->falling_counter = 0;
         }
     }
 }

@@ -161,7 +161,27 @@ void blit_level(Level* level) {
                 }
             }
         }
+
+        // repeat the bottom on top
+        for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
+            if (level->map[position_index((Position) {x, 0})]) {
+                blit_sprite(level->fill_tile, x * TILE_WIDTH, MAP_HEIGHT * TILE_HEIGHT, 0, 0);
+            }
+        }
     }
+}
+
+void compute_shifts(MapObject* obj, int* shiftx, int* shifty) {
+    float shift_x = ((float) obj->moving_counter) / MAX_MOVING_COUNTER * TILE_WIDTH * (obj->look_right ? -1 : 1);
+    float shift_y = 0;
+
+    if (obj->jumping_counter > 0)
+        shift_y = (float) (JUMP_EVERY - obj->jumping_counter % JUMP_EVERY) / JUMP_EVERY * TILE_HEIGHT;
+    else if (obj->is_falling)
+        shift_y = ((float) obj->falling_counter) / FALL_EVERY * TILE_HEIGHT;
+
+    *shiftx = (int) shift_x;
+    *shifty = (int) shift_y;
 }
 
 void blit_dragon(Dragon *dragon) {
@@ -171,11 +191,14 @@ void blit_dragon(Dragon *dragon) {
         animation = &(dragon->animations[DA_MOVE]);
     }
 
+    int shift_x = 0, shift_y = 0;
+    compute_shifts(dragon->representation, &shift_x, &shift_y);
+
     animation_animate(animation);
     blit_animation(
             *animation,
-            dragon->representation->position.x * TILE_WIDTH + ((int) ((float) dragon->representation->moving_counter / MAX_MOVING_COUNTER * TILE_WIDTH) * (dragon->representation->look_right ? -1 : 1)),
-            dragon->representation->position.y * TILE_HEIGHT,
+            dragon->representation->position.x * TILE_WIDTH + shift_x,
+            dragon->representation->position.y * TILE_HEIGHT + shift_y,
             dragon->representation->look_right,
             false);
 }
