@@ -25,6 +25,8 @@ enum {
 
 #define DRAGON_LIFE 3
 
+#define DRAGON_JUMP 8 // height of jump
+
 typedef struct Dragon_ {
     Position current_position;
     unsigned int score;
@@ -34,6 +36,10 @@ typedef struct Dragon_ {
     unsigned int invincibility_counter;
     bool is_bub; // if not, this is Bob
     Animation* animations[DA_NUMBER]; // animations
+    bool look_right;
+    int is_moving;
+    int is_jumping;
+    bool is_falling;
 } Dragon;
 
 Dragon* dragon_new(Position position, bool is_bub, Animation* animation[DA_NUMBER]);

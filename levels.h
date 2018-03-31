@@ -9,11 +9,11 @@
 #include "images.h"
 #include "game_object_definitions.h"
 
-#define SPRITE_LEVEL_WIDTH 16
-#define SPRITE_LEVEL_HEIGHT 16
+#define LEVEL_WIDTH 16
+#define LEVEL_HEIGHT 16
 
-#define MAP_WIDTH 32
-#define MAP_HEIGHT 24
+#define MAP_WIDTH 32 // cases
+#define MAP_HEIGHT 24 // cases
 
 typedef struct Position_ {
     unsigned int x;
@@ -40,5 +40,10 @@ Level *level_new_from_string(char *buffer, int *position, Image *image_level, Mo
                              int num_monster_defs);
 Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monster_defs, int num_monster_defs,
                             unsigned int *num_levels);
+
+bool can_go_left(Level* level, Position current_position, int cwidth, int cheight);
+bool can_go_right(Level* level, Position current_position, int cwidth, int cheight);
+bool can_go_top(Level* level, Position current_position, int cwidth, int cheight);
+bool can_go_bottom(Level* level, Position current_position, int cwidth, int cheight);
 
 #endif //BUBBLES_LEVELS_H

@@ -161,7 +161,7 @@ Level *level_new_from_string(char *buffer, int *position_in_buff, Image *image_l
         return NULL;
     }
 
-    Sprite* sprite_tile = sprite_new(image_level, (int) sx, (int) sy, SPRITE_LEVEL_WIDTH, SPRITE_LEVEL_HEIGHT);
+    Sprite* sprite_tile = sprite_new(image_level, (int) sx, (int) sy, LEVEL_WIDTH, LEVEL_HEIGHT);
 
     if (sprite_tile == NULL) {
         *position_in_buff = -1;
@@ -320,3 +320,66 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
 
     return beg;
 }
+
+bool can_go_left(Level* level, Position current_position, int cwidth, int cheight) {
+    Position n =  {current_position.x - 1, current_position.y};
+
+    if (n.x < 0)
+        return false;
+
+    for (int i = 0; i < cheight; ++i) {
+        if (level->map[position_index(n)])
+            return false;
+        n.y += 1;
+    }
+
+    return true;
+
+}
+
+bool can_go_right(Level* level, Position current_position, int cwidth, int cheight) {
+    Position n =  {current_position.x + cwidth, current_position.y};
+
+    if (n.x >= MAP_WIDTH)
+        return false;
+
+    for (int i = 0; i < cheight; ++i) {
+        if (level->map[position_index(n)])
+            return false;
+        n.y += 1;
+    }
+
+    return true;
+}
+
+
+bool can_go_top(Level* level, Position current_position, int cwidth, int cheight) {
+    Position n =  {current_position.x, current_position.y + cheight};
+
+    if (n.y >= MAP_HEIGHT)
+        return false;
+
+    /*for (int i = 0; i < cwidth; ++i) {
+        if (level->map[position_index(n)])
+            return false;
+        n.x += 1;
+    }*/
+
+    return true;
+}
+
+bool can_go_bottom(Level* level, Position current_position, int cwidth, int cheight) {
+    Position n =  {current_position.x, current_position.y -1};
+
+    if (n.y < 0)
+        return false;
+
+    for (int i = 0; i < cwidth; ++i) {
+        if (level->map[position_index(n)])
+            return false;
+        n.x += 1;
+    }
+
+    return true;
+}
+

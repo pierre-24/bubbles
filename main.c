@@ -21,6 +21,12 @@ int main(int argc, char **argv) {
 
 	glutReshapeFunc(changeSize);
 	glutIdleFunc(game_loop);
+	glutKeyboardFunc(game_key_down);
+    glutKeyboardUpFunc(game_key_up);
+    glutSpecialFunc(game_special_key_down);
+    glutSpecialUpFunc(game_special_key_up);
+
+    glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
 	
 	atexit(game_quit);
 

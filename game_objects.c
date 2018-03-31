@@ -25,6 +25,10 @@ Dragon* dragon_new(Position position, bool is_bub, Animation* animation[DA_NUMBE
     dragon->invicible = false;
     dragon->invincibility_counter = 0;
     dragon->is_bub = is_bub;
+    dragon->look_right = is_bub;
+    dragon->is_moving = 0;
+    dragon->is_jumping = 0;
+    dragon->is_falling = false;
 
     for (int i = 0; i < DA_NUMBER; ++i) {
         dragon->animations[i] = animation_copy(animation[i]);
