@@ -41,10 +41,29 @@ typedef struct Dragon_ {
 Dragon* dragon_new(MapObject *representation, bool is_bub, Animation **animation);
 void dragon_delete(Dragon* dragon);
 
-#define REPRESENTATION_BUB (Position) {1, 1}, 2, 2, true
-#define POSITION_BOB (Position) {31, 1}, 2, 2, true
+#define POSITION_BUB (Position) {1, 1}
+#define POSITION_BOB (Position) {31, 1}
 
 Dragon* create_bub(Image* texture, int y);
 Dragon* create_bob(Image* texture, int y);
+
+#define MONSTER_WIDTH 32
+#define MONSTER_HEIGHT 32
+#define MONSTER_FRAMERATE 10
+
+typedef struct Monster_ {
+    MapObject* representation;
+    MonsterDef* definition;
+    Animation* animation;
+    bool invincible; // true at the beginning of the game
+    bool angry;
+    bool in_bubble;
+    struct Monster_* next;
+} Monster;
+
+Monster* monster_new(MapObject* representation, MonsterDef* definition);
+void monster_delete(Monster* monster);
+
+Monster* monsters_new_from_level(Level* level);
 
 #endif //BUBBLES_GAME_OBJECTS_H

@@ -27,7 +27,7 @@ Level* level_new(bool *map, Position bubble_endpoint, Sprite *fill_tile, unsigne
     }
 
 #ifdef VERBOSE_MEM
-    printf("+Level %p\n", a);
+    printf("+Level %p\n", level);
 #endif
 
     level->bubble_endpoint = bubble_endpoint;
@@ -463,8 +463,8 @@ void map_object_move_left(MapObject *representation, Level* level) {
             representation->position.x -= 1;
             representation->moving_counter = MAX_MOVING_COUNTER;
 
-            if (representation->jumping_counter > JUMP_EVERY)
-                representation->jumping_counter -= JUMP_EVERY;
+            if (representation->jumping_counter > 2 * JUMP_EVERY)
+                representation->jumping_counter -= 2 * JUMP_EVERY;
         }
     }
 }
@@ -477,8 +477,8 @@ void map_object_move_right(MapObject *representation, Level* level) {
             representation->position.x += 1;
             representation->moving_counter = MAX_MOVING_COUNTER;
 
-            if (representation->jumping_counter > JUMP_EVERY)
-                representation->jumping_counter -= JUMP_EVERY;
+            if (representation->jumping_counter > 2 * JUMP_EVERY)
+                representation->jumping_counter -= 2 * JUMP_EVERY;
         }
     }
 }

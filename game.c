@@ -114,8 +114,11 @@ void game_init() {
         game_fail_exit();
     }
 
-    // dragons
+    game->current_level = game->levels; // ->next;
+
+    // dragons & monsters
     game->bub = create_bub(game->texture_dragons, 0);
+    game->monsters_list = monsters_new_from_level(game->current_level);
 
     if (game->bub == NULL)
         game_fail_exit();
@@ -185,21 +188,42 @@ void compute_shifts(MapObject* obj, int* shiftx, int* shifty) {
 }
 
 void blit_dragon(Dragon *dragon) {
+    if (dragon == NULL)
+        return;
+
     Animation** animation = &(dragon->animations[DA_NORMAL]);
 
     if (dragon->representation->moving_counter > 0) {
         animation = &(dragon->animations[DA_MOVE]);
     }
 
+    animation_animate(animation);
+
     int shift_x = 0, shift_y = 0;
     compute_shifts(dragon->representation, &shift_x, &shift_y);
 
-    animation_animate(animation);
     blit_animation(
             *animation,
             dragon->representation->position.x * TILE_WIDTH + shift_x,
             dragon->representation->position.y * TILE_HEIGHT + shift_y,
             dragon->representation->look_right,
+            false);
+}
+
+void blit_monster(Monster* monster) {
+    if (monster == NULL)
+        return;
+
+    animation_animate(&(monster->animation));
+
+    int shift_x = 0, shift_y = 0;
+    compute_shifts(monster->representation, &shift_x, &shift_y);
+
+    blit_animation(
+            monster->animation,
+            monster->representation->position.x * TILE_WIDTH + shift_x,
+            monster->representation->position.y * TILE_HEIGHT + shift_y,
+            monster->representation->look_right,
             false);
 }
 
@@ -214,22 +238,28 @@ void game_loop() {
     map_object_update(game->bub->representation);
 
     if (game->key_pressed[E_LEFT] && game->key_pressed_interval[E_LEFT] == 0)
-        map_object_move_left(game->bub->representation, game->levels);
+        map_object_move_left(game->bub->representation, game->current_level);
 
     else if (game->key_pressed[E_RIGHT] && game->key_pressed_interval[E_RIGHT] == 0)
-        map_object_move_right(game->bub->representation, game->levels);
+        map_object_move_right(game->bub->representation, game->current_level);
 
     if (game->key_pressed[E_ACTION_1] && game->key_pressed_interval[E_ACTION_1] == 0)
-        map_object_jump(game->bub->representation, game->levels, DRAGON_JUMP);
+        map_object_jump(game->bub->representation, game->current_level, DRAGON_JUMP);
 
-    map_object_adjust(game->bub->representation, game->levels);
+    map_object_adjust(game->bub->representation, game->current_level);
 
     // DRAWING:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
-    blit_level(game->levels); // level
-    blit_dragon(game->bub);
+    blit_level(game->current_level); // level
+    blit_dragon(game->bub); // dragon
+
+    Monster* t = game->monsters_list;
+    while (t != NULL) {
+        blit_monster(t); // monster
+        t = t->next;
+    }
 
     glutSwapBuffers();
 }
@@ -267,6 +297,7 @@ void game_quit() {
 
         // dragons
         dragon_delete(game->bub);
+        monster_delete(game->monsters_list);
 
         // and finally:
         free(game);

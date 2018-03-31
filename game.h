@@ -65,10 +65,12 @@ typedef struct Game_ {
 
     // levels
     Level* levels;
+    Level* current_level;
     unsigned int num_levels;
 
-    // dragons
+    // dragons & monsters
     Dragon* bub;
+    Monster* monsters_list;
 
     // keys
     bool key_pressed[E_SIZE];

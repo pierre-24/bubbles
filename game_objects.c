@@ -86,7 +86,7 @@ Dragon* create_bub(Image* texture, int y) {
         sprite_delete(sprite2);
     }
 
-    MapObject* obj = map_object_new(REPRESENTATION_BUB);
+    MapObject* obj = map_object_new(POSITION_BUB, DRAGON_WIDTH / TILE_WIDTH, DRAGON_HEIGHT / TILE_HEIGHT, true);
 
     if (obj == NULL)
         return NULL;
@@ -110,4 +110,78 @@ Dragon* create_bob(Image* texture, int y) {
         dragon->is_bub = false;
 
     return dragon;
+}
+
+Monster* monster_new(MapObject* representation, MonsterDef* definition) {
+    Monster* monster = malloc(sizeof(Monster));
+
+    if (monster == NULL) {
+        write_log("! unable to allocate monster");
+        return NULL;
+    }
+
+
+#ifdef VERBOSE_MEM
+    printf("+Monster %p\n", monster);
+#endif
+
+    monster->representation = map_object_copy(representation);
+    monster->animation = animation_copy(definition->animation);
+
+    if (monster->representation == NULL || monster->animation == NULL) {
+        monster_delete(monster);
+        return NULL;
+    }
+
+    monster->in_bubble = false;
+    monster->angry = false;
+    monster->invincible = false;
+    monster->definition = definition;
+    monster->next = NULL;
+
+    return monster;
+}
+
+void monster_delete(Monster* monster) {
+    Monster* next = monster, *t = NULL;
+    while (next != NULL) {
+        t = next->next;
+
+        map_object_delete(next->representation);
+        animation_delete(next->animation);
+
+        free(next);
+        next = t;
+
+#ifdef VERBOSE_MEM
+        printf("-Monster %p\n", monster);
+#endif
+    }
+}
+
+Monster* monsters_new_from_level(Level* level) {
+    Monster* m = NULL, *t = NULL, *beg = NULL;
+    for (int i = 0; i < level->num_monsters; ++i) {
+        MapObject* obj = map_object_new(level->monster_positions[i], MONSTER_WIDTH / TILE_WIDTH, MONSTER_HEIGHT / TILE_HEIGHT, true);
+        if (obj == NULL)
+            continue;
+
+        t = monster_new(obj, level->monsters[i]);
+
+        if (t == NULL)
+            continue;
+
+        if (m == NULL) {
+            m = t;
+            beg = t;
+        }
+        else {
+            m->next = t;
+            m = t;
+        }
+
+        free(obj);
+    }
+
+    return beg;
 }
