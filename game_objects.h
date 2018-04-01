@@ -92,7 +92,7 @@ typedef struct Bubble_ {
 #define BUBBLE_HEIGHT 32
 #define BUBBLE_FRAMERATE 10
 
-#define BUBBLE_MOMENTUM 5
+#define BUBBLE_MOMENTUM 10
 #define BUBBLE_TIME 500
 
 #define BUBBLE_X 0

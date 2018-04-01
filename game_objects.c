@@ -107,13 +107,17 @@ Dragon* create_bub(Image* texture, int y) {
     if (dragon == NULL)
         return NULL;
 
+    dragon->representation->look_right = true;
+
     return dragon;
 }
 
 Dragon* create_bob(Image* texture, int y) {
     Dragon* dragon = create_bub(texture, y);
-    if (dragon != NULL)
+    if (dragon != NULL) {
         dragon->is_bub = false;
+        dragon->representation->look_right = false;
+    }
 
     return dragon;
 }
