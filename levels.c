@@ -462,7 +462,7 @@ bool map_object_move_left(MapObject *representation, Level *level) {
 
         if (map_object_test_left(representation, level) && representation->moving_counter == 0) {
             representation->position.x -= 1;
-            representation->moving_counter = MAX_MOVING_COUNTER;
+            representation->moving_counter = MOVE_EVERY;
 
             if (representation->jumping_counter > 2 * JUMP_EVERY)
                 representation->jumping_counter -= 2 * JUMP_EVERY;
@@ -480,7 +480,7 @@ bool map_object_move_right(MapObject *representation, Level *level) {
 
         if (map_object_test_right(representation, level) && representation->moving_counter == 0) {
             representation->position.x += 1;
-            representation->moving_counter = MAX_MOVING_COUNTER;
+            representation->moving_counter = MOVE_EVERY;
 
             if (representation->jumping_counter > 2 * JUMP_EVERY)
                 representation->jumping_counter -= 2 * JUMP_EVERY;
@@ -574,11 +574,11 @@ void map_object_chase(MapObject *moving, MapObject *target, Level *level, int sp
 
             else {
                 bool action = false;
-                if (moving->position.x < target->position.x) {
+                if (moving->position.x < target->position.x && map_object_test_right(moving, level)) {
                     action = map_object_move_right(moving, level);
                 }
 
-                if (!action && moving->position.x > target->position.x) {
+                if (!action && moving->position.x > target->position.x && map_object_test_left(moving, level)) {
                     action = map_object_move_left(moving, level);
                 }
 

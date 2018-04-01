@@ -74,4 +74,35 @@ void monster_delete(Monster* monster);
 
 Monster* monsters_new_from_level(Level* level);
 
+#define BUBBLE_TRANSLATE_EVERY 4
+
+typedef struct Bubble_ {
+    MapObject* representation;
+    Animation* animation;
+    int momentum; // counter until it moves on its own
+    int time_left; // counter until it auto-burst
+    Monster* captured; // NULL in the begining
+    int translate_counter;
+    bool go_up;
+    bool translating;
+    struct Bubble_* next; // NULL terminated
+} Bubble;
+
+#define BUBBLE_WIDTH 32
+#define BUBBLE_HEIGHT 32
+#define BUBBLE_FRAMERATE 10
+
+#define BUBBLE_MOMENTUM 5
+#define BUBBLE_TIME 500
+
+#define BUBBLE_X 0
+#define BUBBLE_Y 32
+
+Bubble *bubble_new(MapObject *representation, Image *texture, bool go_right);
+void bubble_delete(Bubble* bubble);
+
+Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_position);
+
+Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture);
+
 #endif //BUBBLES_GAME_OBJECTS_H

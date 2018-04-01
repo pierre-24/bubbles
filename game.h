@@ -46,8 +46,7 @@ void game_key_up(unsigned char key, int x, int y);
 
 void key_update_interval();
 
-// macro to get pixel component position from game screen (note: invert y so that it is located above)
-#define _SR(i, j) (((WINDOW_HEIGHT - (j))*WINDOW_WIDTH+(i))*4)
+#define BLOW_EVERY 60
 
 typedef struct Game_ {
 
@@ -68,9 +67,10 @@ typedef struct Game_ {
     Level* current_level;
     unsigned int num_levels;
 
-    // dragons & monsters
+    // dragons & monsters & bubbles
     Dragon* bub;
     Monster* monsters_list;
+    Bubble* bubble_list;
 
     // keys
     bool key_pressed[E_SIZE];

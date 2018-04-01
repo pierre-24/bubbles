@@ -153,6 +153,8 @@ Monster* monster_new(MapObject* representation, MonsterDef* definition) {
     printf("+Monster %p\n", monster);
 #endif
 
+    monster->next = NULL;
+
     monster->representation = map_object_copy(representation);
     monster->animation = animation_copy(definition->animation);
 
@@ -165,8 +167,6 @@ Monster* monster_new(MapObject* representation, MonsterDef* definition) {
     monster->angry = false;
     monster->invincible = false;
     monster->definition = definition;
-
-    monster->next = NULL;
 
     return monster;
 }
@@ -183,7 +183,7 @@ void monster_delete(Monster* monster) {
         next = t;
 
 #ifdef VERBOSE_MEM
-        printf("-Monster %p\n", monster);
+        printf("-Monster %p\n", next);
 #endif
     }
 }
@@ -213,4 +213,180 @@ Monster* monsters_new_from_level(Level* level) {
     }
 
     return beg;
+}
+
+Bubble *bubble_new(MapObject *representation, Image *texture, bool go_right) {
+    if (representation == NULL || texture == NULL)
+        return NULL;
+
+    Bubble* bubble = malloc(sizeof(Bubble));
+
+    if (bubble == NULL) {
+        write_log("! unable to allocate bubble");
+        return NULL;
+    }
+
+
+#ifdef VERBOSE_MEM
+    printf("+Bubble %p\n", bubble);
+#endif
+
+    bubble->next = NULL;
+
+    bubble->representation = map_object_copy(representation);
+    bubble->representation->look_right = go_right;
+
+    bubble->animation = animation_new(BUBBLE_FRAMERATE);
+
+    Sprite* sprite1 = sprite_new(texture, BUBBLE_X, BUBBLE_Y, BUBBLE_WIDTH, BUBBLE_HEIGHT),
+            *sprite2 = sprite_new(texture, BUBBLE_X + BUBBLE_WIDTH, BUBBLE_Y, BUBBLE_WIDTH, BUBBLE_HEIGHT);
+
+    bubble->animation = animation_add_frame(bubble->animation, sprite1);
+    bubble->animation = animation_add_frame(bubble->animation, sprite2);
+
+    sprite_delete(sprite1);
+    sprite_delete(sprite2);
+
+    if (bubble->representation == NULL || bubble->animation == NULL) {
+        bubble_delete(bubble);
+        return NULL;
+    }
+
+    bubble->captured = NULL;
+    bubble->momentum = BUBBLE_MOMENTUM;
+    bubble->time_left = BUBBLE_TIME;
+    bubble->translate_counter = 0;
+    bubble->translating = false;
+
+    return bubble;
+}
+
+void bubble_delete(Bubble* bubble) {
+    Bubble* next = bubble, *t = NULL;
+    while (next != NULL) {
+        t = next->next;
+
+        map_object_delete(next->representation);
+        animation_delete(next->animation);
+
+        free(next);
+        next = t;
+
+#ifdef VERBOSE_MEM
+        printf("-Bubble %p\n", next);
+#endif
+    }
+}
+
+bool collide_previous_bubble(Bubble *a, Bubble *list) {
+    Bubble* t = list;
+
+    while (t != NULL) {
+        if (t == a)
+            break;
+
+        if (map_object_in_collision(t->representation, a->representation))
+            return true;
+
+        t = t->next;
+    }
+
+    return false;
+}
+
+Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_position) {
+    Bubble* bubble = bubble_list, *prev = NULL, *first = bubble_list;
+
+    while (bubble != NULL)  {
+        if (bubble->representation->moving_counter == 0 && bubble->translate_counter == 0) {
+            if(!collide_previous_bubble(bubble, first)) {
+                if (bubble->momentum > 0) {
+                    if (bubble->representation->look_right) {
+                        if (map_object_test_right(bubble->representation, level)) {
+                            map_object_move_right(bubble->representation, level);
+                            bubble->momentum--;
+                        }
+                        else
+                            bubble->momentum = 0;
+                    }
+
+                    else {
+                        if (map_object_test_left(bubble->representation, level)) {
+                            map_object_move_left(bubble->representation, level);
+                            bubble->momentum--;
+                        }
+                        else
+                            bubble->momentum = 0;
+                    }
+                } else {
+                    if (bubble->representation->position.y != final_position.y) {
+                        bubble->representation->position.y += 1 * (bubble->representation->position.y < final_position.y ? 1 : -1);
+                        bubble->translate_counter = BUBBLE_TRANSLATE_EVERY;
+                        bubble->go_up = bubble->representation->position.y < final_position.y;
+                        bubble->translating = true;
+                    }
+
+                    else if (bubble->representation->position.x != final_position.x) {
+                        if (bubble->representation->position.x < final_position.x)
+                            map_object_move_right(bubble->representation, level);
+                        else
+                            map_object_move_left(bubble->representation, level);
+
+                        bubble->translating = false;
+                    }
+                }
+            }
+        }
+
+        else {
+            if (bubble->representation->moving_counter > 0)
+                bubble->representation->moving_counter--;
+            if (bubble->translate_counter > 0)
+                bubble->translate_counter--;
+        }
+
+        bubble->time_left--;
+
+        if (bubble->time_left == 0) {
+            if (prev == NULL) {
+                first = bubble->next;
+                prev = first;
+            }
+            else {
+                prev->next = bubble->next;
+            }
+            bubble->next = NULL;
+            bubble_delete(bubble);
+            bubble = prev;
+
+        } else {
+            prev = bubble;
+            bubble = bubble->next;
+        }
+    }
+
+    return first;
+}
+
+Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture) {
+    Position p = dragon->representation->position;
+    p.x += dragon->representation->look_right ? 1 : -1;
+
+    MapObject* m = map_object_new(p, BUBBLE_WIDTH / TILE_WIDTH, BUBBLE_HEIGHT / TILE_HEIGHT, true);
+    Bubble* bubble = bubble_new(m, texture, dragon->representation->look_right);
+
+    if (bubble == NULL) {
+        return bubble_list;
+    }
+
+    map_object_delete(m);
+
+    Bubble* last = bubble_list;
+    if (last != NULL) {
+        while (last->next != NULL)
+            last = last->next;
+        last->next = bubble;
+        return bubble_list;
+    } else
+        return bubble;
 }
