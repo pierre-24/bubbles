@@ -228,54 +228,6 @@ void blit_monster(Monster* monster) {
             false);
 }
 
-void move_logic(MapObject *moving, MapObject *target, Level *level, int speed) {
-    int random = rand();
-
-    if (moving->moving_counter == 0) {
-        if (random % speed == 0) {
-            if (moving->position.y > target->position.y){
-                // look for a hole
-                bool look_left = true, look_right = true;
-
-                for (int i = 1; i < MAP_HEIGHT; ++i) {
-                    if (i < 0)
-                        look_left = false;
-                    if (i >= MAP_HEIGHT)
-                        look_right = false;
-
-                    if(look_right && !level->map[position_index((Position) {moving->position.x + i, moving->position.y})]) {
-                        map_object_move_right(moving, level);
-                        break;
-                    }
-
-                    if(look_left && !level->map[position_index((Position) {moving->position.x - i, moving->position.y})]) {
-                        map_object_move_left(moving, level);
-                        break;
-                    }
-                }
-
-            }
-
-            else {
-                bool action = false;
-                if (moving->position.x < target->position.x) {
-                    action = map_object_move_right(moving, level);
-                }
-
-                if (!action && moving->position.x > target->position.x) {
-                    action = map_object_move_left(moving, level);
-                }
-
-                if (!action && moving->position.y < target->position.y && target->jumping_counter == 0 && !target->is_falling && moving->jumping_counter == 0 && !moving->is_falling) {
-                    map_object_jump(moving, level, MONSTER_JUMP);
-                }
-
-            }
-        }
-    }
-
-}
-
 void game_loop() {
     // KEY MANAGEMENT:
     key_update_interval();
@@ -301,8 +253,20 @@ void game_loop() {
     Monster* t = game->monsters_list;
     while (t != NULL) {
         map_object_update(t->representation);
-        move_logic(t->representation, game->bub->representation, game->current_level, t->definition->speed);
+        map_object_chase(t->representation, game->bub->representation, game->current_level, t->definition->speed);
         map_object_adjust(t->representation, game->current_level);
+        t = t->next;
+    }
+
+    // test collisions
+    t = game->monsters_list;
+    while (t != NULL) {
+        if (map_object_in_collision(t->representation, game->bub->representation) && !game->bub->invincible) {
+            game->bub->representation->position = (Position) POSITION_BUB;
+            game->bub->invincible = true;
+            game->bub->invincibility_counter = DRAGON_INVINCIBILITY;
+        }
+
         t = t->next;
     }
 

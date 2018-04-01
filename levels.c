@@ -2,6 +2,7 @@
 // Created by pbeaujea on 3/21/18.
 //
 
+#include "game.h"
 #include "levels.h"
 
 int position_index(Position pos) {
@@ -528,3 +529,74 @@ void map_object_adjust(MapObject *representation, Level* level) {
     }
 }
 
+void map_object_chase(MapObject *moving, MapObject *target, Level *level, int speed) {
+    int random = rand();
+
+    if (moving->moving_counter == 0) {
+        if (random % speed == 0) {
+            if (moving->position.y > target->position.y){
+                // look for a hole
+                bool look_left = true, look_right = true;
+                MapObject* m = map_object_copy(moving);
+
+                for (int i = 1; i < MAP_HEIGHT; ++i) {
+                    if(look_right) {
+                        m->position = (Position) {moving->position.x + i, moving->position.y};
+                        if (!map_object_test_right(m, level)) {
+                            look_right = false;
+                            continue;
+                        }
+
+                        if (map_object_test_down(m, level)) {
+                            map_object_move_right(moving, level);
+                            break;
+                        }
+                    }
+
+                    if(look_left) {
+                        m->position = (Position) {moving->position.x - i, moving->position.y};
+
+                        if (!map_object_test_left(m, level)) {
+                            look_left = false;
+                            continue;
+                        }
+
+                        if (map_object_test_down(m, level)) {
+                            map_object_move_left(moving, level);
+                            break;
+                        }
+                    }
+                }
+
+                map_object_delete(m);
+
+            }
+
+            else {
+                bool action = false;
+                if (moving->position.x < target->position.x) {
+                    action = map_object_move_right(moving, level);
+                }
+
+                if (!action && moving->position.x > target->position.x) {
+                    action = map_object_move_left(moving, level);
+                }
+
+                if (!action && moving->position.y < target->position.y && target->jumping_counter == 0 && !target->is_falling && moving->jumping_counter == 0 && !moving->is_falling) {
+                    map_object_jump(moving, level, MONSTER_JUMP);
+                }
+
+            }
+        }
+    }
+}
+
+bool map_object_in_collision(MapObject* a, MapObject* b) {
+    if (a->position.x > (b->position.x + b->width) || a->position.y > (b->position.y + b->height))
+        return false;
+
+    if (a->position.x + a->width < b->position.x || a->position.y + a->height < b->position.y)
+        return false;
+
+    return true;
+}

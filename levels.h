@@ -76,4 +76,7 @@ bool map_object_move_right(MapObject *representation, Level *level);
 bool map_object_jump(MapObject *representation, Level *level, int jump);
 void map_object_adjust(MapObject *representation, Level* level);
 
+void map_object_chase(MapObject *moving, MapObject *target, Level *level, int speed);
+bool map_object_in_collision(MapObject* a, MapObject* b);
+
 #endif //BUBBLES_LEVELS_H

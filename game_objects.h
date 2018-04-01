@@ -26,6 +26,7 @@ enum {
 #define DRAGON_LIFE 3
 
 #define DRAGON_JUMP 6 // height of jump
+#define DRAGON_INVINCIBILITY 30 // frames
 
 typedef struct Dragon_ {
     bool is_bub; // if not, this is Bob
