@@ -228,46 +228,52 @@ void blit_monster(Monster* monster) {
             false);
 }
 
-void move_monster_logic(Monster* monster, Dragon* target, Level* level) {
-    bool action = false;
+void move_logic(MapObject *moving, MapObject *target, Level *level, int speed) {
     int random = rand();
 
-    if (random % monster->stupidity == 0) {
-        if (monster->representation->position.y > target->representation->position.y){
-            // look for a hole
-            bool look_left = true, look_right = true;
+    if (moving->moving_counter == 0) {
+        if (random % speed == 0) {
+            if (moving->position.y > target->position.y){
+                // look for a hole
+                bool look_left = true, look_right = true;
 
-            for (int i = 1; i < MAP_HEIGHT; ++i) {
-                if (i < 0)
-                    look_left = false;
-                if (i >= MAP_HEIGHT)
-                    look_right = false;
+                for (int i = 1; i < MAP_HEIGHT; ++i) {
+                    if (i < 0)
+                        look_left = false;
+                    if (i >= MAP_HEIGHT)
+                        look_right = false;
 
-                if(look_right && !level->map[position_index((Position) {monster->representation->position.x + i, monster->representation->position.y})]) {
-                    action = map_object_move_right(monster->representation, level);
-                    break;
+                    if(look_right && !level->map[position_index((Position) {moving->position.x + i, moving->position.y})]) {
+                        map_object_move_right(moving, level);
+                        break;
+                    }
+
+                    if(look_left && !level->map[position_index((Position) {moving->position.x - i, moving->position.y})]) {
+                        map_object_move_left(moving, level);
+                        break;
+                    }
                 }
 
-                if(look_left && !level->map[position_index((Position) {monster->representation->position.x - i, monster->representation->position.y})]) {
-                    action = map_object_move_left(monster->representation, level);
-                    break;
-                }
             }
 
-        }
+            else {
+                bool action = false;
+                if (moving->position.x < target->position.x) {
+                    action = map_object_move_right(moving, level);
+                }
 
-        if (!action && monster->representation->position.x < target->representation->position.x) {
-            action = map_object_move_right(monster->representation, level);
-        }
+                if (!action && moving->position.x > target->position.x) {
+                    action = map_object_move_left(moving, level);
+                }
 
-        if (!action && monster->representation->position.x > target->representation->position.x) {
-            action = map_object_move_left(monster->representation, level);
-        }
+                if (!action && moving->position.y < target->position.y && target->jumping_counter == 0 && !target->is_falling && moving->jumping_counter == 0 && !moving->is_falling) {
+                    map_object_jump(moving, level, MONSTER_JUMP);
+                }
 
-        if (!action && monster->representation->position.y < target->representation->position.y) {
-            map_object_jump(monster->representation, level, MONSTER_JUMP);
+            }
         }
     }
+
 }
 
 void game_loop() {
@@ -291,6 +297,15 @@ void game_loop() {
 
     map_object_adjust(game->bub->representation, game->current_level);
 
+    // move monsters
+    Monster* t = game->monsters_list;
+    while (t != NULL) {
+        map_object_update(t->representation);
+        move_logic(t->representation, game->bub->representation, game->current_level, t->definition->speed);
+        map_object_adjust(t->representation, game->current_level);
+        t = t->next;
+    }
+
     // DRAWING:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor4f(1.0, 1.0, 1.0, 1.0);
@@ -298,11 +313,8 @@ void game_loop() {
     blit_level(game->current_level); // level
     blit_dragon(game->bub); // dragon
 
-    Monster* t = game->monsters_list;
+    t = game->monsters_list;
     while (t != NULL) {
-        map_object_update(t->representation);
-        move_monster_logic(t, game->bub, game->current_level);
-        map_object_adjust(t->representation, game->current_level);
         blit_monster(t);
         t = t->next;
     }

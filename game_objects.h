@@ -59,7 +59,6 @@ typedef struct Monster_ {
     bool invincible; // true at the beginning of the game
     bool angry;
     bool in_bubble;
-    int stupidity;
     struct Monster_* next;
 } Monster;
 
