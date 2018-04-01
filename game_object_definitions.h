@@ -28,12 +28,19 @@ void item_def_delete(ItemDef* item);
 ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size);
 
 // monsters
+enum {
+    MA_NORMAL,
+    MA_ANGRY,
+    MA_CAPTURED,
+    MA_NUMBER
+};
+
 typedef struct MonsterDef_ {
-	Animation* animation;
+	Animation* animation[MA_NUMBER];
 	unsigned int speed; // number of frames between two movements
 } MonsterDef;
 
-MonsterDef* monster_def_new(Animation *sprite_animation, unsigned int speed);
+MonsterDef* monster_def_new(Animation **sprite_animation, unsigned int speed);
 void monster_def_delete(MonsterDef* item);
 
 #define MONSTER_WIDTH 32

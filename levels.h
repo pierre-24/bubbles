@@ -42,14 +42,13 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
                             unsigned int *num_levels);
 
 #define MOVE_EVERY 4 // [frames]
-#define JUMP_EVERY 4 // [frames]
-#define FALL_EVERY 4 // [frames]
+#define JUMP_EVERY 2 // [frames]
+#define FALL_EVERY 2 // [frames]
 
 typedef struct MapObject_ {
     Position position;
     int width;
     int height;
-    bool alive;
 
     // if alive:
     bool look_right;
@@ -59,10 +58,8 @@ typedef struct MapObject_ {
     bool is_falling;
 } MapObject;
 
-MapObject* map_object_new(Position position, int width, int height, bool alive);
+MapObject *map_object_new(Position position, int width, int height);
 void map_object_delete(MapObject *map_object);
-
-void map_object_update(MapObject* object);
 
 MapObject* map_object_copy(MapObject *src);
 

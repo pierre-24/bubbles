@@ -13,6 +13,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <math.h>
 
 #include <GL/glut.h>
 #include <GL/freeglut.h>
@@ -28,5 +29,7 @@ char* file_get_content(FILE* f);
 char *strnextspace(char *str);
 char *strnextline(char *str);
 char *strnextnspace(char *str);
+
+int factorial(int a);
 
 #endif //BUBBLES_UTILS_H

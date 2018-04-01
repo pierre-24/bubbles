@@ -322,7 +322,7 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
     return beg;
 }
 
-MapObject* map_object_new(Position position, int width, int height, bool alive) {
+MapObject *map_object_new(Position position, int width, int height) {
     MapObject* obj = malloc(sizeof(MapObject));
 
     if (obj == NULL) {
@@ -339,15 +339,12 @@ MapObject* map_object_new(Position position, int width, int height, bool alive) 
 
     obj->width = width;
     obj->height = height;
-    obj->alive = alive;
 
-    if (alive) {
-        obj->jumping_counter = 0;
-        obj->moving_counter = 0;
-        obj->falling_counter = 0;
-        obj->is_falling = false;
-        obj->look_right = false;
-    }
+    obj->jumping_counter = 0;
+    obj->moving_counter = 0;
+    obj->falling_counter = 0;
+    obj->is_falling = false;
+    obj->look_right = false;
 
     return obj;
 }
@@ -377,155 +374,130 @@ MapObject* map_object_copy(MapObject *src) {
 }
 
 void map_object_update(MapObject* object) {
-    if (object->alive) {
-        if(object->moving_counter > 0)
-            object->moving_counter--;
-        if (object->jumping_counter > 0)
-            object->jumping_counter--;
-    }
+    if (object->jumping_counter > 0)
+        object->jumping_counter--;
 }
 
 bool map_object_test_left(MapObject *representation, Level* level) {
-    if (representation->alive) {
-        Position n = {representation->position.x - 1, representation->position.y};
+    Position n = {representation->position.x - 1, representation->position.y};
 
-        if (n.x < 0)
+    if (n.x < 0)
+        return false;
+
+    for (int i = 0; i < representation->height; ++i) {
+        if (level->map[position_index(n)])
             return false;
-
-        for (int i = 0; i < representation->height; ++i) {
-            if (level->map[position_index(n)])
-                return false;
-            n.y += 1;
-        }
-
-        return true;
+        n.y += 1;
     }
 
-    return false;
+    return true;
 }
 
 bool map_object_test_right(MapObject *representation, Level* level) {
-    if (representation->alive) {
-        Position n = {representation->position.x + representation->width, representation->position.y};
+    Position n = {representation->position.x + representation->width, representation->position.y};
 
-        if (n.x >= MAP_WIDTH)
+    if (n.x >= MAP_WIDTH)
+        return false;
+
+    for (int i = 0; i < representation->height; ++i) {
+        if (level->map[position_index(n)])
             return false;
-
-        for (int i = 0; i < representation->height; ++i) {
-            if (level->map[position_index(n)])
-                return false;
-            n.y += 1;
-        }
-
-        return true;
+        n.y += 1;
     }
 
-    return false;
+    return true;
 }
 
 
 bool map_object_test_up(MapObject *representation, Level* level) {
-    if (representation->alive) {
-        Position n = {representation->position.x, representation->position.y + representation->height};
+    Position n = {representation->position.x, representation->position.y + representation->height};
 
-        if (n.y >= MAP_HEIGHT)
-            return false;
+    if (n.y >= MAP_HEIGHT)
+        return false;
 
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 bool map_object_test_down(MapObject *representation, Level* level) {
-    if (representation->alive) {
-        Position n = {representation->position.x, representation->position.y - 1};
+    Position n = {representation->position.x, representation->position.y - 1};
 
-        if (n.y < 0)
+    if (n.y < 0)
+        return false;
+
+    for (int i = 0; i < representation->width; ++i) {
+        if (level->map[position_index(n)])
             return false;
-
-        for (int i = 0; i < representation->width; ++i) {
-            if (level->map[position_index(n)])
-                return false;
-            n.x += 1;
-        }
-
-        return true;
+        n.x += 1;
     }
 
-    return false;
+    return true;
 }
 
 bool map_object_move_left(MapObject *representation, Level *level) {
-    if (representation->alive) {
-        representation->look_right = false;
+    representation->look_right = false;
 
-        if (map_object_test_left(representation, level) && representation->moving_counter == 0) {
-            representation->position.x -= 1;
-            representation->moving_counter = MOVE_EVERY;
+    if (map_object_test_left(representation, level) && representation->moving_counter == 0) {
+        representation->position.x -= 1;
+        representation->moving_counter = MOVE_EVERY;
 
-            if (representation->jumping_counter > 2 * JUMP_EVERY)
-                representation->jumping_counter -= 2 * JUMP_EVERY;
+        if (representation->jumping_counter > 2 * JUMP_EVERY)
+            representation->jumping_counter -= 2 * JUMP_EVERY;
 
-            return true;
-        }
+        return true;
     }
 
     return false;
 }
 
 bool map_object_move_right(MapObject *representation, Level *level) {
-    if (representation->alive) {
-        representation->look_right = true;
+    representation->look_right = true;
 
-        if (map_object_test_right(representation, level) && representation->moving_counter == 0) {
-            representation->position.x += 1;
-            representation->moving_counter = MOVE_EVERY;
+    if (map_object_test_right(representation, level) && representation->moving_counter == 0) {
+        representation->position.x += 1;
+        representation->moving_counter = MOVE_EVERY;
 
-            if (representation->jumping_counter > 2 * JUMP_EVERY)
-                representation->jumping_counter -= 2 * JUMP_EVERY;
+        if (representation->jumping_counter > 2 * JUMP_EVERY)
+            representation->jumping_counter -= 2 * JUMP_EVERY;
 
-            return true;
-        }
+        return true;
     }
 
     return false;
 }
 
 bool map_object_jump(MapObject *representation, Level *level, int jump) {
-    if (representation->alive) {
-        if (representation->jumping_counter == 0 && !representation->is_falling &&
-            map_object_test_up(representation, level)) {
-            representation->jumping_counter = jump * JUMP_EVERY;
-            return true;
-        }
+    if (representation->jumping_counter == 0 && !representation->is_falling &&
+        map_object_test_up(representation, level)) {
+        representation->jumping_counter = jump * JUMP_EVERY;
+        return true;
     }
 
     return false;
 }
 
 void map_object_adjust(MapObject *representation, Level* level) {
-    if (representation->alive) {
-        if (representation->jumping_counter > 0) {
-            if (map_object_test_up(representation, level)) {
-                if (representation->jumping_counter % JUMP_EVERY == 0)
-                    representation->position.y += 1;
-                representation->jumping_counter--;
+    if(representation->moving_counter > 0)
+        representation->moving_counter--;
+
+    if (representation->jumping_counter > 0) {
+        if (map_object_test_up(representation, level)) {
+            if (representation->jumping_counter % JUMP_EVERY == 0)
+                representation->position.y += 1;
+            representation->jumping_counter--;
+        } else
+            representation->jumping_counter = 0;
+    } else if (representation->is_falling) {
+        if (map_object_test_down(representation, level)) {
+            if (representation->falling_counter == 0) {
+                representation->position.y -= 1;
+                representation->falling_counter = FALL_EVERY - 1;
             } else
-                representation->jumping_counter = 0;
-        } else if (representation->is_falling) {
-            if (map_object_test_down(representation, level)) {
-                if (representation->falling_counter == 0) {
-                    representation->position.y -= 1;
-                    representation->falling_counter = FALL_EVERY - 1;
-                } else
-                    representation->falling_counter--;
-            } else
-                representation->is_falling = false;
-        } else if (map_object_test_down(representation, level)) {
-            representation->is_falling = true;
-            representation->falling_counter = 0;
-        }
+                representation->falling_counter--;
+        } else
+            representation->is_falling = false;
+    } else if (map_object_test_down(representation, level)) {
+        representation->is_falling = true;
+        representation->falling_counter = 0;
     }
 }
 
@@ -569,7 +541,6 @@ void map_object_chase(MapObject *moving, MapObject *target, Level *level, int sp
                 }
 
                 map_object_delete(m);
-
             }
 
             else {
@@ -592,10 +563,10 @@ void map_object_chase(MapObject *moving, MapObject *target, Level *level, int sp
 }
 
 bool map_object_in_collision(MapObject* a, MapObject* b) {
-    if (a->position.x > (b->position.x + b->width) || a->position.y > (b->position.y + b->height))
+    if (a->position.x > (b->position.x + b->width-1) || a->position.y > (b->position.y + b->height-1))
         return false;
 
-    if (a->position.x + a->width < b->position.x || a->position.y + a->height < b->position.y)
+    if (a->position.x + a->width-1 < b->position.x || a->position.y + a->height-1 < b->position.y)
         return false;
 
     return true;

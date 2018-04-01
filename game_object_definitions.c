@@ -78,6 +78,7 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
 
     while(nextstart != NULL && index < *size) {
         err = datafile_line_field_positions(nextstart, 4, positions, &nextstart);
+
         if (err == 0) {
             write_log("# - adding item %d", index);
             points_given = strtoul(positions[0], &next, 0);
@@ -139,7 +140,7 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
     return definitions;
 }
 
-MonsterDef* monster_def_new(Animation *sprite_animation, unsigned int speed) {
+MonsterDef* monster_def_new(Animation **sprite_animation, unsigned int speed) {
     if (sprite_animation == NULL)
         return NULL;
 
@@ -154,20 +155,26 @@ MonsterDef* monster_def_new(Animation *sprite_animation, unsigned int speed) {
     printf("+MonsterDef %p\n", def);
 #endif
 
-    def->speed = speed;
-    def->animation = animation_copy(sprite_animation);
+    for (int i = 0; i < MA_NUMBER; ++i) {
+        def->animation[i] = animation_copy(sprite_animation[i]);
 
-    if (def->animation == NULL) {
-        monster_def_delete(def);
-        return NULL;
+        if (def->animation[i] == NULL) {
+            monster_def_delete(def);
+            return NULL;
+        }
     }
+
+    def->speed = speed;
 
     return def;
 }
 
 void monster_def_delete(MonsterDef* item) {
     if (item != NULL) {
-        animation_delete(item->animation);
+        for (int i = 0; i < MA_NUMBER; ++i) {
+            animation_delete(item->animation[i]);
+        }
+
         free(item);
 #ifdef VERBOSE_MEM
         printf("-MonsterDef %p\n", item);
@@ -185,7 +192,7 @@ MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int*
     char* nextstart = buffer;
     char* next;
     int err = 0;
-    long speed, s1x, s1y, s2x, s2y;
+    long speed, sy;
 
     // catch number of items
     do {
@@ -206,11 +213,10 @@ MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int*
     MonsterDef** definitions = malloc(*size * sizeof(MonsterDef*));
     int index = 0;
 
-    Sprite* animation_frames[2];
-    Animation* animation = NULL;
+    Animation* animation[MA_NUMBER];
 
     while(nextstart != NULL && index < *size) {
-        err = datafile_line_field_positions(nextstart, 5, positions, &nextstart);
+        err = datafile_line_field_positions(nextstart, 2, positions, &nextstart);
         if (err == 0) {
             write_log("# - adding item %d", index);
 
@@ -220,27 +226,9 @@ MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int*
                 continue;
             }
 
-            s1x = strtoul(positions[1], &next, 0);
+            sy = strtoul(positions[1], &next, 0);
             if (next == positions[1]) {
                 write_log("! error while converting number #1");
-                continue;
-            }
-
-            s1y = strtoul(positions[2], &next, 0);
-            if (next == positions[2]) {
-                write_log("! error while converting number #2");
-                continue;
-            }
-
-            s2x = strtoul(positions[3], &next, 0);
-            if (next == positions[3]) {
-                write_log("! error while converting number #3");
-                continue;
-            }
-
-            s2y = strtoul(positions[4], &next, 0);
-            if (next == positions[4]) {
-                write_log("! error while converting number #4");
                 continue;
             }
 
@@ -249,27 +237,29 @@ MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int*
                 continue;
             }
 
-            animation = animation_new(MONSTER_FRAMERATE);
-            if (animation == NULL)
-                continue;
+            for (int i = 0; i < MA_NUMBER; ++i) {
+                Sprite* sprite1 =  sprite_new(items_texture, i * 2 * MONSTER_WIDTH, (int) sy, MONSTER_WIDTH, MONSTER_HEIGHT);
+                Sprite* sprite2 =  sprite_new(items_texture, (i * 2 + 1) * MONSTER_WIDTH, (int) sy, MONSTER_WIDTH, MONSTER_HEIGHT);
 
-            animation_frames[0] = sprite_new(items_texture, (int) s1x, (int) s1y, MONSTER_WIDTH, MONSTER_HEIGHT);
-            animation_frames[1] = sprite_new(items_texture, (int) s2x, (int) s2y, MONSTER_WIDTH, MONSTER_HEIGHT);
+                if (sprite1 == NULL || sprite2 == NULL)
+                    continue;
 
-            if (animation_frames[0] == NULL || animation_frames[1] == NULL)
-                continue;
+                animation[i] = animation_new(MONSTER_FRAMERATE);
+                animation[i] = animation_add_frame(animation[i], sprite1);
+                animation[i] = animation_add_frame(animation[i], sprite2);
 
-            animation = animation_add_frame(animation, animation_frames[0]);
-            animation = animation_add_frame(animation, animation_frames[1]);
+                sprite_delete(sprite1);
+                sprite_delete(sprite2);
 
-            if (animation == NULL)
-                continue;
+                if (animation[i] == NULL)
+                    continue;
+            }
 
             definitions[index] = monster_def_new(animation, (unsigned int) speed);
 
-            animation_delete(animation);
-            sprite_delete(animation_frames[0]);
-            sprite_delete(animation_frames[1]);
+            for (int j = 0; j < MA_NUMBER; ++j) {
+                animation_delete(animation[j]);
+            }
 
             if (definitions[index] != NULL)
                 index++;

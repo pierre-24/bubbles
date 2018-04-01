@@ -102,3 +102,7 @@ char *strnextnspace(char *str) {
 
     return next;
 }
+
+int factorial(int a)  {
+    return 0 == a ? 1 : (a * factorial(a - 1));
+}
