@@ -23,12 +23,18 @@ Dragon* dragon_new(MapObject *representation, bool is_bub, Animation **animation
         return NULL;
     }
 
+    dragon->respawn_position = dragon->representation->position;
+
     dragon->score = 0;
     dragon->life = DRAGON_LIFE;
     dragon->max_life = DRAGON_LIFE;
+    dragon->is_bub = is_bub;
+
+
     dragon->invincible = false;
     dragon->invincibility_counter = 0;
-    dragon->is_bub = is_bub;
+    dragon->hit = false;
+    dragon->hit_counter = 0;
 
     for (int i = 0; i < DA_NUMBER; ++i) {
         dragon->animations[i] = animation_copy(animation[i]);
@@ -110,6 +116,28 @@ Dragon* create_bob(Image* texture, int y) {
         dragon->is_bub = false;
 
     return dragon;
+}
+
+void dragon_adjust(Dragon* dragon) {
+    if (dragon->hit) {
+        dragon->hit_counter--;
+
+        if (dragon->hit_counter == 0) {
+
+            dragon->hit = false;
+            dragon->invincible = true;
+            dragon->invincibility_counter = DRAGON_INVINCIBILITY;
+
+            dragon->representation->position = dragon->respawn_position;
+            dragon->life--;
+        }
+    }
+
+    else if (dragon->invincible) {
+        dragon->invincibility_counter--;
+        if (dragon->invincibility_counter == 0)
+            dragon->invincible = false;
+    }
 }
 
 Monster* monster_new(MapObject* representation, MonsterDef* definition) {

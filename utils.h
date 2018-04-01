@@ -15,6 +15,7 @@
 #include <time.h>
 
 #include <GL/glut.h>
+#include <GL/freeglut.h>
 
 #define LOG_FILE "bubbles.log"
 

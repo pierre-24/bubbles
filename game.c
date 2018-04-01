@@ -194,9 +194,14 @@ void blit_dragon(Dragon *dragon) {
 
     Animation** animation = &(dragon->animations[DA_NORMAL]);
 
-    if (dragon->representation->moving_counter > 0) {
+    if (dragon->hit)
+        animation = &(dragon->animations[DA_HIT]);
+
+    else if (dragon->invincible)
+        animation = &(dragon->animations[DA_INVICIBLE]);
+
+    else if (dragon->representation->moving_counter > 0)
         animation = &(dragon->animations[DA_MOVE]);
-    }
 
     animation_animate(animation);
 
@@ -238,14 +243,16 @@ void game_loop() {
     // eventually move bub:
     map_object_update(game->bub->representation);
 
-    if (game->key_pressed[E_LEFT] && game->key_pressed_interval[E_LEFT] == 0)
-        map_object_move_left(game->bub->representation, game->current_level);
+    if (!game->bub->hit) {
+        if (game->key_pressed[E_LEFT] && game->key_pressed_interval[E_LEFT] == 0)
+            map_object_move_left(game->bub->representation, game->current_level);
 
-    else if (game->key_pressed[E_RIGHT] && game->key_pressed_interval[E_RIGHT] == 0)
-        map_object_move_right(game->bub->representation, game->current_level);
+        else if (game->key_pressed[E_RIGHT] && game->key_pressed_interval[E_RIGHT] == 0)
+            map_object_move_right(game->bub->representation, game->current_level);
 
-    if (game->key_pressed[E_ACTION_1] && game->key_pressed_interval[E_ACTION_1] == 0)
-        map_object_jump(game->bub->representation, game->current_level, DRAGON_JUMP);
+        if (game->key_pressed[E_ACTION_1] && game->key_pressed_interval[E_ACTION_1] == 0)
+            map_object_jump(game->bub->representation, game->current_level, DRAGON_JUMP);
+    }
 
     map_object_adjust(game->bub->representation, game->current_level);
 
@@ -261,27 +268,39 @@ void game_loop() {
     // test collisions
     t = game->monsters_list;
     while (t != NULL) {
-        if (map_object_in_collision(t->representation, game->bub->representation) && !game->bub->invincible) {
-            game->bub->representation->position = (Position) POSITION_BUB;
-            game->bub->invincible = true;
-            game->bub->invincibility_counter = DRAGON_INVINCIBILITY;
+        if (map_object_in_collision(t->representation, game->bub->representation) && !game->bub->hit && !game->bub->invincible) {
+            game->bub->hit = true;
+            game->bub->hit_counter = DRAGON_HIT;
         }
 
         t = t->next;
     }
+
+    // adjust dragon
+    dragon_adjust(game->bub);
 
     // DRAWING:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
     blit_level(game->current_level); // level
-    blit_dragon(game->bub); // dragon
 
     t = game->monsters_list;
     while (t != NULL) {
         blit_monster(t);
         t = t->next;
     }
+
+    blit_dragon(game->bub); // dragon
+
+    char buffer[25];
+    sprintf(buffer, "%d", game->bub->life);
+    glRasterPos2f(2 * TILE_WIDTH, 0 * TILE_HEIGHT);
+    glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char*) buffer);
+
+    sprintf(buffer, "%06d", game->bub->score);
+    glRasterPos2f(4 * TILE_WIDTH, 25 * TILE_HEIGHT);
+    glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char*) buffer);
 
     glutSwapBuffers();
 }

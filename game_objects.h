@@ -14,7 +14,6 @@ enum {
     DA_MOVE,
     DA_BLOW,
     DA_HIT,
-    DA_DEAD,
     DA_INVICIBLE,
     DA_NUMBER
 };
@@ -25,22 +24,29 @@ enum {
 
 #define DRAGON_LIFE 3
 
-#define DRAGON_JUMP 6 // height of jump
-#define DRAGON_INVINCIBILITY 30 // frames
+#define DRAGON_JUMP 6 // [height] of jump
+#define DRAGON_INVINCIBILITY 120 // [frames]
+#define DRAGON_HIT 60 // [frames]
 
 typedef struct Dragon_ {
     bool is_bub; // if not, this is Bob
     MapObject* representation;
+    Position respawn_position; // to respawn
     Animation* animations[DA_NUMBER]; // animations
     unsigned int score;
     unsigned int life; // 3 at the beginning
     unsigned int max_life; // 3 at the beginning
+
+    bool hit; // hit!
+    int hit_counter;
     bool invincible; // when just killed
-    unsigned int invincibility_counter;
+    int invincibility_counter;
 } Dragon;
 
 Dragon* dragon_new(MapObject *representation, bool is_bub, Animation **animation);
 void dragon_delete(Dragon* dragon);
+
+void dragon_adjust(Dragon* dragon);
 
 #define POSITION_BUB (Position) {1, 1}
 #define POSITION_BOB (Position) {31, 1}
