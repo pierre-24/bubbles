@@ -545,16 +545,16 @@ void map_object_chase(MapObject *moving, MapObject *target, Level *level, int sp
 
             else {
                 bool action = false;
-                if (moving->position.x < target->position.x && map_object_test_right(moving, level)) {
+
+                if (moving->position.y < target->position.y && target->jumping_counter == 0 && !target->is_falling && moving->jumping_counter == 0 && !moving->is_falling) {
+                    action = map_object_jump(moving, level, MONSTER_JUMP);
+                }
+                if (!action && moving->position.x < target->position.x && map_object_test_right(moving, level)) {
                     action = map_object_move_right(moving, level);
                 }
 
                 if (!action && moving->position.x > target->position.x && map_object_test_left(moving, level)) {
-                    action = map_object_move_left(moving, level);
-                }
-
-                if (!action && moving->position.y < target->position.y && target->jumping_counter == 0 && !target->is_falling && moving->jumping_counter == 0 && !moving->is_falling) {
-                    map_object_jump(moving, level, MONSTER_JUMP);
+                    map_object_move_left(moving, level);
                 }
 
             }

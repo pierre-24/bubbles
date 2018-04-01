@@ -35,8 +35,8 @@ typedef struct Dragon_ {
     Position respawn_position; // to respawn
     Animation* animations[DA_NUMBER]; // animations
     unsigned int score;
-    unsigned int life; // 3 at the beginning
-    unsigned int max_life; // 3 at the beginning
+    int life; // 3 at the beginning
+    int max_life; // 3 at the beginning
 
     bool hit; // hit!
     int hit_counter;

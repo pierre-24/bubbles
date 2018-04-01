@@ -41,6 +41,7 @@ void game_init() {
     game->texture_monsters = NULL;
     game->texture_levels = NULL;
     game->texture_dragons = NULL;
+    game->texture_screens = NULL;
 
     game->texture_items = load_texture(TEXTURE_ITEMS);
     if (game->texture_items == NULL)
@@ -57,6 +58,17 @@ void game_init() {
     game->texture_dragons = load_texture(TEXTURE_DRAGONS);
     if (game->texture_dragons == NULL)
         game_fail_exit();
+
+    game->texture_screens = load_texture(TEXTURE_SCREENS);
+    if (game->texture_screens == NULL)
+        game_fail_exit();
+
+    // sprites for screen
+    for (int i = 0; i < SCREEN_NUMBER; ++i) {
+        game->screens[i] = sprite_new(game->texture_screens, 0, i * WINDOW_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT);
+        if (game->screens[i] == NULL)
+            game_fail_exit();
+    }
 
     // load definition
     game->num_items = 0;
@@ -135,6 +147,10 @@ void game_init() {
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     write_log("# READY TO PLAY !");
+
+    game->paused = true;
+    game->done = false;
+    game->current_screen = SCREEN_INSTRUCTIONS; // starts with instruction screen
 }
 
 void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y) {
@@ -222,8 +238,7 @@ void blit_dragon(Dragon *dragon) {
 }
 
 void blit_monster(Monster* monster) {
-    if (monster != NULL && !monster->in_bubble)
-    {
+    if (monster != NULL && !monster->in_bubble) {
         Animation** animation = &(monster->animation[MA_NORMAL]);
 
         if (monster->angry)
@@ -276,13 +291,28 @@ void blit_item(Item* item) {
     }
 }
 
-void game_loop() {
+void game_loop_input_management() {
     // KEY MANAGEMENT:
     key_update_interval();
 
-    if (game->key_pressed[E_QUIT])
-        exit(EXIT_SUCCESS);
+    if (!game->bub->hit) {
+        if (game->key_pressed[E_LEFT] && game->key_pressed_interval[E_LEFT] == 0)
+            map_object_move_left(game->bub->representation, game->current_level);
 
+        else if (game->key_pressed[E_RIGHT] && game->key_pressed_interval[E_RIGHT] == 0)
+            map_object_move_right(game->bub->representation, game->current_level);
+
+        if (game->key_pressed[E_ACTION_1] && game->key_pressed_interval[E_ACTION_1] == 0)
+            map_object_jump(game->bub->representation, game->current_level, DRAGON_JUMP);
+
+        if (game->key_pressed[E_ACTION_2] && game->key_pressed_interval[E_ACTION_2] == 0) {
+            game->bubble_list = dragon_blow(game->bub, game->bubble_list, game->texture_levels);
+            game->key_pressed_interval[E_ACTION_2] = BLOW_EVERY;
+        }
+    }
+}
+
+void game_loop_update_states() {
     // test collisions with items
     Item* it = game->item_list, *x = NULL;
     while (it != NULL) {
@@ -340,22 +370,6 @@ void game_loop() {
         m = m->next;
     }
 
-    if (!game->bub->hit) {
-        if (game->key_pressed[E_LEFT] && game->key_pressed_interval[E_LEFT] == 0)
-            map_object_move_left(game->bub->representation, game->current_level);
-
-        else if (game->key_pressed[E_RIGHT] && game->key_pressed_interval[E_RIGHT] == 0)
-            map_object_move_right(game->bub->representation, game->current_level);
-
-        if (game->key_pressed[E_ACTION_1] && game->key_pressed_interval[E_ACTION_1] == 0)
-            map_object_jump(game->bub->representation, game->current_level, DRAGON_JUMP);
-
-        if (game->key_pressed[E_ACTION_2] && game->key_pressed_interval[E_ACTION_2] == 0) {
-            game->bubble_list = dragon_blow(game->bub, game->bubble_list, game->texture_levels);
-            game->key_pressed_interval[E_ACTION_2] = BLOW_EVERY;
-        }
-    }
-
     // move monsters
     m = game->monster_list;
     while (m != NULL) {
@@ -371,15 +385,15 @@ void game_loop() {
     dragon_adjust(game->bub, game->current_level);
     game->bubble_list = adjust_bubbles(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
     items_adjust(game->item_list, game->current_level);
+}
 
-    // DRAWING:
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColor4f(1.0, 1.0, 1.0, 1.0);
 
+
+void game_loop_draw() {
     blit_level(game->current_level); // level
 
     // monsters
-    m = game->monster_list;
+    Monster* m = game->monster_list;
     while (m != NULL) {
         if (!m->in_bubble)
             blit_monster(m);
@@ -389,14 +403,14 @@ void game_loop() {
     blit_dragon(game->bub); // dragon
 
     // bubbles
-    Bubble* u = game->bubble_list;
-    while (u != NULL) {
-        blit_bubble(u);
-        u = u->next;
+    Bubble* b = game->bubble_list;
+    while (b != NULL) {
+        blit_bubble(b);
+        b = b->next;
     }
 
     // items
-    it = game->item_list;
+    Item* it = game->item_list;
     while (it != NULL) {
         blit_item(it);
         it = it->next;
@@ -410,13 +424,51 @@ void game_loop() {
     sprintf(buffer, "%06d", game->bub->score);
     glRasterPos2f(4 * TILE_WIDTH, 25 * TILE_HEIGHT);
     glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char*) buffer);
+}
+
+void game_loop() {
+    if (game->key_pressed[E_QUIT])
+        exit(EXIT_SUCCESS);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+
+    if (!game->paused) {
+        game_loop_input_management();
+        game_loop_update_states();
+        game_loop_draw();
+
+
+        if (game->bub->life < 0) {
+            game->paused = true;
+            game->done = true;
+            game->current_screen = SCREEN_GAME_OVER;
+        }
+
+        else if(game->monster_list == NULL && game->item_list == NULL){
+            game->paused = true;
+            game->done = true;
+            game->current_screen = SCREEN_WIN;
+        }
+    }
+
+    else {
+        blit_sprite(game->screens[game->current_screen], 0, 0, false, false);
+
+        if (game->key_pressed[E_ACTION_1]) {
+            game->paused = false;
+            game->key_pressed[E_ACTION_1] = false;
+
+            if (game->done)
+                exit(EXIT_SUCCESS);
+        }
+    }
 
     glutSwapBuffers();
+
 }
 
 void game_quit() {
-    // free everything
-
     // screen
     if (game != NULL) {
         // textures

@@ -16,6 +16,7 @@
 #define TEXTURE_MONSTERS "assets/monsters.ppm"
 #define TEXTURE_LEVELS "assets/levels.ppm"
 #define TEXTURE_DRAGONS "assets/dragons.ppm"
+#define TEXTURE_SCREENS "assets/screens.ppm"
 
 #define DEFINITION_ITEMS "data/items.txt"
 #define DEFINITION_MONSTERS "data/monsters.txt"
@@ -48,13 +49,26 @@ void key_update_interval();
 
 #define BLOW_EVERY 60
 
+enum {
+    SCREEN_INSTRUCTIONS,
+    SCREEN_GAME_OVER,
+    SCREEN_WIN,
+    SCREEN_UNKNOWN,
+    SCREEN_NUMBER
+};
+
 typedef struct Game_ {
+    bool paused;
+    bool done;
+    int current_screen;
+    Sprite* screens[SCREEN_NUMBER];
 
     // Image
     Image* texture_items;
     Image* texture_monsters;
     Image* texture_levels;
     Image* texture_dragons;
+    Image* texture_screens;
 
     // definitions
     ItemDef** definition_items;
