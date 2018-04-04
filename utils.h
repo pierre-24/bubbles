@@ -14,6 +14,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include <GL/glut.h>
 #include <GL/freeglut.h>
@@ -30,6 +31,21 @@ char *strnextspace(char *str);
 char *strnextline(char *str);
 char *strnextnspace(char *str);
 
-int factorial(int a);
+typedef struct Counter_ {
+    int value;
+    int max;
+    bool infinite;
+    bool decrement;
+} Counter;
+
+Counter* counter_new(int max, bool infinite, bool decrement);
+void counter_delete(Counter* counter);
+
+Counter* counter_copy(Counter* counter);
+
+void counter_restart(Counter* counter, int nmax);
+void counter_stop(Counter* counter);
+int counter_tick(Counter* counter);
+int counter_value(Counter* counter);
 
 #endif //BUBBLES_UTILS_H

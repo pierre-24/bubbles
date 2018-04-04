@@ -42,19 +42,17 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
                             unsigned int *num_levels);
 
 #define MOVE_EVERY 4 // [frames]
-#define JUMP_EVERY 2 // [frames]
-#define FALL_EVERY 2 // [frames]
 
 typedef struct MapObject_ {
     Position position;
     int width;
     int height;
 
-    // if alive:
-    bool look_right;
-    int moving_counter;
-    int jumping_counter;
-    int falling_counter;
+    bool move_forward;
+    Counter* counter_x;
+    Counter* counter_y;
+    Counter* counter_jump;
+    
     bool is_falling;
 } MapObject;
 
@@ -68,12 +66,22 @@ bool map_object_test_right(MapObject *representation, Level* level);
 bool map_object_test_up(MapObject *representation, Level* level);
 bool map_object_test_down(MapObject *representation, Level* level);
 
+bool map_object_can_move(MapObject* obj);
+bool map_object_can_jump(MapObject* obj);
+
 bool map_object_move_left(MapObject *representation, Level *level);
 bool map_object_move_right(MapObject *representation, Level *level);
 bool map_object_jump(MapObject *representation, Level *level, int jump);
 void map_object_adjust(MapObject *representation, Level* level);
 
 void map_object_chase(MapObject *moving, MapObject *target, Level *level, int speed);
+
+typedef struct EfFectivePosition_ {
+	float x;
+	float y;
+} EffectivePosition;
+
+EffectivePosition map_object_to_effective_position(MapObject* mobj);
 bool map_object_in_collision(MapObject* a, MapObject* b);
 
 #endif //BUBBLES_LEVELS_H

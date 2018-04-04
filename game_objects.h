@@ -31,7 +31,7 @@ enum {
 
 typedef struct Dragon_ {
     bool is_bub; // if not, this is Bob
-    MapObject* representation;
+    MapObject* map_object;
     Position respawn_position; // to respawn
     Animation* animations[DA_NUMBER]; // animations
     unsigned int score;
@@ -45,7 +45,7 @@ typedef struct Dragon_ {
     int blow_counter;
 } Dragon;
 
-Dragon* dragon_new(MapObject *representation, bool is_bub, Animation **animation);
+Dragon* dragon_new(MapObject *map_object, bool is_bub, Animation **animation);
 void dragon_delete(Dragon* dragon);
 
 void dragon_adjust(Dragon *dragon, Level *level);
@@ -62,7 +62,7 @@ Dragon* create_bob(Image* texture, int y);
 #define MONSTER_JUMP 6 // height of jump
 
 typedef struct Monster_ {
-    MapObject* representation;
+    MapObject* map_object;
     MonsterDef* definition;
     Animation* animation[MA_NUMBER];
     bool angry;
@@ -70,7 +70,7 @@ typedef struct Monster_ {
     struct Monster_* next;
 } Monster;
 
-Monster* monster_new(MapObject* representation, MonsterDef* definition);
+Monster* monster_new(MapObject* map_object, MonsterDef* definition);
 void monster_delete(Monster* monster);
 
 Monster* monsters_new_from_level(Level* level);
@@ -79,13 +79,13 @@ Monster* monster_kill(Monster* list, Monster* monster);
 #define ITEM_JUMP 6
 
 typedef struct Item_ {
-    MapObject* representation;
+    MapObject* map_object;
     ItemDef* definition;
     bool go_right;
     struct Item_* next;
 } Item;
 
-Item* item_new(MapObject* representation, ItemDef* definition);
+Item* item_new(MapObject* map_object, ItemDef* definition);
 void item_delete(Item* item);
 
 Item *create_item(MapObject *position, Item *list, ItemDef *definitions[], int num_item_definitions, Level *level,
@@ -97,7 +97,7 @@ void items_adjust(Item* list, Level* level);
 #define BUBBLE_TRANSLATE_EVERY 4
 
 typedef struct Bubble_ {
-    MapObject* representation;
+    MapObject* map_object;
     Animation* animation;
     int momentum; // counter until it moves on its own
     int time_left; // counter until it auto-burst
@@ -118,7 +118,7 @@ typedef struct Bubble_ {
 #define BUBBLE_X 0
 #define BUBBLE_Y 32
 
-Bubble *bubble_new(MapObject *representation, Image *texture, bool go_right);
+Bubble *bubble_new(MapObject *map_object, Image *texture, bool go_right);
 void bubble_delete(Bubble* bubble);
 
 Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_position);

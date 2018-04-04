@@ -103,6 +103,97 @@ char *strnextnspace(char *str) {
     return next;
 }
 
-int factorial(int a)  {
-    return 0 == a ? 1 : (a * factorial(a - 1));
+
+Counter* counter_new(int max, bool infinite, bool decrement) {
+	Counter* counter = malloc(sizeof(Counter));
+	
+	if (counter == NULL) {
+		write_log("! cannot allocate counter");
+		return NULL;
+	}
+
+#ifdef VERBOSE_MEM
+    printf("+Counter %p\n", counter);
+#endif
+	
+	counter->max = max;
+	counter->infinite = infinite;
+	counter->decrement = decrement;
+	
+	counter_restart(counter, -1);
+	
+	return counter;
+}
+
+
+Counter* counter_copy(Counter* src) {
+	Counter* counter = malloc(sizeof(Counter));
+	
+	if (counter == NULL) {
+		write_log("! cannot allocate counter");
+		return NULL;
+	}
+
+#ifdef VERBOSE_MEM
+    printf("+Counter %p (by copy)\n", counter);
+#endif
+
+	memcpy(counter, src, sizeof(Counter));
+	
+	return counter;
+}
+
+void counter_delete(Counter* counter) {
+	if (counter != NULL) {
+		free(counter);
+
+#ifdef VERBOSE_MEM
+    printf("-Counter %p\n", counter);
+#endif
+	}
+}
+
+void counter_restart(Counter* counter, int nmax) {
+	if (nmax > 0)
+		counter->max = nmax;
+		
+	if (counter->decrement)
+		counter->value = counter->max - 1;
+	else
+		counter->value = 0;
+}
+
+void counter_stop(Counter* counter) {
+	if (!counter->decrement)
+		counter->value = counter->max - 1;
+	else
+		counter->value = 0;
+}
+
+int counter_tick(Counter* counter) {
+	if (!counter->decrement) {
+		if (counter->value >= counter->max - 1) {
+			if(counter->infinite)
+				counter_restart(counter, -1);
+		}
+		
+		else
+			counter->value += 1;
+	}
+	
+	else {
+		if (counter->value <= 0) {
+			if (counter->infinite)
+				counter_restart(counter, -1);
+		}
+		
+		else
+			counter->value -= 1;
+	}
+	
+	return counter->value;
+}
+
+int counter_value(Counter* counter) {
+	return counter->value;
 }

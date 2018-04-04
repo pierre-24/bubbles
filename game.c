@@ -134,6 +134,8 @@ void game_init() {
 
     if (game->bub == NULL)
         game_fail_exit();
+    
+    write_log("# created bub");
 
     game->monster_list = monsters_new_from_level(game->current_level);
     game->bubble_list = NULL;
@@ -194,17 +196,11 @@ void blit_level(Level* level) {
     }
 }
 
-void compute_shifts(MapObject* obj, int* shiftx, int* shifty) {
-    float shift_x = ((float) obj->moving_counter) / MOVE_EVERY * TILE_WIDTH * (obj->look_right ? -1 : 1);
-    float shift_y = 0;
+void compute_real_positions(MapObject* obj, int* shiftx, int* shifty) {
+    EffectivePosition p = map_object_to_effective_position(obj);
 
-    if (obj->jumping_counter > 0)
-        shift_y = (float) (JUMP_EVERY - obj->jumping_counter % JUMP_EVERY) / JUMP_EVERY * TILE_HEIGHT;
-    else if (obj->is_falling)
-        shift_y = ((float) obj->falling_counter) / FALL_EVERY * TILE_HEIGHT;
-
-    *shiftx = (int) shift_x;
-    *shifty = (int) shift_y;
+    *shiftx = (int) (p.x * TILE_WIDTH);
+    *shifty = (int) (p.y * TILE_HEIGHT);
 }
 
 void blit_dragon(Dragon *dragon) {
@@ -220,19 +216,19 @@ void blit_dragon(Dragon *dragon) {
         else if (dragon->blow_counter)
             animation = &(dragon->animations[DA_BLOW]);
 
-        else if (dragon->representation->moving_counter > 0)
+        else if (!map_object_can_move(dragon->map_object))
             animation = &(dragon->animations[DA_MOVE]);
 
         animation_animate(animation);
 
         int shift_x = 0, shift_y = 0;
-        compute_shifts(dragon->representation, &shift_x, &shift_y);
+        compute_real_positions(dragon->map_object, &shift_x, &shift_y);
 
         blit_animation(
                 *animation,
-                dragon->representation->position.x * TILE_WIDTH + shift_x,
-                dragon->representation->position.y * TILE_HEIGHT + shift_y,
-                dragon->representation->look_right,
+                shift_x,
+                shift_y,
+                dragon->map_object->move_forward,
                 false);
     }
 }
@@ -247,13 +243,13 @@ void blit_monster(Monster* monster) {
         animation_animate(animation);
 
         int shift_x = 0, shift_y = 0;
-        compute_shifts(monster->representation, &shift_x, &shift_y);
+        compute_real_positions(monster->map_object, &shift_x, &shift_y);
 
         blit_animation(
                 *animation,
-                monster->representation->position.x * TILE_WIDTH + shift_x,
-                monster->representation->position.y * TILE_HEIGHT + shift_y,
-                monster->representation->look_right,
+                shift_x,
+                shift_y,
+                monster->map_object->move_forward,
                 false);
 
     }
@@ -269,7 +265,7 @@ void blit_bubble(Bubble* bubble) {
         animation_animate(animation);
 
         int shift_x = 0, shift_y = 0;
-        compute_shifts(bubble->representation, &shift_x, &shift_y);
+        compute_real_positions(bubble->map_object, &shift_x, &shift_y);
 
         if (bubble->translating) {
             float sy = (float) (BUBBLE_TRANSLATE_EVERY - bubble->translate_counter) / BUBBLE_TRANSLATE_EVERY * TILE_HEIGHT * (bubble->go_up ? 1 : -1);
@@ -278,16 +274,16 @@ void blit_bubble(Bubble* bubble) {
 
         blit_animation(
                 *animation,
-                bubble->representation->position.x * TILE_WIDTH + shift_x,
-                bubble->representation->position.y * TILE_HEIGHT + shift_y,
-                bubble->representation->look_right,
+                shift_x,
+                bubble->map_object->position.y, //* TILE_HEIGHT + shift_y,
+                false,
                 false);
     }
 }
 
 void blit_item(Item* item) {
     if (item != NULL) {
-        blit_sprite(item->definition->sprite, item->representation->position.x * TILE_WIDTH, item->representation->position.y * TILE_HEIGHT, false, false);
+        blit_sprite(item->definition->sprite, item->map_object->position.x * TILE_WIDTH, item->map_object->position.y * TILE_HEIGHT, false, false);
     }
 }
 
@@ -297,13 +293,13 @@ void game_loop_input_management() {
 
     if (!game->bub->hit) {
         if (game->key_pressed[E_LEFT] && game->key_pressed_interval[E_LEFT] == 0)
-            map_object_move_left(game->bub->representation, game->current_level);
+            map_object_move_left(game->bub->map_object, game->current_level);
 
         else if (game->key_pressed[E_RIGHT] && game->key_pressed_interval[E_RIGHT] == 0)
-            map_object_move_right(game->bub->representation, game->current_level);
+            map_object_move_right(game->bub->map_object, game->current_level);
 
         if (game->key_pressed[E_ACTION_1] && game->key_pressed_interval[E_ACTION_1] == 0)
-            map_object_jump(game->bub->representation, game->current_level, DRAGON_JUMP);
+            map_object_jump(game->bub->map_object, game->current_level, DRAGON_JUMP);
 
         if (game->key_pressed[E_ACTION_2] && game->key_pressed_interval[E_ACTION_2] == 0) {
             game->bubble_list = dragon_blow(game->bub, game->bubble_list, game->texture_levels);
@@ -316,7 +312,7 @@ void game_loop_update_states() {
     // test collisions with items
     Item* it = game->item_list, *x = NULL;
     while (it != NULL) {
-        if (map_object_in_collision(it->representation, game->bub->representation)) {
+        if (map_object_in_collision(it->map_object, game->bub->map_object)) {
             x = it->next;
             game->item_list = dragon_consume_item(game->bub, game->item_list, it);
             it = x;
@@ -329,12 +325,12 @@ void game_loop_update_states() {
     Bubble* b = game->bubble_list;
     Bubble* t;
     while (b != NULL) {
-        if (map_object_in_collision(game->bub->representation, b->representation) && b->momentum < BUBBLE_MOMENTUM - 2) {
+        if (map_object_in_collision(game->bub->map_object, b->map_object) && b->momentum < BUBBLE_MOMENTUM - 2) {
             t = b->next;
             if (b->captured != NULL) {
                 game->monster_list = monster_kill(game->monster_list, b->captured);
-                game->item_list = create_item(b->representation, game->item_list, game->definition_items,
-                                              game->num_items, game->current_level, game->bub->representation->look_right);
+                game->item_list = create_item(b->map_object, game->item_list, game->definition_items,
+                                              game->num_items, game->current_level, game->bub->map_object->move_forward);
             }
 
             game->bubble_list = bubble_burst(game->bubble_list, b, false);
@@ -348,7 +344,7 @@ void game_loop_update_states() {
     Monster* m = game->monster_list;
     while (m != NULL) {
         if (!m->in_bubble) {
-            if (map_object_in_collision(m->representation, game->bub->representation) && !game->bub->hit && !game->bub->invincible) {
+            if (map_object_in_collision(m->map_object, game->bub->map_object) && !game->bub->hit && !game->bub->invincible) {
                 game->bub->hit = true;
                 game->bub->hit_counter = DRAGON_HIT;
             }
@@ -356,7 +352,7 @@ void game_loop_update_states() {
             // eventually capture monster in bubbles
             b = game->bubble_list;
             while (b != NULL) {
-                if (map_object_in_collision(m->representation, b->representation) && b->captured == NULL && b->momentum > 0) {
+                if (map_object_in_collision(m->map_object, b->map_object) && b->captured == NULL && b->momentum > 0) {
                     m->in_bubble = true;
                     b->captured = m;
                     b->momentum = 1;
@@ -374,8 +370,8 @@ void game_loop_update_states() {
     m = game->monster_list;
     while (m != NULL) {
         if (!m->in_bubble) {
-            map_object_chase(m->representation, game->bub->representation, game->current_level, m->definition->speed / (m->angry ? 2 : 1));
-            map_object_adjust(m->representation, game->current_level);
+            map_object_chase(m->map_object, game->bub->map_object, game->current_level, m->definition->speed / (m->angry ? 2 : 1));
+            map_object_adjust(m->map_object, game->current_level);
         }
 
         m = m->next;
@@ -386,7 +382,6 @@ void game_loop_update_states() {
     game->bubble_list = adjust_bubbles(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
     items_adjust(game->item_list, game->current_level);
 }
-
 
 
 void game_loop_draw() {
