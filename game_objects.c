@@ -343,7 +343,7 @@ Item *create_item(MapObject *position, Item *list, ItemDef *definitions[], int n
     if (item == NULL)
         return list;
 
-    item->go_right = look_right;
+    item->go_right = rand() % 2 == 0;
     map_object_jump(item->map_object, level, ITEM_JUMP);
 
     if (item->go_right)

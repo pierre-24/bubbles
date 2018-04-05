@@ -616,12 +616,11 @@ EffectivePosition map_object_to_effective_position(MapObject* mobj) {
 
 bool map_object_in_collision(MapObject* a, MapObject* b) {
 	EffectivePosition pa = map_object_to_effective_position(a), pb = map_object_to_effective_position(b);
-	
-    if (pa.x > (pb.x + b->width) || pa.y > pb.y + b->height)
-        return false;
 
-    if (pa.x + a->width < pb.x || pa.y + a->height < pb.y)
-        return false;
+    double square_dist = pow(pa.x - pb.x, 2) + pow(pa.y - pb.y, 2);
 
-    return true;
+    if (square_dist < CONTACT_DISTANCE)
+        return true;
+    else
+        return false;
 }

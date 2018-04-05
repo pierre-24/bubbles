@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 99)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
+
 add_executable(bubbles
         ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES}
         game.c
@@ -23,5 +24,5 @@ add_executable(bubbles
         datafile.h animations.c animations.h levels.c levels.h game_objects.c game_objects.h)
 
 include_directories(bubbles ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
-target_link_libraries(bubbles ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} )
+target_link_libraries(bubbles ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} m)
 
