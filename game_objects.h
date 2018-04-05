@@ -18,9 +18,9 @@ enum {
     DA_NUMBER
 };
 
-#define DRAGON_WIDTH 32
-#define DRAGON_HEIGHT 32
-#define DRAGON_FRAMERATE 10
+#define DRAGON_WIDTH 32 // [pixels]
+#define DRAGON_HEIGHT 32 // [pixels]
+#define DRAGON_FRAMERATE 10 // [frames]
 
 #define DRAGON_LIFE 3
 
@@ -112,7 +112,7 @@ typedef struct Bubble_ {
 #define BUBBLE_FRAMERATE 10
 
 #define BUBBLE_MOMENTUM 10
-#define BUBBLE_TIME 500
+#define BUBBLE_TIME 600
 
 #define BUBBLE_X 0
 #define BUBBLE_Y 32

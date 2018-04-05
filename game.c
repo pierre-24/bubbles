@@ -523,117 +523,74 @@ void key_up(int key) {
 
 }
 
+char skey_to_internal[] = {
+        GLUT_KEY_DOWN, E_DOWN,
+        GLUT_KEY_UP, E_UP,
+        GLUT_KEY_LEFT, E_LEFT,
+        GLUT_KEY_RIGHT, E_RIGHT
+};
+
 void game_special_key_down(int key, int x, int y) {
     // printf("down(s): %d (%d)\n", key, GLUT_KEY_DOWN);
 
-    int keyp;
+    int keyp = E_NONE;
 
-    switch (key) {
-        case GLUT_KEY_DOWN:
-            keyp = E_DOWN;
-            break;
-        case GLUT_KEY_UP:
-            keyp = E_UP;
-            break;
-        case GLUT_KEY_LEFT:
-            keyp = E_LEFT;
-            break;
-        case GLUT_KEY_RIGHT:
-            keyp = E_RIGHT;
-            break;
-        default:
-            keyp = E_NONE;
-            break;
+    for (int i = 0; i < sizeof(skey_to_internal) / 2; ++i) {
+        if (key == skey_to_internal[i*2])
+            keyp = skey_to_internal[i*2 +1];
     }
 
-    key_down(keyp);
+    if (keyp != E_NONE)
+        key_down(keyp);
 }
 
 void game_special_key_up(int key, int x, int y) {
     // printf("up(s): %d\n", key);
 
-    int keyp;
+    int keyp = E_NONE;
 
-    switch (key) {
-        case GLUT_KEY_DOWN:
-            keyp = E_DOWN;
-            break;
-        case GLUT_KEY_UP:
-            keyp = E_UP;
-            break;
-        case GLUT_KEY_LEFT:
-            keyp = E_LEFT;
-            break;
-        case GLUT_KEY_RIGHT:
-            keyp = E_RIGHT;
-            break;
-        default:
-            keyp = E_NONE;
-            break;
+    for (int i = 0; i < sizeof(skey_to_internal) / 2; ++i) {
+        if (key == skey_to_internal[i*2])
+            keyp = skey_to_internal[i*2 +1];
     }
 
-    key_up(keyp);
+    if (keyp != E_NONE)
+        key_up(keyp);
 }
 
+char key_to_internal[] = {
+        'x', E_ACTION_2,
+        ' ', E_ACTION_1,
+        'p', E_PAUSE,
+        'm', E_SHOW_SCORE,
+        'c', E_SHOW_CONTROLS,
+        27, E_QUIT // esc key
+};
+
 void game_key_down(unsigned char key, int x, int y) {
-    // printf("down keyboard: %c\n", key);
+    int keyp = E_NONE;
 
-    int keyp;
-
-    switch (key) {
-        case 'x':
-            keyp = E_ACTION_2;
-            break;
-        case ' ':
-            keyp = E_ACTION_1;
-            break;
-        case 'p':
-            keyp = E_PAUSE;
-            break;
-        case 'm':
-            keyp = E_SHOW_SCORE;
-            break;
-        case 'c':
-            keyp = E_SHOW_CONTROLS;
-            break;
-        case 27: // esc key
-            keyp = E_QUIT;
-            break;
-        default:
-            keyp = E_NONE;
-            break;
+    for (int i = 0; i < sizeof(key_to_internal) / 2; ++i) {
+        if (key == key_to_internal[i*2])
+            keyp = key_to_internal[i*2 +1];
     }
 
-    key_down(keyp);
+    if (keyp != E_NONE)
+        key_down(keyp);
 }
 
 void game_key_up(unsigned char key, int x, int y) {
     // printf("down keyboard: %c\n", key);
 
-    int keyp;
+    int keyp = E_NONE;
 
-    switch (key) {
-        case 'x':
-            keyp = E_ACTION_2;
-            break;
-        case ' ':
-            keyp = E_ACTION_1;
-            break;
-        case 'p':
-            keyp = E_PAUSE;
-            break;
-        case 'm':
-            keyp = E_SHOW_SCORE;
-            break;
-        case 'c':
-            keyp = E_SHOW_CONTROLS;
-            break;
-        default:
-            keyp = E_NONE;
-            break;
+    for (int i = 0; i < sizeof(key_to_internal) / 2; ++i) {
+        if (key == key_to_internal[i*2])
+            keyp = key_to_internal[i*2 +1];
     }
 
-    key_up(keyp);
+    if (keyp != E_NONE)
+        key_up(keyp);
 }
 
 void key_update_interval() {
