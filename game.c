@@ -137,7 +137,7 @@ void game_init() {
     
     write_log("# created bub");
 
-    game->monster_list = NULL; // monsters_new_from_level(game->current_level);
+    game->monster_list = monsters_new_from_level(game->current_level);
     game->bubble_list = NULL;
     game->item_list = NULL;
 
@@ -213,7 +213,7 @@ void blit_dragon(Dragon *dragon) {
         else if (dragon->invincible)
             animation = &(dragon->animations[DA_INVICIBLE]);
 
-        else if (dragon->blow_counter)
+        else if (counter_value(game->bub->counter_blow) != 0)
             animation = &(dragon->animations[DA_BLOW]);
 
         else if (!map_object_can_move(dragon->map_object))
@@ -341,7 +341,7 @@ void game_loop_update_states() {
         if (!m->in_bubble) {
             if (map_object_in_collision(m->map_object, game->bub->map_object) && !game->bub->hit && !game->bub->invincible) {
                 game->bub->hit = true;
-                game->bub->hit_counter = DRAGON_HIT;
+                counter_restart(game->bub->counter_hit, -1);
             }
 
             // eventually capture monster in bubbles

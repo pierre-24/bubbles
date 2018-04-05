@@ -39,10 +39,10 @@ typedef struct Dragon_ {
     int max_life; // 3 at the beginning
 
     bool hit; // hit!
-    int hit_counter;
     bool invincible; // when just killed
-    int invincibility_counter;
-    int blow_counter;
+    Counter* counter_hit;
+    Counter* counter_blow;
+    Counter* counter_invincible;
 } Dragon;
 
 Dragon* dragon_new(MapObject *map_object, bool is_bub, Animation **animation);

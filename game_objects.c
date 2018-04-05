@@ -32,10 +32,13 @@ Dragon* dragon_new(MapObject *map_object, bool is_bub, Animation **animation) {
 
 
     dragon->invincible = false;
-    dragon->invincibility_counter = 0;
     dragon->hit = false;
-    dragon->hit_counter = 0;
-    dragon->blow_counter = 0;
+
+    dragon->counter_blow = counter_new(DRAGON_BLOW, false, true);
+    counter_stop(dragon->counter_blow);
+
+    dragon->counter_hit = counter_new(DRAGON_HIT, false, true);
+    dragon->counter_invincible = counter_new(DRAGON_INVINCIBILITY, false, true);
 
     for (int i = 0; i < DA_NUMBER; ++i) {
         dragon->animations[i] = animation_copy(animation[i]);
@@ -57,6 +60,11 @@ void dragon_delete(Dragon* dragon) {
         }
 
         map_object_delete(dragon->map_object);
+
+        counter_delete(dragon->counter_blow);
+        counter_delete(dragon->counter_hit);
+        counter_delete(dragon->counter_invincible);
+
 
         free(dragon);
 
@@ -126,14 +134,17 @@ Dragon* create_bob(Image* texture, int y) {
 void dragon_adjust(Dragon *dragon, Level *level) {
     map_object_adjust(dragon->map_object, level);
 
-    if (dragon->hit) {
-        dragon->hit_counter--;
+    counter_tick(dragon->counter_blow);
+    counter_tick(dragon->counter_invincible);
+    counter_tick(dragon->counter_hit);
 
-        if (dragon->hit_counter == 0) {
+    if (dragon->hit) {
+
+        if (counter_value(dragon->counter_hit) == 0) {
 
             dragon->hit = false;
             dragon->invincible = true;
-            dragon->invincibility_counter = DRAGON_INVINCIBILITY;
+            counter_restart(dragon->counter_invincible, -1);
 
             dragon->map_object->position = dragon->respawn_position;
             dragon->life--;
@@ -141,13 +152,9 @@ void dragon_adjust(Dragon *dragon, Level *level) {
     }
 
     else if (dragon->invincible) {
-        dragon->invincibility_counter--;
-        if (dragon->invincibility_counter == 0)
+        if (counter_value(dragon->counter_invincible) == 0)
             dragon->invincible = false;
     }
-
-    if (dragon->blow_counter > 0)
-        dragon->blow_counter--;
 }
 
 Monster* monster_new(MapObject* map_object, MonsterDef* definition) {
@@ -570,7 +577,7 @@ Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture) {
     if (dragon == NULL || texture == NULL)
         return bubble_list;
 
-    dragon->blow_counter = DRAGON_BLOW;
+    counter_restart(dragon->counter_blow, -1);
 
     Position p = dragon->map_object->position;
     p.x += dragon->map_object->move_forward ? 1 : -1;
