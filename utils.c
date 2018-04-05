@@ -139,7 +139,6 @@ Counter* counter_copy(Counter* src) {
 #endif
 
 	memcpy(counter, src, sizeof(Counter));
-	
 	return counter;
 }
 
@@ -170,26 +169,21 @@ void counter_stop(Counter* counter) {
 		counter->value = 0;
 }
 
+bool counter_stopped(Counter* counter) {
+    if (!counter->decrement)
+        return counter->value == counter->max - 1;
+    else
+        return counter->value == 0;
+}
+
 int counter_tick(Counter* counter) {
-	if (!counter->decrement) {
-		if (counter->value >= counter->max - 1) {
-			if(counter->infinite)
-				counter_restart(counter, -1);
-		}
-		
-		else
-			counter->value += 1;
-	}
-	
-	else {
-		if (counter->value <= 0) {
-			if (counter->infinite)
-				counter_restart(counter, -1);
-		}
-		
-		else
-			counter->value -= 1;
-	}
+    if (counter_stopped(counter)) {
+        if (counter->infinite)
+            counter_restart(counter, -1);
+    }
+
+    else
+        counter->value += 1 * (counter->decrement ? -1 : 1);
 	
 	return counter->value;
 }

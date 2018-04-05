@@ -45,6 +45,8 @@ Counter* counter_copy(Counter* counter);
 
 void counter_restart(Counter* counter, int nmax);
 void counter_stop(Counter* counter);
+bool counter_stopped(Counter* counter);
+
 int counter_tick(Counter* counter);
 int counter_value(Counter* counter);
 
