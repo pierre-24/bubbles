@@ -213,7 +213,7 @@ void blit_dragon(Dragon *dragon) {
         else if (dragon->invincible)
             animation = &(dragon->animations[DA_INVICIBLE]);
 
-        else if (counter_value(game->bub->counter_blow) != 0)
+        else if (!counter_stopped(game->bub->counter_blow))
             animation = &(dragon->animations[DA_BLOW]);
 
         else if (!map_object_can_move(dragon->map_object))
@@ -307,7 +307,7 @@ void game_loop_update_states() {
     // test collisions with items
     Item* it = game->item_list, *x = NULL;
     while (it != NULL) {
-        if (map_object_in_collision(it->map_object, game->bub->map_object)) {
+        if (map_object_in_collision(it->map_object, game->bub->map_object) && counter_stopped(it->counter_invulnerability)) {
             x = it->next;
             game->item_list = dragon_consume_item(game->bub, game->item_list, it);
             it = x;

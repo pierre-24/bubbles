@@ -76,12 +76,14 @@ void monster_delete(Monster* monster);
 Monster* monsters_new_from_level(Level* level);
 Monster* monster_kill(Monster* list, Monster* monster);
 
-#define ITEM_JUMP 6
+#define ITEM_JUMP 8
+#define ITEM_INVULNERABILITY 30
 
 typedef struct Item_ {
     MapObject* map_object;
     ItemDef* definition;
     bool go_right;
+    Counter* counter_invulnerability;
     struct Item_* next;
 } Item;
 

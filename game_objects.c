@@ -140,7 +140,7 @@ void dragon_adjust(Dragon *dragon, Level *level) {
 
     if (dragon->hit) {
 
-        if (counter_value(dragon->counter_hit) == 0) {
+        if (counter_stopped(dragon->counter_hit)) {
 
             dragon->hit = false;
             dragon->invincible = true;
@@ -152,7 +152,7 @@ void dragon_adjust(Dragon *dragon, Level *level) {
     }
 
     else if (dragon->invincible) {
-        if (counter_value(dragon->counter_invincible) == 0)
+        if (counter_stopped(dragon->counter_invincible))
             dragon->invincible = false;
     }
 }
@@ -290,6 +290,7 @@ Item* item_new(MapObject* map_object, ItemDef* definition) {
     }
 
     item->definition = definition;
+    item->counter_invulnerability = counter_new(ITEM_INVULNERABILITY, false, true);
     item->next = NULL;
 
     return item;
@@ -298,8 +299,8 @@ Item* item_new(MapObject* map_object, ItemDef* definition) {
 void item_delete(Item* item) {
     Item* i = item, *t = NULL;
     while (i != NULL) {
-        if (i->map_object != NULL)
-            map_object_delete(i->map_object);
+        map_object_delete(i->map_object);
+        counter_delete(item->counter_invulnerability);
 
         t = i->next;
         free(i);
@@ -397,8 +398,9 @@ void items_adjust(Item* list, Level* level) {
 
     while (it != NULL) {
         map_object_adjust(it->map_object, level);
+        counter_tick(it->counter_invulnerability);
 
-        if (map_object_can_move(it->map_object) && (counter_value(it->map_object->counter_jump) > 0 || it->map_object->is_falling)) {
+        if (map_object_can_move(it->map_object) && (!counter_stopped(it->map_object->counter_jump) || it->map_object->is_falling)) {
             if (it->go_right)
                 map_object_move_right(it->map_object, level);
             else
@@ -528,9 +530,9 @@ Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_positio
         counter_tick(bubble->map_object->counter_y);
         counter_tick(bubble->counter_time_left);
 
-        if (map_object_can_move(bubble->map_object) && counter_value(bubble->map_object->counter_y) == 0) {
+        if (map_object_can_move(bubble->map_object) && counter_stopped(bubble->map_object->counter_y)) {
             if(!collide_previous_bubble(bubble, first)) {
-                if (counter_value(bubble->counter_momentum) > 0) {
+                if (!counter_stopped(bubble->counter_momentum)) {
                     if (bubble->map_object->move_forward) {
                         if (map_object_move_right(bubble->map_object, level))
                             counter_tick(bubble->counter_momentum);
@@ -562,7 +564,7 @@ Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_positio
             }
         }
 
-        if (counter_value(bubble->counter_time_left) == 0) {
+        if (counter_stopped(bubble->counter_time_left)) {
             t = bubble->next;
             first = bubble_burst(first, bubble, true);
             bubble = t;

@@ -451,11 +451,11 @@ bool map_object_test_down(MapObject *obj, Level* level) {
 }
 
 bool map_object_can_move(MapObject* obj) {
-	return counter_value(obj->counter_x) == 0;
+	return counter_stopped(obj->counter_x);
 }
 
 bool map_object_can_jump(MapObject* obj) {
-	return !obj->is_falling && counter_value(obj->counter_jump) == 0;
+	return !obj->is_falling && counter_stopped(obj->counter_jump);
 }
 
 bool map_object_move_left(MapObject *obj, Level *level) {
@@ -507,9 +507,9 @@ void map_object_adjust(MapObject *obj, Level* level) {
     counter_tick(obj->counter_x);
     counter_tick(obj->counter_y);
 
-    if (counter_value(obj->counter_jump) > 0) {
+    if (!counter_stopped(obj->counter_jump)) {
         if (map_object_test_up(obj, level)) {
-            if (counter_value(obj->counter_y) == 0) {
+            if (counter_stopped(obj->counter_y)) {
 				counter_tick(obj->counter_jump);
                 obj->position.y += 1;
 				counter_restart(obj->counter_y, -1);
@@ -519,7 +519,7 @@ void map_object_adjust(MapObject *obj, Level* level) {
 			counter_stop(obj->counter_jump);
     } else if (obj->is_falling) {
         if (map_object_test_down(obj, level)) {
-            if (counter_value(obj->counter_y) == 0) {
+            if (counter_stopped(obj->counter_y)) {
                 obj->position.y -= 1;
                 counter_restart(obj->counter_y, -1);
             }
@@ -527,7 +527,7 @@ void map_object_adjust(MapObject *obj, Level* level) {
             obj->is_falling = false;
             counter_stop(obj->counter_y);
 		}
-    } else if (map_object_test_down(obj, level) && counter_value(obj->counter_y) == 0) {
+    } else if (map_object_test_down(obj, level) && counter_stopped(obj->counter_y)) {
         obj->is_falling = true;
     }
 }
