@@ -4,7 +4,7 @@
 
 #include "game_objects.h"
 
-Dragon* dragon_new(MapObject *representation, bool is_bub, Animation **animation) {
+Dragon* dragon_new(MapObject *map_object, bool is_bub, Animation **animation) {
     Dragon* dragon = malloc(sizeof(Dragon));
 
     if (dragon == NULL) {
@@ -16,14 +16,14 @@ Dragon* dragon_new(MapObject *representation, bool is_bub, Animation **animation
     printf("+Dragon %p\n", dragon);
 #endif
 
-    dragon->representation = map_object_copy(representation);
+    dragon->map_object = map_object_copy(map_object);
 
-    if (dragon->representation == NULL) {
+    if (dragon->map_object == NULL) {
         dragon_delete(dragon);
         return NULL;
     }
 
-    dragon->respawn_position = dragon->representation->position;
+    dragon->respawn_position = dragon->map_object->position;
 
     dragon->score = 0;
     dragon->life = DRAGON_LIFE;
@@ -56,7 +56,7 @@ void dragon_delete(Dragon* dragon) {
                 animation_delete(dragon->animations[i]);
         }
 
-        map_object_delete(dragon->representation);
+        map_object_delete(dragon->map_object);
 
         free(dragon);
 
@@ -108,7 +108,7 @@ Dragon* create_bub(Image* texture, int y) {
     if (dragon == NULL)
         return NULL;
 
-    dragon->representation->look_right = true;
+    dragon->map_object->move_forward = true;
 
     return dragon;
 }
@@ -117,14 +117,14 @@ Dragon* create_bob(Image* texture, int y) {
     Dragon* dragon = create_bub(texture, y);
     if (dragon != NULL) {
         dragon->is_bub = false;
-        dragon->representation->look_right = false;
+        dragon->map_object->move_forward = false;
     }
 
     return dragon;
 }
 
 void dragon_adjust(Dragon *dragon, Level *level) {
-    map_object_adjust(dragon->representation, level);
+    map_object_adjust(dragon->map_object, level);
 
     if (dragon->hit) {
         dragon->hit_counter--;
@@ -135,7 +135,7 @@ void dragon_adjust(Dragon *dragon, Level *level) {
             dragon->invincible = true;
             dragon->invincibility_counter = DRAGON_INVINCIBILITY;
 
-            dragon->representation->position = dragon->respawn_position;
+            dragon->map_object->position = dragon->respawn_position;
             dragon->life--;
         }
     }
@@ -150,7 +150,7 @@ void dragon_adjust(Dragon *dragon, Level *level) {
         dragon->blow_counter--;
 }
 
-Monster* monster_new(MapObject* representation, MonsterDef* definition) {
+Monster* monster_new(MapObject* map_object, MonsterDef* definition) {
     Monster* monster = malloc(sizeof(Monster));
 
     if (monster == NULL) {
@@ -165,7 +165,7 @@ Monster* monster_new(MapObject* representation, MonsterDef* definition) {
 
     monster->next = NULL;
 
-    monster->representation = map_object_copy(representation);
+    monster->map_object = map_object_copy(map_object);
 
     for (int i = 0; i < MA_NUMBER; ++i) {
         monster->animation[i] = animation_copy(definition->animation[i]);
@@ -175,7 +175,7 @@ Monster* monster_new(MapObject* representation, MonsterDef* definition) {
         }
     }
 
-    if (monster->representation == NULL) {
+    if (monster->map_object == NULL) {
         monster_delete(monster);
         return NULL;
     }
@@ -192,7 +192,7 @@ void monster_delete(Monster* monster) {
     while (next != NULL) {
         t = next->next;
 
-        map_object_delete(next->representation);
+        map_object_delete(next->map_object);
 
         for (int i = 0; i < MA_NUMBER; ++i) {
             animation_delete(next->animation[i]);
@@ -260,8 +260,8 @@ Monster* monster_kill(Monster* list, Monster* monster) {
     return first;
 }
 
-Item* item_new(MapObject* representation, ItemDef* definition) {
-    if(representation == NULL || definition == NULL)
+Item* item_new(MapObject* map_object, ItemDef* definition) {
+    if(map_object == NULL || definition == NULL)
         return NULL;
 
     Item* item = malloc(sizeof(Item));
@@ -275,9 +275,9 @@ Item* item_new(MapObject* representation, ItemDef* definition) {
     printf("+Item %p\n", item);
 #endif
 
-    item->representation = map_object_copy(representation);
+    item->map_object = map_object_copy(map_object);
 
-    if (item->representation == NULL) {
+    if (item->map_object == NULL) {
         item_delete(item);
         return NULL;
     }
@@ -291,8 +291,8 @@ Item* item_new(MapObject* representation, ItemDef* definition) {
 void item_delete(Item* item) {
     Item* i = item, *t = NULL;
     while (i != NULL) {
-        if (i->representation != NULL)
-            map_object_delete(i->representation);
+        if (i->map_object != NULL)
+            map_object_delete(i->map_object);
 
         t = i->next;
         free(i);
@@ -336,12 +336,12 @@ Item *create_item(MapObject *position, Item *list, ItemDef *definitions[], int n
         return list;
 
     item->go_right = look_right;
-    map_object_jump(item->representation, level, ITEM_JUMP);
+    map_object_jump(item->map_object, level, ITEM_JUMP);
 
     if (item->go_right)
-        map_object_move_right(item->representation, level);
+        map_object_move_right(item->map_object, level);
     else
-        map_object_move_left(item->representation, level);
+        map_object_move_left(item->map_object, level);
 
     Item* last = list;
     if (last == NULL)
@@ -382,26 +382,27 @@ Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item) {
     }
 
     return first;
+ 
 }
 
 void items_adjust(Item* list, Level* level) {
     Item* it = list;
 
     while (it != NULL) {
-        map_object_adjust(it->representation, level);
+        map_object_adjust(it->map_object, level);
 
-        if (it->representation->moving_counter == 0 && (it->representation->jumping_counter > 0 || it->representation->is_falling)) {
+        if (map_object_can_move(it->map_object) && (counter_value(it->map_object->counter_jump) > 0 || it->map_object->is_falling)) {
             if (it->go_right)
-                map_object_move_right(it->representation, level);
+                map_object_move_right(it->map_object, level);
             else
-                map_object_move_left(it->representation, level);
+                map_object_move_left(it->map_object, level);
         }
         it = it->next;
     }
 }
 
-Bubble *bubble_new(MapObject *representation, Image *texture, bool go_right) {
-    if (representation == NULL || texture == NULL)
+Bubble *bubble_new(MapObject *map_object, Image *texture, bool go_right) {
+    if (map_object == NULL || texture == NULL)
         return NULL;
 
     Bubble* bubble = malloc(sizeof(Bubble));
@@ -418,8 +419,8 @@ Bubble *bubble_new(MapObject *representation, Image *texture, bool go_right) {
 
     bubble->next = NULL;
 
-    bubble->representation = map_object_copy(representation);
-    bubble->representation->look_right = go_right;
+    bubble->map_object = map_object_copy(map_object);
+    bubble->map_object->move_forward = go_right;
 
     bubble->animation = animation_new(BUBBLE_FRAMERATE);
 
@@ -432,7 +433,7 @@ Bubble *bubble_new(MapObject *representation, Image *texture, bool go_right) {
     sprite_delete(sprite1);
     sprite_delete(sprite2);
 
-    if (bubble->representation == NULL || bubble->animation == NULL) {
+    if (bubble->map_object == NULL || bubble->animation == NULL) {
         bubble_delete(bubble);
         return NULL;
     }
@@ -451,7 +452,7 @@ void bubble_delete(Bubble* bubble) {
     while (next != NULL) {
         t = next->next;
 
-        map_object_delete(next->representation);
+        map_object_delete(next->map_object);
         animation_delete(next->animation);
 
         free(next);
@@ -470,7 +471,7 @@ bool collide_previous_bubble(Bubble *a, Bubble *list) {
         if (t == a)
             break;
 
-        if (map_object_in_collision(t->representation, a->representation))
+        if (map_object_in_collision(t->map_object, a->map_object))
             return true;
 
         t = t->next;
@@ -494,8 +495,8 @@ Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
             if (bubble->captured != NULL && free_monster) {
                 // printf("freeing %p\n", bubble->captured);
                 bubble->captured->in_bubble = false;
-                bubble->captured->representation->position = bubble->representation->position;
-                bubble->captured->representation->is_falling = true;
+                bubble->captured->map_object->position = bubble->map_object->position;
+                bubble->captured->map_object->is_falling = true;
                 bubble->captured->angry = true;
             }
 
@@ -516,12 +517,12 @@ Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_positio
     Bubble* bubble = bubble_list, *t = NULL, *first = bubble_list;
 
     while (bubble != NULL)  {
-        if (bubble->representation->moving_counter == 0 && bubble->translate_counter == 0) {
+        if (map_object_can_move(bubble->map_object) && bubble->translate_counter == 0) {
             if(!collide_previous_bubble(bubble, first)) {
                 if (bubble->momentum > 0) {
-                    if (bubble->representation->look_right) {
-                        if (map_object_test_right(bubble->representation, level)) {
-                            map_object_move_right(bubble->representation, level);
+                    if (bubble->map_object->move_forward) {
+                        if (map_object_test_right(bubble->map_object, level)) {
+                            map_object_move_right(bubble->map_object, level);
                             bubble->momentum--;
                         }
                         else
@@ -529,26 +530,26 @@ Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_positio
                     }
 
                     else {
-                        if (map_object_test_left(bubble->representation, level)) {
-                            map_object_move_left(bubble->representation, level);
+                        if (map_object_test_left(bubble->map_object, level)) {
+                            map_object_move_left(bubble->map_object, level);
                             bubble->momentum--;
                         }
                         else
                             bubble->momentum = 0;
                     }
                 } else {
-                    if (bubble->representation->position.y != final_position.y) {
-                        bubble->representation->position.y += 1 * (bubble->representation->position.y < final_position.y ? 1 : -1);
+                    if (bubble->map_object->position.y != final_position.y) {
+                        bubble->map_object->position.y += 1 * (bubble->map_object->position.y < final_position.y ? 1 : -1);
                         bubble->translate_counter = BUBBLE_TRANSLATE_EVERY;
-                        bubble->go_up = bubble->representation->position.y < final_position.y;
+                        bubble->go_up = bubble->map_object->position.y < final_position.y;
                         bubble->translating = true;
                     }
 
-                    else if (bubble->representation->position.x != final_position.x) {
-                        if (bubble->representation->position.x < final_position.x)
-                            map_object_move_right(bubble->representation, level);
+                    else if (bubble->map_object->position.x != final_position.x) {
+                        if (bubble->map_object->position.x < final_position.x)
+                            map_object_move_right(bubble->map_object, level);
                         else
-                            map_object_move_left(bubble->representation, level);
+                            map_object_move_left(bubble->map_object, level);
 
                         bubble->translating = false;
                     }
@@ -557,8 +558,8 @@ Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_positio
         }
 
         else {
-            if (bubble->representation->moving_counter > 0)
-                bubble->representation->moving_counter--;
+            if (!map_object_can_move(bubble->map_object))
+                counter_tick(bubble->map_object->counter_x);
             if (bubble->translate_counter > 0)
                 bubble->translate_counter--;
         }
@@ -582,11 +583,11 @@ Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture) {
 
     dragon->blow_counter = DRAGON_BLOW;
 
-    Position p = dragon->representation->position;
-    p.x += dragon->representation->look_right ? 1 : -1;
+    Position p = dragon->map_object->position;
+    p.x += dragon->map_object->move_forward ? 1 : -1;
 
     MapObject* m = map_object_new(p, BUBBLE_WIDTH / TILE_WIDTH, BUBBLE_HEIGHT / TILE_HEIGHT);
-    Bubble* bubble = bubble_new(m, texture, dragon->representation->look_right);
+    Bubble* bubble = bubble_new(m, texture, dragon->map_object->move_forward);
 
     if (bubble == NULL) {
         return bubble_list;
