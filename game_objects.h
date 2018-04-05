@@ -94,17 +94,14 @@ Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item);
 
 void items_adjust(Item* list, Level* level);
 
-#define BUBBLE_TRANSLATE_EVERY 4
-
 typedef struct Bubble_ {
     MapObject* map_object;
     Animation* animation;
-    int momentum; // counter until it moves on its own
-    int time_left; // counter until it auto-burst
+
     Monster* captured; // NULL in the beginning
-    int translate_counter;
-    bool go_up;
-    bool translating;
+
+    Counter* counter_momentum; // counter until it moves on its own
+    Counter* counter_time_left; // counter until it auto-burst
     struct Bubble_* next; // NULL terminated
 } Bubble;
 

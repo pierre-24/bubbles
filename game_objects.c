@@ -439,10 +439,8 @@ Bubble *bubble_new(MapObject *map_object, Image *texture, bool go_right) {
     }
 
     bubble->captured = NULL;
-    bubble->momentum = BUBBLE_MOMENTUM;
-    bubble->time_left = BUBBLE_TIME;
-    bubble->translate_counter = 0;
-    bubble->translating = false;
+    bubble->counter_momentum = counter_new(BUBBLE_MOMENTUM, false, true);
+    bubble->counter_time_left = counter_new(BUBBLE_TIME, false, true);
 
     return bubble;
 }
@@ -454,6 +452,9 @@ void bubble_delete(Bubble* bubble) {
 
         map_object_delete(next->map_object);
         animation_delete(next->animation);
+
+        counter_delete(next->counter_momentum);
+        counter_delete(next->counter_time_left);
 
         free(next);
         next = t;
@@ -493,7 +494,6 @@ Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
             }
 
             if (bubble->captured != NULL && free_monster) {
-                // printf("freeing %p\n", bubble->captured);
                 bubble->captured->in_bubble = false;
                 bubble->captured->map_object->position = bubble->map_object->position;
                 bubble->captured->map_object->is_falling = true;
@@ -517,56 +517,45 @@ Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_positio
     Bubble* bubble = bubble_list, *t = NULL, *first = bubble_list;
 
     while (bubble != NULL)  {
-        if (map_object_can_move(bubble->map_object) && bubble->translate_counter == 0) {
+        counter_tick(bubble->map_object->counter_x);
+        counter_tick(bubble->map_object->counter_y);
+        counter_tick(bubble->counter_time_left);
+
+        if (map_object_can_move(bubble->map_object) && counter_value(bubble->map_object->counter_y) == 0) {
             if(!collide_previous_bubble(bubble, first)) {
-                if (bubble->momentum > 0) {
+                if (counter_value(bubble->counter_momentum) > 0) {
                     if (bubble->map_object->move_forward) {
-                        if (map_object_test_right(bubble->map_object, level)) {
-                            map_object_move_right(bubble->map_object, level);
-                            bubble->momentum--;
-                        }
+                        if (map_object_move_right(bubble->map_object, level))
+                            counter_tick(bubble->counter_momentum);
                         else
-                            bubble->momentum = 0;
+                            counter_stop(bubble->counter_momentum);
                     }
 
                     else {
-                        if (map_object_test_left(bubble->map_object, level)) {
-                            map_object_move_left(bubble->map_object, level);
-                            bubble->momentum--;
-                        }
+                        if (map_object_move_left(bubble->map_object, level))
+                            counter_tick(bubble->counter_momentum);
                         else
-                            bubble->momentum = 0;
+                            counter_stop(bubble->counter_momentum);
                     }
                 } else {
                     if (bubble->map_object->position.y != final_position.y) {
-                        bubble->map_object->position.y += 1 * (bubble->map_object->position.y < final_position.y ? 1 : -1);
-                        bubble->translate_counter = BUBBLE_TRANSLATE_EVERY;
-                        bubble->go_up = bubble->map_object->position.y < final_position.y;
-                        bubble->translating = true;
+                        bubble->map_object->is_falling = bubble->map_object->position.y > final_position.y;
+                        bubble->map_object->position.y += 1 * (bubble->map_object->is_falling ? -1 : 1);
+                        counter_restart(bubble->map_object->counter_y, -1);
                     }
 
                     else if (bubble->map_object->position.x != final_position.x) {
-                        if (bubble->map_object->position.x < final_position.x)
-                            map_object_move_right(bubble->map_object, level);
-                        else
-                            map_object_move_left(bubble->map_object, level);
+                        bubble->map_object->move_forward = bubble->map_object->position.x < final_position.x;
+                        bubble->map_object->position.x += 1 * (bubble->map_object->move_forward ? 1 : -1);
+                        counter_restart(bubble->map_object->counter_x, -1);
 
-                        bubble->translating = false;
+                        bubble->map_object->is_falling = false;
                     }
                 }
             }
         }
 
-        else {
-            if (!map_object_can_move(bubble->map_object))
-                counter_tick(bubble->map_object->counter_x);
-            if (bubble->translate_counter > 0)
-                bubble->translate_counter--;
-        }
-
-        bubble->time_left--;
-
-        if (bubble->time_left == 0) {
+        if (counter_value(bubble->counter_time_left) == 0) {
             t = bubble->next;
             first = bubble_burst(first, bubble, true);
             bubble = t;

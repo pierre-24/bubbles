@@ -137,7 +137,7 @@ void game_init() {
     
     write_log("# created bub");
 
-    game->monster_list = monsters_new_from_level(game->current_level);
+    game->monster_list = NULL; // monsters_new_from_level(game->current_level);
     game->bubble_list = NULL;
     game->item_list = NULL;
 
@@ -267,15 +267,10 @@ void blit_bubble(Bubble* bubble) {
         int shift_x = 0, shift_y = 0;
         compute_real_positions(bubble->map_object, &shift_x, &shift_y);
 
-        if (bubble->translating) {
-            float sy = (float) (BUBBLE_TRANSLATE_EVERY - bubble->translate_counter) / BUBBLE_TRANSLATE_EVERY * TILE_HEIGHT * (bubble->go_up ? 1 : -1);
-            shift_y = (int) sy;
-        }
-
         blit_animation(
                 *animation,
                 shift_x,
-                bubble->map_object->position.y, //* TILE_HEIGHT + shift_y,
+                shift_y,
                 false,
                 false);
     }
@@ -325,7 +320,7 @@ void game_loop_update_states() {
     Bubble* b = game->bubble_list;
     Bubble* t;
     while (b != NULL) {
-        if (map_object_in_collision(game->bub->map_object, b->map_object) && b->momentum < BUBBLE_MOMENTUM - 2) {
+        if (map_object_in_collision(game->bub->map_object, b->map_object) && counter_value(b->counter_momentum) < BUBBLE_MOMENTUM - 2) {
             t = b->next;
             if (b->captured != NULL) {
                 game->monster_list = monster_kill(game->monster_list, b->captured);
@@ -352,10 +347,9 @@ void game_loop_update_states() {
             // eventually capture monster in bubbles
             b = game->bubble_list;
             while (b != NULL) {
-                if (map_object_in_collision(m->map_object, b->map_object) && b->captured == NULL && b->momentum > 0) {
+                if (map_object_in_collision(m->map_object, b->map_object) && b->captured == NULL && b->counter_momentum > 0) {
                     m->in_bubble = true;
                     b->captured = m;
-                    b->momentum = 1;
                     break;
                 }
 
@@ -440,11 +434,11 @@ void game_loop() {
             game->current_screen = SCREEN_GAME_OVER;
         }
 
-        else if(game->monster_list == NULL && game->item_list == NULL){
+        /*else if(game->monster_list == NULL && game->item_list == NULL){
             game->paused = true;
             game->done = true;
             game->current_screen = SCREEN_WIN;
-        }
+        }*/
     }
 
     else {
@@ -471,6 +465,10 @@ void game_quit() {
         image_delete(game->texture_monsters);
         image_delete(game->texture_levels);
         image_delete(game->texture_dragons);
+        image_delete(game->texture_screens);
+
+        for (int j = 0; j < SCREEN_NUMBER; ++j)
+            sprite_delete(game->screens[j]);
 
         // definitions
         if (game->definition_items != NULL)  {
