@@ -33,4 +33,6 @@ void sprite_delete(Sprite* sprite);
 
 Sprite* sprite_copy(Sprite* origin);
 
+void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y);
+
 #endif

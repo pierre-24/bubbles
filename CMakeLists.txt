@@ -21,7 +21,7 @@ add_executable(bubbles
         game_object_definitions.h
         game_object_definitions.c
         datafile.c
-        datafile.h animations.c animations.h levels.c levels.h game_objects.c game_objects.h)
+        datafile.h animations.c animations.h levels.c levels.h game_objects.c game_objects.h game_main.c game_main.h game_base.c game_base.h)
 
 include_directories(bubbles ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
 target_link_libraries(bubbles ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} m)

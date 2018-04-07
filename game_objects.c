@@ -2,6 +2,8 @@
 // Created by pbeaujea on 3/30/18.
 //
 
+#include "game.h"
+#include "game_main.h"
 #include "game_objects.h"
 
 Dragon* dragon_new(MapObject *map_object, bool is_bub, Animation **animation) {
@@ -613,4 +615,87 @@ Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture) {
         return bubble_list;
     } else
         return bubble;
+}
+
+void blit_monster(Monster* monster) {
+    if (monster != NULL && !monster->in_bubble) {
+        Animation** animation = &(monster->animation[MA_NORMAL]);
+
+        if (monster->angry)
+            animation = &(monster->animation[MA_ANGRY]);
+
+        animation_animate(animation);
+
+        int px = 0, py = 0;
+        compute_real_pixel_positions(monster->map_object, &px, &py);
+
+        blit_animation(
+                *animation,
+                px,
+                py,
+                monster->map_object->move_forward,
+                false);
+
+    }
+}
+
+void blit_bubble(Bubble* bubble) {
+    if (bubble != NULL) {
+        Animation** animation = &(bubble->animation);
+
+        if (bubble->captured != NULL)
+            animation = &(bubble->captured->animation[MA_CAPTURED]);
+
+        animation_animate(animation);
+
+        int px = 0, py = 0;
+        compute_real_pixel_positions(bubble->map_object, &px, &py);
+
+        blit_animation(
+                *animation,
+                px,
+                py,
+                false,
+                false);
+    }
+}
+
+void blit_item(Item* item) {
+    if (item != NULL) {
+        blit_sprite(
+                item->definition->sprite,
+                item->map_object->position.x * TILE_WIDTH,
+                item->map_object->position.y * TILE_HEIGHT,
+                false, false);
+    }
+}
+
+void blit_dragon(Dragon *dragon) {
+    if (dragon != NULL) {
+        Animation** animation = &(dragon->animations[DA_NORMAL]);
+
+        if (dragon->hit)
+            animation = &(dragon->animations[DA_HIT]);
+
+        else if (dragon->invincible)
+            animation = &(dragon->animations[DA_INVICIBLE]);
+
+        else if (!counter_stopped(dragon->counter_blow))
+            animation = &(dragon->animations[DA_BLOW]);
+
+        else if (!map_object_can_move(dragon->map_object))
+            animation = &(dragon->animations[DA_MOVE]);
+
+        animation_animate(animation);
+
+        int px = 0, py = 0;
+        compute_real_pixel_positions(dragon->map_object, &px, &py);
+
+        blit_animation(
+                *animation,
+                px,
+                py,
+                dragon->map_object->move_forward,
+                false);
+    }
 }

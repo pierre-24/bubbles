@@ -155,280 +155,21 @@ void game_init() {
     game->current_screen = SCREEN_INSTRUCTIONS; // starts with instruction screen
 }
 
-void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y) {
-    if (sprite != NULL) {
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
-
-        glBegin(GL_QUADS);
-        glTexCoord2d(0.0, 1.0); glVertex2i(sx + (flip_x ? sprite->width : 0), sy + ((flip_y) ? sprite->height : 0));
-        glTexCoord2d(0.0, 0.0); glVertex2i(sx + (flip_x ? sprite->width : 0), sy + ((flip_y) ? 0 : sprite->height));
-        glTexCoord2d(1.0, 0.0); glVertex2i(sx + (flip_x ? 0 : sprite->width), sy + ((flip_y) ? 0 : sprite->height));
-        glTexCoord2d(1.0, 1.0); glVertex2i(sx + (flip_x ? 0 : sprite->width), sy + ((flip_y) ? sprite->height : 0));
-        glEnd();
-
-        glDisable(GL_TEXTURE_2D);
-    }
-}
-
-void blit_animation(Animation *animation, int sx, int sy, bool flip_x, bool flip_y) {
-    if (animation != NULL && animation->frame != NULL) {
-        blit_sprite(animation->frame, sx, sy, flip_x, flip_y);
-    }
-}
-
-void blit_level(Level* level) {
-    if (level != NULL) {
-        for (unsigned int y = 0; y < MAP_HEIGHT; ++y) {
-            for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
-                if (level->map[position_index((Position) {x, y})]) {
-                    blit_sprite(level->fill_tile, x * TILE_WIDTH, y * TILE_HEIGHT, 0, 0);
-                }
-            }
-        }
-
-        // repeat the bottom on top
-        for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
-            if (level->map[position_index((Position) {x, 0})]) {
-                blit_sprite(level->fill_tile, x * TILE_WIDTH, MAP_HEIGHT * TILE_HEIGHT, 0, 0);
-            }
-        }
-    }
-}
-
-void compute_real_positions(MapObject* obj, int* shiftx, int* shifty) {
-    EffectivePosition p = map_object_to_effective_position(obj);
-
-    *shiftx = (int) (p.x * TILE_WIDTH);
-    *shifty = (int) (p.y * TILE_HEIGHT);
-}
-
-void blit_dragon(Dragon *dragon) {
-    if (dragon != NULL) {
-        Animation** animation = &(dragon->animations[DA_NORMAL]);
-
-        if (dragon->hit)
-            animation = &(dragon->animations[DA_HIT]);
-
-        else if (dragon->invincible)
-            animation = &(dragon->animations[DA_INVICIBLE]);
-
-        else if (!counter_stopped(game->bub->counter_blow))
-            animation = &(dragon->animations[DA_BLOW]);
-
-        else if (!map_object_can_move(dragon->map_object))
-            animation = &(dragon->animations[DA_MOVE]);
-
-        animation_animate(animation);
-
-        int shift_x = 0, shift_y = 0;
-        compute_real_positions(dragon->map_object, &shift_x, &shift_y);
-
-        blit_animation(
-                *animation,
-                shift_x,
-                shift_y,
-                dragon->map_object->move_forward,
-                false);
-    }
-}
-
-void blit_monster(Monster* monster) {
-    if (monster != NULL && !monster->in_bubble) {
-        Animation** animation = &(monster->animation[MA_NORMAL]);
-
-        if (monster->angry)
-            animation = &(monster->animation[MA_ANGRY]);
-
-        animation_animate(animation);
-
-        int shift_x = 0, shift_y = 0;
-        compute_real_positions(monster->map_object, &shift_x, &shift_y);
-
-        blit_animation(
-                *animation,
-                shift_x,
-                shift_y,
-                monster->map_object->move_forward,
-                false);
-
-    }
-}
-
-void blit_bubble(Bubble* bubble) {
-    if (bubble != NULL) {
-        Animation** animation = &(bubble->animation);
-
-        if (bubble->captured != NULL)
-            animation = &(bubble->captured->animation[MA_CAPTURED]);
-
-        animation_animate(animation);
-
-        int shift_x = 0, shift_y = 0;
-        compute_real_positions(bubble->map_object, &shift_x, &shift_y);
-
-        blit_animation(
-                *animation,
-                shift_x,
-                shift_y,
-                false,
-                false);
-    }
-}
-
-void blit_item(Item* item) {
-    if (item != NULL) {
-        blit_sprite(item->definition->sprite, item->map_object->position.x * TILE_WIDTH, item->map_object->position.y * TILE_HEIGHT, false, false);
-    }
-}
-
-void game_loop_input_management() {
-    // KEY MANAGEMENT:
-    key_update_interval();
-
-    if (!game->bub->hit) {
-        if (game->key_pressed[E_LEFT] && game->key_pressed_interval[E_LEFT] == 0)
-            map_object_move_left(game->bub->map_object, game->current_level);
-
-        else if (game->key_pressed[E_RIGHT] && game->key_pressed_interval[E_RIGHT] == 0)
-            map_object_move_right(game->bub->map_object, game->current_level);
-
-        if (game->key_pressed[E_ACTION_1] && game->key_pressed_interval[E_ACTION_1] == 0)
-            map_object_jump(game->bub->map_object, game->current_level, DRAGON_JUMP);
-
-        if (game->key_pressed[E_ACTION_2] && game->key_pressed_interval[E_ACTION_2] == 0) {
-            game->bubble_list = dragon_blow(game->bub, game->bubble_list, game->texture_levels);
-            game->key_pressed_interval[E_ACTION_2] = BLOW_EVERY;
-        }
-    }
-}
-
-void game_loop_update_states() {
-    // test collisions with items
-    Item* it = game->item_list, *x = NULL;
-    while (it != NULL) {
-        if (map_object_in_collision(it->map_object, game->bub->map_object) && counter_stopped(it->counter_invulnerability)) {
-            x = it->next;
-            game->item_list = dragon_consume_item(game->bub, game->item_list, it);
-            it = x;
-        }
-        else
-            it = it->next;
-    }
-
-    // test collision between dragon and bubbles (generate item)
-    Bubble* b = game->bubble_list;
-    Bubble* t;
-    while (b != NULL) {
-        if (map_object_in_collision(game->bub->map_object, b->map_object) && counter_value(b->counter_momentum) < BUBBLE_MOMENTUM - 2) {
-            t = b->next;
-            if (b->captured != NULL) {
-                game->monster_list = monster_kill(game->monster_list, b->captured);
-                game->item_list = create_item(b->map_object, game->item_list, game->definition_items,
-                                              game->num_items, game->current_level, game->bub->map_object->move_forward);
-            }
-
-            game->bubble_list = bubble_burst(game->bubble_list, b, false);
-            b = t;
-        }
-        else
-            b = b->next;
-    }
-
-    // test collisions with monster
-    Monster* m = game->monster_list;
-    while (m != NULL) {
-        if (!m->in_bubble) {
-            if (map_object_in_collision(m->map_object, game->bub->map_object) && !game->bub->hit && !game->bub->invincible) {
-                game->bub->hit = true;
-                counter_restart(game->bub->counter_hit, -1);
-            }
-
-            // eventually capture monster in bubbles
-            b = game->bubble_list;
-            while (b != NULL) {
-                if (map_object_in_collision(m->map_object, b->map_object) && b->captured == NULL && b->counter_momentum > 0) {
-                    m->in_bubble = true;
-                    b->captured = m;
-                    break;
-                }
-
-                b = b->next;
-            }
-        }
-
-        m = m->next;
-    }
-
-    // adjust everything
-    monsters_adjust(game->monster_list, game->current_level, game->bub->map_object);
-    dragon_adjust(game->bub, game->current_level);
-    game->bubble_list = bubbles_adjut(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
-    items_adjust(game->item_list, game->current_level);
-}
-
-
-void game_loop_draw() {
-    blit_level(game->current_level); // level
-
-    // monsters
-    Monster* m = game->monster_list;
-    while (m != NULL) {
-        if (!m->in_bubble)
-            blit_monster(m);
-        m = m->next;
-    }
-
-    blit_dragon(game->bub); // dragon
-
-    // bubbles
-    Bubble* b = game->bubble_list;
-    while (b != NULL) {
-        blit_bubble(b);
-        b = b->next;
-    }
-
-    // items
-    Item* it = game->item_list;
-    while (it != NULL) {
-        blit_item(it);
-        it = it->next;
-    }
-
-    char buffer[25];
-    sprintf(buffer, "%d", game->bub->life);
-    glRasterPos2f(2 * TILE_WIDTH, 0 * TILE_HEIGHT);
-    glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char*) buffer);
-
-    sprintf(buffer, "%06d", game->bub->score);
-    glRasterPos2f(4 * TILE_WIDTH, 25 * TILE_HEIGHT);
-    glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char*) buffer);
-}
-
 void game_loop() {
+    // KEY MANAGEMENT:
+    key_update_interval(game);
+
     if (game->key_pressed[E_QUIT])
         exit(EXIT_SUCCESS);
 
+    // clear color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
     if (!game->paused) {
-        game_loop_input_management();
-        game_loop_update_states();
-        game_loop_draw();
-
-
-        if (game->bub->life < 0) {
-            game->paused = true;
-            game->done = true;
-            game->current_screen = SCREEN_GAME_OVER;
-        }
-
-        /*else if(game->monster_list == NULL && game->item_list == NULL){
-            game->paused = true;
-            game->done = true;
-            game->current_screen = SCREEN_WIN;
-        }*/
+        game_main_input_management(game);
+        game_main_update_states(game);
+        game_main_draw(game);
     }
 
     else {
@@ -495,24 +236,6 @@ void game_quit() {
 	close_log();
 }
 
-void key_down(int key) {
-    if (key >= E_SIZE)
-        return;
-
-    game->key_pressed[key] = true;
-    game->key_pressed_interval[key] = 1;
-}
-
-void key_up(int key) {
-    if (key >= E_SIZE)
-        return;
-
-    // printf("→ up: %d\n", key);
-
-    game->key_pressed[key] = false;
-
-}
-
 char skey_to_internal[] = {
         GLUT_KEY_DOWN, E_DOWN,
         GLUT_KEY_UP, E_UP,
@@ -521,8 +244,6 @@ char skey_to_internal[] = {
 };
 
 void game_special_key_down(int key, int x, int y) {
-    // printf("down(s): %d (%d)\n", key, GLUT_KEY_DOWN);
-
     int keyp = E_NONE;
 
     for (int i = 0; i < sizeof(skey_to_internal) / 2; ++i) {
@@ -531,12 +252,10 @@ void game_special_key_down(int key, int x, int y) {
     }
 
     if (keyp != E_NONE)
-        key_down(keyp);
+        key_down(game, keyp);
 }
 
 void game_special_key_up(int key, int x, int y) {
-    // printf("up(s): %d\n", key);
-
     int keyp = E_NONE;
 
     for (int i = 0; i < sizeof(skey_to_internal) / 2; ++i) {
@@ -545,7 +264,7 @@ void game_special_key_up(int key, int x, int y) {
     }
 
     if (keyp != E_NONE)
-        key_up(keyp);
+        key_up(game, keyp);
 }
 
 char key_to_internal[] = {
@@ -566,11 +285,10 @@ void game_key_down(unsigned char key, int x, int y) {
     }
 
     if (keyp != E_NONE)
-        key_down(keyp);
+        key_down(game, keyp);
 }
 
 void game_key_up(unsigned char key, int x, int y) {
-    // printf("down keyboard: %c\n", key);
 
     int keyp = E_NONE;
 
@@ -580,17 +298,5 @@ void game_key_up(unsigned char key, int x, int y) {
     }
 
     if (keyp != E_NONE)
-        key_up(keyp);
-}
-
-void key_update_interval() {
-    for (int i = 0; i < E_SIZE; ++i) {
-        if (game->key_pressed[i]) {
-            if (game->key_pressed_interval[i] <= 0)
-                game->key_pressed_interval[i] = FRAMES_BETWEEN_KEY_REPEAT;
-            else {
-                game->key_pressed_interval[i] -= 1;
-            }
-        }
-    }
+        key_up(game, keyp);
 }

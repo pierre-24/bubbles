@@ -2,6 +2,7 @@
 // Created by pbeaujea on 3/21/18.
 //
 
+#include "game_main.h"
 #include "game.h"
 #include "levels.h"
 
@@ -628,4 +629,30 @@ bool map_object_in_collision(MapObject* a, MapObject* b) {
         return true;
     else
         return false;
+}
+
+void blit_level(Level* level) {
+    if (level != NULL) {
+        for (unsigned int y = 0; y < MAP_HEIGHT; ++y) {
+            for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
+                if (level->map[position_index((Position) {x, y})]) {
+                    blit_sprite(level->fill_tile, x * TILE_WIDTH, y * TILE_HEIGHT, 0, 0);
+                }
+            }
+        }
+
+        // repeat the bottom on top
+        for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
+            if (level->map[position_index((Position) {x, 0})]) {
+                blit_sprite(level->fill_tile, x * TILE_WIDTH, MAP_HEIGHT * TILE_HEIGHT, 0, 0);
+            }
+        }
+    }
+}
+
+void compute_real_pixel_positions(MapObject *obj, int *px, int *py) {
+    EffectivePosition p = map_object_to_effective_position(obj);
+
+    *px = (int) (p.x * TILE_WIDTH);
+    *py = (int) (p.y * TILE_HEIGHT);
 }

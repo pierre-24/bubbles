@@ -1,3 +1,4 @@
+#include "game.h"
 #include "images.h"
 
 #define MAGIC_WHITESPACE "%*[ \n\t]"
@@ -182,3 +183,18 @@ Sprite* sprite_copy(Sprite* origin) {
     return dest;
 }
 
+void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y) {
+    if (sprite != NULL) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
+
+        glBegin(GL_QUADS);
+        glTexCoord2d(0.0, 1.0); glVertex2i(sx + (flip_x ? sprite->width : 0), sy + ((flip_y) ? sprite->height : 0));
+        glTexCoord2d(0.0, 0.0); glVertex2i(sx + (flip_x ? sprite->width : 0), sy + ((flip_y) ? 0 : sprite->height));
+        glTexCoord2d(1.0, 0.0); glVertex2i(sx + (flip_x ? 0 : sprite->width), sy + ((flip_y) ? 0 : sprite->height));
+        glTexCoord2d(1.0, 1.0); glVertex2i(sx + (flip_x ? 0 : sprite->width), sy + ((flip_y) ? sprite->height : 0));
+        glEnd();
+
+        glDisable(GL_TEXTURE_2D);
+    }
+}

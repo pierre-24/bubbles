@@ -24,4 +24,6 @@ void animation_animate(Animation **animation);
 
 Animation* animation_copy(Animation* src);
 
+void blit_animation(Animation *animation, int sx, int sy, bool flip_x, bool flip_y);
+
 #endif //BUBBLES_ANIMATIONS_H

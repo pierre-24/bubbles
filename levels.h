@@ -43,6 +43,8 @@ Level *level_new_from_string(char *buffer, int *position, Image *image_level, Mo
 Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monster_defs, int num_monster_defs,
                             unsigned int *num_levels);
 
+void blit_level(Level* level);
+
 #define MOVE_EVERY 4 // [frames]
 
 typedef struct MapObject_ {
@@ -86,5 +88,7 @@ typedef struct EfFectivePosition_ {
 
 EffectivePosition map_object_to_effective_position(MapObject* mobj);
 bool map_object_in_collision(MapObject* a, MapObject* b);
+
+void compute_real_pixel_positions(MapObject *obj, int *px, int *py);
 
 #endif //BUBBLES_LEVELS_H

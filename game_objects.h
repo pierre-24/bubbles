@@ -50,6 +50,8 @@ void dragon_delete(Dragon* dragon);
 
 void dragon_adjust(Dragon *dragon, Level *level);
 
+void blit_dragon(Dragon *dragon);
+
 #define POSITION_BUB (Position) {3, 1}
 #define POSITION_BOB (Position) {27, 1}
 
@@ -77,6 +79,8 @@ Monster* monsters_new_from_level(Level* level);
 Monster* monster_kill(Monster* list, Monster* monster);
 void monsters_adjust(Monster* list, Level* level, MapObject* target);
 
+void blit_monster(Monster* monster);
+
 #define ITEM_JUMP 8
 #define ITEM_INVULNERABILITY 30
 
@@ -96,6 +100,8 @@ Item *create_item(MapObject *position, Item *list, ItemDef *definitions[], int n
 Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item);
 
 void items_adjust(Item* list, Level* level);
+
+void blit_item(Item* item);
 
 typedef struct Bubble_ {
     MapObject* map_object;
@@ -125,5 +131,7 @@ Bubble* bubbles_adjut(Bubble *bubble_list, Level *level, Position final_position
 
 Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture);
 Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster);
+
+void blit_bubble(Bubble* bubble);
 
 #endif //BUBBLES_GAME_OBJECTS_H

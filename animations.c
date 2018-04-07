@@ -2,6 +2,7 @@
 // Created by pierre on 3/20/18.
 //
 
+#include "game.h"
 #include "animations.h"
 
 Animation *animation_new(int framerate) {
@@ -130,4 +131,10 @@ Animation* animation_copy(Animation* src) {
     }
 
     return dest;
+}
+
+void blit_animation(Animation *animation, int sx, int sy, bool flip_x, bool flip_y) {
+    if (animation != NULL && animation->frame != NULL) {
+        blit_sprite(animation->frame, sx, sy, flip_x, flip_y);
+    }
 }
