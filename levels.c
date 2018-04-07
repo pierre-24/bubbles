@@ -349,6 +349,8 @@ MapObject *map_object_new(Position position, int width, int height) {
     counter_stop(obj->counter_y);
     obj->counter_jump = counter_new(1, false, true);
     counter_stop(obj->counter_jump);
+    obj->counter_chase = counter_new(1, false, true);
+    counter_stop(obj->counter_chase);
     
     if (obj->counter_x == NULL || obj->counter_y == NULL || obj->counter_jump == NULL) {
 		map_object_delete(obj);
@@ -363,6 +365,7 @@ void map_object_delete(MapObject *obj) {
 		counter_delete(obj->counter_x);
 		counter_delete(obj->counter_y);
 		counter_delete(obj->counter_jump);
+        counter_delete(obj->counter_chase);
         free(obj);
 
 #ifdef VERBOSE_MEM
@@ -390,6 +393,7 @@ MapObject* map_object_copy(MapObject *src) {
     obj->counter_x = counter_copy(src->counter_x);
     obj->counter_y = counter_copy(src->counter_y);
     obj->counter_jump = counter_copy(src->counter_jump);
+    obj->counter_chase = counter_copy(src->counter_chase);
     
     return obj;
 }
@@ -506,6 +510,7 @@ bool map_object_jump(MapObject *obj, Level *level, int jump) {
 void map_object_adjust(MapObject *obj, Level* level) {
     counter_tick(obj->counter_x);
     counter_tick(obj->counter_y);
+    counter_tick(obj->counter_chase);
 
     if (!counter_stopped(obj->counter_jump)) {
         if (map_object_test_up(obj, level)) {
@@ -533,10 +538,10 @@ void map_object_adjust(MapObject *obj, Level* level) {
 }
 
 void map_object_chase(MapObject *moving, MapObject *target, Level *level, int speed) {
-    int random = rand();
-
     if (map_object_can_move(moving)) {
-        if (random % speed == 0) {
+        if (counter_stopped(moving->counter_chase)) {
+            counter_restart(moving->counter_chase, speed);
+
             if (moving->position.y > target->position.y){
                 // look for a hole
                 bool look_left = true, look_right = true;

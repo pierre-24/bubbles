@@ -54,6 +54,7 @@ typedef struct MapObject_ {
     Counter* counter_x;
     Counter* counter_y;
     Counter* counter_jump;
+    Counter* counter_chase;
     
     bool is_falling;
 } MapObject;

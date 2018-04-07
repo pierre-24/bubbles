@@ -267,6 +267,18 @@ Monster* monster_kill(Monster* list, Monster* monster) {
     return first;
 }
 
+void monsters_adjust(Monster* list, Level* level, MapObject* target) {
+    Monster* m = list;
+    while (m != NULL) {
+        if (!m->in_bubble) {
+            map_object_chase(m->map_object, target, level, m->definition->speed / (m->angry ? 2 : 1));
+            map_object_adjust(m->map_object, level);
+        }
+
+        m = m->next;
+    }
+}
+
 Item* item_new(MapObject* map_object, ItemDef* definition) {
     if(map_object == NULL || definition == NULL)
         return NULL;
@@ -522,7 +534,7 @@ Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
     return first;
 }
 
-Bubble* adjust_bubbles(Bubble* bubble_list, Level* level, Position final_position) {
+Bubble* bubbles_adjut(Bubble *bubble_list, Level *level, Position final_position) {
     Bubble* bubble = bubble_list, *t = NULL, *first = bubble_list;
 
     while (bubble != NULL)  {

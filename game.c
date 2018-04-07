@@ -360,20 +360,10 @@ void game_loop_update_states() {
         m = m->next;
     }
 
-    // move monsters
-    m = game->monster_list;
-    while (m != NULL) {
-        if (!m->in_bubble) {
-            map_object_chase(m->map_object, game->bub->map_object, game->current_level, m->definition->speed / (m->angry ? 2 : 1));
-            map_object_adjust(m->map_object, game->current_level);
-        }
-
-        m = m->next;
-    }
-
-    // adjust dragon & bubbles & items
+    // adjust everything
+    monsters_adjust(game->monster_list, game->current_level, game->bub->map_object);
     dragon_adjust(game->bub, game->current_level);
-    game->bubble_list = adjust_bubbles(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
+    game->bubble_list = bubbles_adjut(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
     items_adjust(game->item_list, game->current_level);
 }
 
