@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "game_main.h"
+#include "game_screens.h"
 
 #define WINDOW_WIDTH 512
 #define WINDOW_HEIGHT 432
@@ -14,6 +15,7 @@
 #define TEXTURE_LEVELS "assets/levels.ppm"
 #define TEXTURE_DRAGONS "assets/dragons.ppm"
 #define TEXTURE_SCREENS "assets/screens.ppm"
+#define TEXTURE_GAME "assets/game.ppm"
 
 #define DEFINITION_ITEMS "data/items.txt"
 #define DEFINITION_MONSTERS "data/monsters.txt"

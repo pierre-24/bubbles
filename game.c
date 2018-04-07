@@ -42,6 +42,7 @@ void game_init() {
     game->texture_levels = NULL;
     game->texture_dragons = NULL;
     game->texture_screens = NULL;
+    game->texture_game = NULL;
 
     game->texture_items = load_texture(TEXTURE_ITEMS);
     if (game->texture_items == NULL)
@@ -67,6 +68,17 @@ void game_init() {
     for (int i = 0; i < SCREEN_NUMBER; ++i) {
         game->screens[i] = sprite_new(game->texture_screens, 0, i * WINDOW_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT);
         if (game->screens[i] == NULL)
+            game_fail_exit();
+    }
+
+    game->texture_game = load_texture(TEXTURE_GAME);
+    if (game->texture_game == NULL)
+        game_fail_exit();
+
+    // sprites game elements
+    for (int i = 0; i < GE_NUMBER; ++i) {
+        game->game_elements[i] = sprite_new(game->texture_game, 0, i * GAME_ELEMENT_WIDTH, GAME_ELEMENT_WIDTH, GAME_ELEMENT_WIDTH);
+        if (game->game_elements[i] == NULL)
             game_fail_exit();
     }
 
@@ -127,19 +139,7 @@ void game_init() {
         game_fail_exit();
     }
 
-    game->current_level = game->levels; // ->next;
-
-    // dragons & monsters & bubbles
-    game->bub = create_bub(game->texture_dragons, 0);
-
-    if (game->bub == NULL)
-        game_fail_exit();
-    
-    write_log("# created bub");
-
-    game->monster_list = monsters_new_from_level(game->current_level);
-    game->bubble_list = NULL;
-    game->item_list = NULL;
+    game->current_level = game->levels;
 
     // keys
     for (int i = 0; i < E_SIZE; ++i)
@@ -148,12 +148,15 @@ void game_init() {
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    write_log("# READY TO PLAY !");
+    write_log("# READY TO START !");
 
     game->paused = true;
-    game->done = false;
-    game->current_screen = SCREEN_INSTRUCTIONS; // starts with instruction screen
+    game->main_started = false;
+    game->current_screen = SCREEN_WELCOME; // starts with welcome screen
+    game->key_interval = FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS;
 }
+
+int action = 0;
 
 void game_loop() {
     // KEY MANAGEMENT:
@@ -167,21 +170,19 @@ void game_loop() {
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
     if (!game->paused) {
-        game_main_input_management(game);
         game_main_update_states(game);
+        game_main_input_management(game);
         game_main_draw(game);
     }
 
+    else if(game->current_screen == SCREEN_WELCOME) {
+        game_welcome_screen_input_management(game, &action);
+        game_welcome_screen_draw(game, &action);
+    }
+
     else {
-        blit_sprite(game->screens[game->current_screen], 0, 0, false, false);
-
-        if (game->key_pressed[E_ACTION_1]) {
-            game->paused = false;
-            game->key_pressed[E_ACTION_1] = false;
-
-            if (game->done)
-                exit(EXIT_SUCCESS);
-        }
+        game_simple_screen_input_management(game, game->main_started);
+        game_simple_screen_draw(game);
     }
 
     glutSwapBuffers();
@@ -197,9 +198,14 @@ void game_quit() {
         image_delete(game->texture_levels);
         image_delete(game->texture_dragons);
         image_delete(game->texture_screens);
+        image_delete(game->texture_game);
 
         for (int j = 0; j < SCREEN_NUMBER; ++j)
             sprite_delete(game->screens[j]);
+
+        // sprites game elements
+        for (int i = 0; i < GE_NUMBER; ++i)
+            sprite_delete(game->game_elements[i]);
 
         // definitions
         if (game->definition_items != NULL)  {

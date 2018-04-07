@@ -10,6 +10,7 @@
 
 #define BLOW_EVERY 60
 
+void game_main_start(Game* game, Level* start_level);
 void game_main_input_management(Game *game);
 void game_main_update_states(Game *game);
 void game_main_draw(Game *game);

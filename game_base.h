@@ -7,7 +7,8 @@
 
 #include "game_objects.h"
 
-#define FRAMES_BETWEEN_KEY_REPEAT 4 // frames
+#define FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS 10 // frames
+#define FRAMES_BETWEEN_KEY_REPEAT_IN_GAME 4
 
 enum {
     E_NONE,
@@ -25,6 +26,7 @@ enum {
 };
 
 enum {
+    SCREEN_WELCOME,
     SCREEN_INSTRUCTIONS,
     SCREEN_GAME_OVER,
     SCREEN_WIN,
@@ -32,19 +34,30 @@ enum {
     SCREEN_NUMBER
 };
 
+#define GAME_ELEMENT_WIDTH 32
+#define GAME_ELEMENT_HEIGHT 32
+
+enum {
+    GE_ARROW,
+    GE_NUMBER
+};
 
 typedef struct Game_ {
     bool paused;
-    bool done;
-    int current_screen;
-    Sprite* screens[SCREEN_NUMBER];
+    bool main_started;
 
     // Image
+    Image* texture_game;
     Image* texture_items;
     Image* texture_monsters;
     Image* texture_levels;
     Image* texture_dragons;
     Image* texture_screens;
+
+    int current_screen;
+    Sprite* screens[SCREEN_NUMBER];
+
+    Sprite* game_elements[GE_NUMBER];
 
     // definitions
     ItemDef** definition_items;
@@ -66,10 +79,13 @@ typedef struct Game_ {
     // keys
     bool key_pressed[E_SIZE];
     int key_pressed_interval[E_SIZE];
+    int key_interval;
 } Game;
 
 void key_down(Game *game, int key);
 void key_up(Game *game, int key);
 void key_update_interval(Game* game);
+
+bool key_fired(Game* game, int key);
 
 #endif //BUBBLES_GAME_BASE_H
