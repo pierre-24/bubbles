@@ -131,7 +131,7 @@ void game_main_update_states(Game *game) {
         // adjust everything
         monsters_adjust(game->monster_list, game->current_level, game->bub->map_object);
         dragon_adjust(game->bub, game->current_level);
-        game->bubble_list = bubbles_adjut(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
+        game->bubble_list = bubbles_adjust(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
         items_adjust(game->item_list, game->current_level);
     }
 }

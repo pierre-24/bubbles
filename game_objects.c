@@ -256,6 +256,8 @@ Monster* monster_kill(Monster* list, Monster* monster) {
                 prev->next = m->next;
             }
 
+            write_log("# Killing a monster");
+
             m->next = NULL;
             monster_delete(monster);
 
@@ -393,6 +395,8 @@ Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item) {
                 prev->next = it->next;
             }
 
+            write_log("# Consuming item (gives %d points)", it->definition->points_given);
+
             it->next = NULL;
             item_delete(item);
 
@@ -509,6 +513,8 @@ Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
 
     while (b != NULL)  {
         if (b == bubble) {
+            write_log("# bursting a bubble");
+
             if (prev == NULL) {
                 first = b->next;
             }
@@ -517,6 +523,7 @@ Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
             }
 
             if (bubble->captured != NULL && free_monster) {
+                write_log("# bursting that bubble release a monster !");
                 bubble->captured->in_bubble = false;
                 bubble->captured->map_object->position = bubble->map_object->position;
                 bubble->captured->map_object->is_falling = true;
@@ -536,7 +543,7 @@ Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
     return first;
 }
 
-Bubble* bubbles_adjut(Bubble *bubble_list, Level *level, Position final_position) {
+Bubble* bubbles_adjust(Bubble *bubble_list, Level *level, Position final_position) {
     Bubble* bubble = bubble_list, *t = NULL, *first = bubble_list;
 
     while (bubble != NULL)  {
@@ -600,6 +607,8 @@ Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture) {
 
     MapObject* m = map_object_new(p, BUBBLE_WIDTH / TILE_WIDTH, BUBBLE_HEIGHT / TILE_HEIGHT);
     Bubble* bubble = bubble_new(m, texture, dragon->map_object->move_forward);
+
+    write_log("# Blowing a bubble");
 
     if (bubble == NULL) {
         return bubble_list;

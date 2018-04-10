@@ -127,7 +127,7 @@ typedef struct Bubble_ {
 Bubble *bubble_new(MapObject *map_object, Image *texture, bool go_right);
 void bubble_delete(Bubble* bubble);
 
-Bubble* bubbles_adjut(Bubble *bubble_list, Level *level, Position final_position);
+Bubble* bubbles_adjust(Bubble *bubble_list, Level *level, Position final_position);
 
 Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture);
 Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster);

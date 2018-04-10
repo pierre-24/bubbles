@@ -295,7 +295,6 @@ void game_key_down(unsigned char key, int x, int y) {
 }
 
 void game_key_up(unsigned char key, int x, int y) {
-
     int keyp = E_NONE;
 
     for (int i = 0; i < sizeof(key_to_internal) / 2; ++i) {

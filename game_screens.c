@@ -6,6 +6,8 @@
 
 void game_set_screen(Game* game, int screen) {
     if (screen >= 0 && screen < SCREEN_NUMBER) {
+        write_log("# set screen %d", screen);
+
         game->current_screen = screen;
         game->paused = true;
     }
@@ -14,8 +16,10 @@ void game_set_screen(Game* game, int screen) {
 void game_simple_screen_input_management(Game *game, bool return_to_game) {
 
     if (game->key_pressed[E_ACTION_1]) {
-        if (return_to_game)
+        if (return_to_game) {
             game->paused = false;
+            write_log("# back to game");
+        }
         else
             game_set_screen(game, SCREEN_WELCOME);
 
