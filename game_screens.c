@@ -4,15 +4,20 @@
 
 #include "game_screens.h"
 
+void game_set_screen(Game* game, int screen) {
+    if (screen >= 0 && screen < SCREEN_NUMBER) {
+        game->current_screen = screen;
+        game->paused = true;
+    }
+}
+
 void game_simple_screen_input_management(Game *game, bool return_to_game) {
 
     if (game->key_pressed[E_ACTION_1]) {
-        if (return_to_game) {
-            game->main_started = true;
+        if (return_to_game)
             game->paused = false;
-        }
         else
-            game->current_screen = SCREEN_WELCOME;
+            game_set_screen(game, SCREEN_WELCOME);
 
         game->key_pressed[E_ACTION_1] = false;
     }
@@ -31,7 +36,7 @@ void game_welcome_screen_input_management(Game *game, int* action) {
             game_main_start(game, game->current_level);
             game->paused = false;
         } else if (*action == 1) {
-            game->current_screen = SCREEN_INSTRUCTIONS;
+            game_set_screen(game, SCREEN_INSTRUCTIONS);
         }
 
         game->key_pressed[E_ACTION_1] = false;

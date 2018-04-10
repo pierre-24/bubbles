@@ -51,10 +51,8 @@ void game_main_input_management(Game *game) {
             game->key_pressed_interval[E_ACTION_2] = BLOW_EVERY;
         }
 
-        if (key_fired(game, E_SHOW_CONTROLS)) {
-            game->paused = true;
-            game->current_screen = SCREEN_INSTRUCTIONS;
-        }
+        if (key_fired(game, E_SHOW_CONTROLS))
+            game_set_screen(game, SCREEN_INSTRUCTIONS);
     }
 }
 
@@ -64,18 +62,17 @@ void game_main_update_states(Game *game) {
 
     // check if not win
     if (game->bub->life < 0) {
-        game->paused = true;
         game->main_started = false;
-        game->current_screen = SCREEN_GAME_OVER;
+        game_set_screen(game, SCREEN_GAME_OVER);
     }
 
     else if(game->monster_list == NULL && game->item_list == NULL){
-        game->paused = true;
         game->main_started = false;
-        game->current_screen = SCREEN_WIN;
+        game_set_screen(game, SCREEN_WIN);
     }
 
-    else {
+    else { // ok, game still running
+
         // test collisions with items
         Item* it = game->item_list, *x = NULL;
         while (it != NULL) {

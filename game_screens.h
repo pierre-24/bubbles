@@ -8,6 +8,8 @@
 #include "game_base.h"
 #include "game_main.h"
 
+void game_set_screen(Game* game, int screen);
+
 void game_simple_screen_input_management(Game *game, bool return_to_game);
 void game_simple_screen_draw(Game *game);
 

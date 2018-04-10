@@ -148,12 +148,11 @@ void game_init() {
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    write_log("# READY TO START !");
-
-    game->paused = true;
+    // initial screen
     game->main_started = false;
-    game->current_screen = SCREEN_WELCOME; // starts with welcome screen
-    game->key_interval = FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS;
+    game_set_screen(game, SCREEN_WELCOME); // starts with welcome screen
+
+    write_log("# READY TO START !");
 }
 
 int action = 0;
@@ -169,6 +168,7 @@ void game_loop() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
+    // update state && draw
     if (!game->paused) {
         game_main_update_states(game);
         game_main_input_management(game);
