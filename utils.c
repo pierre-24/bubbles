@@ -182,8 +182,9 @@ int counter_tick(Counter* counter) {
             counter_restart(counter, -1);
     }
 
-    else
+    else {
         counter->value += 1 * (counter->decrement ? -1 : 1);
+	}
 	
 	return counter->value;
 }

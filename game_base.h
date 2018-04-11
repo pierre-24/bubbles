@@ -6,6 +6,7 @@
 #define BUBBLES_GAME_BASE_H
 
 #include "game_objects.h"
+#include "score.h"
 
 #define FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS 10 // frames
 #define FRAMES_BETWEEN_KEY_REPEAT_IN_GAME 4
@@ -58,6 +59,9 @@ typedef struct Game_ {
     Sprite* screens[SCREEN_NUMBER];
 
     Sprite* game_elements[GE_NUMBER];
+    
+    // scores
+    Score* scores_list;
 
     // definitions
     ItemDef** definition_items;

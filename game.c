@@ -156,6 +156,8 @@ void game_init() {
 }
 
 int action = 0;
+int position = 0;
+char name[SCORE_NAME_SIZE + 1] = "aaaa\0";
 
 void game_loop() {
     // KEY MANAGEMENT:
@@ -177,7 +179,12 @@ void game_loop() {
 
     else if(game->current_screen == SCREEN_WELCOME) {
         game_welcome_screen_input_management(game, &action);
-        game_welcome_screen_draw(game, &action);
+        game_welcome_screen_draw(game, action);
+    }
+
+    else if(game->current_screen == SCREEN_WIN || game->current_screen == SCREEN_GAME_OVER) {
+        game_win_loose_screen_input_management(game, name, &position);
+        game_win_loose_screen_draw(game, name, position);
     }
 
     else {
