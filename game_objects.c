@@ -448,6 +448,7 @@ Bubble *bubble_new(MapObject *map_object, Image *texture, bool go_right) {
 
     bubble->map_object = map_object_copy(map_object);
     bubble->map_object->move_forward = go_right;
+    bubble->force = (EffectivePosition) {.0, .0};
 
     bubble->animation = animation_new(BUBBLE_FRAMERATE);
 
@@ -543,47 +544,61 @@ Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
     return first;
 }
 
+EffectivePosition force_expr(EffectivePosition pa, EffectivePosition pb, float k, float eq, float min) {
+    float ds = (float) (pow(pb.x - pa.x, 2) + pow(pb.y - pa.y, 2)), d = (float) sqrt(ds), dx = d - eq;
+
+    if (ds > pow(min, 2) || d == .0)
+        return (EffectivePosition) {.0, .0};
+    else {
+        return (EffectivePosition) {-2 * k * dx * (pa.x - pb.x) / d, -2 * k * dx * (pa.y - pb.y) / d};
+    }
+}
+
+void bubble_update_force(Bubble *a, Bubble *list, Position target) {
+    Bubble* t = list;
+    EffectivePosition pa = map_object_to_effective_position(a->map_object);
+    EffectivePosition f = force_expr(pa, (EffectivePosition) {(float) target.x, (float) target.y}, BUBBLE_K_POS, BUBBLE_REQ_POS, 50.f);
+    EffectivePosition nf;
+
+    while (t != NULL) {
+        if (t != a) {
+            nf = force_expr(pa, map_object_to_effective_position(t->map_object), BUBBLE_K_INTER, BUBBLE_REQ_INTER, 5.f);
+            f.x += nf.x;
+            f.y += nf.y;
+        }
+
+        t = t->next;
+    }
+
+    if (pow(f.x, 2) + pow(f.y, 2) >= BUBBLE_MIN_FORCES) {
+        a->force.x = f.x;
+        a->force.y = f.y;
+    }
+    else {
+        a->force.x = .0;
+        a->force.y = .0;
+    }
+}
+
+void bubbles_update_force(Bubble* list, Position target) {
+    Bubble* t = list;
+    while(t != NULL) {
+        bubble_update_force(t, list, target);
+        t = t->next;
+    }
+}
+
+bool number_between(unsigned int a, unsigned int min, unsigned int max) {
+    return a > min && a < max;
+}
+
 Bubble* bubbles_adjust(Bubble *bubble_list, Level *level, Position final_position) {
     Bubble* bubble = bubble_list, *t = NULL, *first = bubble_list;
 
-    while (bubble != NULL)  {
+    while (bubble != NULL) {
         counter_tick(bubble->map_object->counter_x);
         counter_tick(bubble->map_object->counter_y);
         counter_tick(bubble->counter_time_left);
-
-        if (map_object_can_move(bubble->map_object) && counter_stopped(bubble->map_object->counter_y)) {
-            if(!collide_previous_bubble(bubble, first)) {
-                if (!counter_stopped(bubble->counter_momentum)) {
-                    if (bubble->map_object->move_forward) {
-                        if (map_object_move_right(bubble->map_object, level))
-                            counter_tick(bubble->counter_momentum);
-                        else
-                            counter_stop(bubble->counter_momentum);
-                    }
-
-                    else {
-                        if (map_object_move_left(bubble->map_object, level))
-                            counter_tick(bubble->counter_momentum);
-                        else
-                            counter_stop(bubble->counter_momentum);
-                    }
-                } else {
-                    if (bubble->map_object->position.y != final_position.y) {
-                        bubble->map_object->is_falling = bubble->map_object->position.y > final_position.y;
-                        bubble->map_object->position.y += 1 * (bubble->map_object->is_falling ? -1 : 1);
-                        counter_restart(bubble->map_object->counter_y, -1);
-                    }
-
-                    else if (bubble->map_object->position.x != final_position.x) {
-                        bubble->map_object->move_forward = bubble->map_object->position.x < final_position.x;
-                        bubble->map_object->position.x += 1 * (bubble->map_object->move_forward ? 1 : -1);
-                        counter_restart(bubble->map_object->counter_x, -1);
-
-                        bubble->map_object->is_falling = false;
-                    }
-                }
-            }
-        }
 
         if (counter_stopped(bubble->counter_time_left)) {
             t = bubble->next;
@@ -593,6 +608,48 @@ Bubble* bubbles_adjust(Bubble *bubble_list, Level *level, Position final_positio
             bubble = bubble->next;
     }
 
+    bubble = first;
+    bubbles_update_force(first, final_position);
+
+    while (bubble != NULL)  {
+        if (map_object_can_move(bubble->map_object) && counter_stopped(bubble->map_object->counter_y)) {
+            if (!counter_stopped(bubble->counter_momentum)) {
+                if (bubble->map_object->move_forward) {
+                    if (map_object_move_right(bubble->map_object, level))
+                        counter_tick(bubble->counter_momentum);
+                    else
+                        counter_stop(bubble->counter_momentum);
+                }
+
+                else {
+                    if (map_object_move_left(bubble->map_object, level))
+                        counter_tick(bubble->counter_momentum);
+                    else
+                        counter_stop(bubble->counter_momentum);
+                }
+            } else {
+
+                if (bubble->force.y != .0 && fabsf(bubble->force.y) > fabsf(bubble->force.x) && number_between(bubble->map_object->position.y, 0, MAP_HEIGHT - 2)) {
+                    bubble->map_object->is_falling = bubble->force.y < 0;
+                    bubble->map_object->position.y += 1 * (bubble->map_object->is_falling ? -1 : 1);
+                    counter_restart(bubble->map_object->counter_y, -1);
+                }
+
+                else if (bubble->force.x != .0 && number_between(bubble->map_object->position.y, 0, MAP_WIDTH - 1)) {
+                    bubble->map_object->move_forward = bubble->force.x > 0;
+                    bubble->map_object->position.x += 1 * (bubble->map_object->move_forward ? 1 : -1);
+                    counter_restart(bubble->map_object->counter_x, -1);
+
+                    bubble->map_object->is_falling = false;
+                }
+
+            }
+        }
+
+        bubble = bubble->next;
+    }
+
+    // bubbles_update_force(first, final_position);
     return first;
 }
 

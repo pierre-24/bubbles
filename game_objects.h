@@ -111,6 +111,7 @@ typedef struct Bubble_ {
 
     Counter* counter_momentum; // counter until it moves on its own
     Counter* counter_time_left; // counter until it auto-burst
+    EffectivePosition force;
     struct Bubble_* next; // NULL terminated
 } Bubble;
 
@@ -123,6 +124,12 @@ typedef struct Bubble_ {
 
 #define BUBBLE_X 0
 #define BUBBLE_Y 32
+
+#define BUBBLE_K_POS 1.f
+#define BUBBLE_K_INTER 1.f
+#define BUBBLE_REQ_POS .5f
+#define BUBBLE_REQ_INTER 3.f
+#define BUBBLE_MIN_FORCES 10.f // avoid shakiness of the bubbles
 
 Bubble *bubble_new(MapObject *map_object, Image *texture, bool go_right);
 void bubble_delete(Bubble* bubble);

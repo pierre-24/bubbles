@@ -19,7 +19,7 @@ void game_main_start(Game* game, Level* start_level) {
         return;
 
     monster_delete(game->monster_list);
-    // game->monster_list = monsters_new_from_level(game->current_level);
+    game->monster_list = monsters_new_from_level(game->current_level);
 
     bubble_delete(game->bubble_list);
     game->bubble_list = NULL;
