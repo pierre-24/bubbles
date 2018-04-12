@@ -92,8 +92,9 @@ void game_main_update_states(Game *game) {
                 t = b->next;
                 if (b->captured != NULL) {
                     game->monster_list = monster_kill(game->monster_list, b->captured);
-                    game->item_list = create_item(b->map_object, game->item_list, game->definition_items,
-                                                  game->num_items, game->current_level, game->bub->map_object->move_forward);
+                    game->item_list = item_create(b->map_object, game->item_list, game->definition_items,
+                                                  game->num_items, game->current_level,
+                                                  game->bub->map_object->move_forward);
                 }
 
                 game->bubble_list = bubble_burst(game->bubble_list, b, false);

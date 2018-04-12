@@ -21,4 +21,6 @@ void score_delete(Score* score);
 Score* scores_new_from_file(FILE* f);
 bool scores_save_in_file(FILE* f, Score* list);
 
+Score* score_add(Score* list, unsigned int score, char name[SCORE_NAME_SIZE]);
+
 #endif //BUBBLES_SCORE_H

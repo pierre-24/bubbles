@@ -328,7 +328,7 @@ void item_delete(Item* item) {
     }
 }
 
-Item *create_item(MapObject *position, Item *list, ItemDef *definitions[], int num_item_definitions, Level *level,
+Item *item_create(MapObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level,
                   bool look_right) {
 
     if (position == NULL || num_item_definitions == 0)

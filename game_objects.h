@@ -95,7 +95,7 @@ typedef struct Item_ {
 Item* item_new(MapObject* map_object, ItemDef* definition);
 void item_delete(Item* item);
 
-Item *create_item(MapObject *position, Item *list, ItemDef *definitions[], int num_item_definitions, Level *level,
+Item *item_create(MapObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level,
                   bool look_right);
 Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item);
 

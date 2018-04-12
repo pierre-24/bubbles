@@ -9,6 +9,8 @@ find_package(GLUT REQUIRED)
 
 add_executable(bubbles
         ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES}
+        score.c
+        score.h
         game.c
         game.h
         game_object_definitions.h
