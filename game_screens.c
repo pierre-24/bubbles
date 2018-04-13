@@ -4,18 +4,6 @@
 
 #include "game_screens.h"
 
-void game_set_screen(Game* game, int screen) {
-    keys_reset(game);
-    game->key_interval = FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS;
-    
-    if (screen >= 0 && screen < SCREEN_NUMBER) {
-        write_log("# set screen %d", screen);
-
-        game->current_screen = screen;
-        game->paused = true;
-    }
-}
-
 void game_simple_screen_input_management(Game *game, bool return_to_game) {
 
     if (game->key_pressed[E_ACTION_1]) {
@@ -35,58 +23,64 @@ void game_simple_screen_draw(Game *game) {
 }
 
 
-void game_welcome_screen_input_management(Game *game, int* action) {
+int welcome_screen_action = 0;
 
+void game_welcome_screen_input_management(Game *game) {
     if (game->key_pressed[E_ACTION_1]) {
-        if (*action == 0) {
+        if (welcome_screen_action == 0) {
             game_main_start(game, game->current_level);
             game->paused = false;
             game->key_interval = FRAMES_BETWEEN_KEY_REPEAT_IN_GAME;
-        } else if (*action == 1) {
+        } else if (welcome_screen_action == 1) {
             game_set_screen(game, SCREEN_INSTRUCTIONS);
+        } else if (welcome_screen_action == 2) {
+            game_set_screen(game, SCREEN_SCORE);
         }
 
         game->key_pressed[E_ACTION_1] = false;
     }
 
     if (key_fired(game, E_UP) || key_fired(game, E_DOWN)) {
-        *action += game->key_pressed[E_UP] ? -1 : 1;
+        welcome_screen_action += game->key_pressed[E_UP] ? -1 : 1;
 
-        if (*action == -1)
-            *action = 2;
+        if (welcome_screen_action == -1)
+            welcome_screen_action = 2;
 
-        *action %= 3;
+        welcome_screen_action %= 3;
     }
 }
 
-void game_welcome_screen_draw(Game *game, int action) {
+void game_welcome_screen_draw(Game *game) {
     blit_sprite(game->screens[SCREEN_WELCOME], 0, 0, false, false);
-    blit_sprite(game->game_elements[GE_ARROW], 100, WS_BASE - action * WS_SHIFT, false, false);
+    blit_sprite(game->game_elements[GE_ARROW], 100, WS_BASE - welcome_screen_action * WS_SHIFT, false, false);
 }
 
-void game_win_loose_screen_input_management(Game *game, char name[SCORE_NAME_SIZE + 1], int* position) {
+int wl_position = 0;
+char wl_name[SCORE_NAME_SIZE + 1] = "aaaa";
+
+void game_win_loose_screen_input_management(Game *game) {
     if (game->key_pressed[E_ACTION_1]) {
-        game->scores_list = score_insert(game->scores_list, game->bub->score, name);
+        game->scores_list = score_insert(game->scores_list, game->bub->score, wl_name);
         game_set_screen(game, SCREEN_WELCOME);
         game->key_pressed[E_ACTION_1] = false;
     }
     
     if (key_fired(game, E_LEFT) || key_fired(game, E_RIGHT)) {
-        *position += game->key_pressed[E_LEFT] ? -1 : 1;
+        wl_position += game->key_pressed[E_LEFT] ? -1 : 1;
 
-        if (*position == -1)
-            *position = SCORE_NAME_SIZE - 1;
+        if (wl_position == -1)
+            wl_position = SCORE_NAME_SIZE - 1;
 
-        *position %= SCORE_NAME_SIZE;
+        wl_position %= SCORE_NAME_SIZE;
     }
     
     if (key_fired(game, E_UP) || key_fired(game, E_DOWN)) {
-        name[*position] += game->key_pressed[E_DOWN] ? -1 : 1;
+        wl_name[wl_position] += game->key_pressed[E_DOWN] ? -1 : 1;
 
-        if (name[*position] == 'z' + 1)
-            name[*position] = 'a';
-        else if (name[*position] == 'a' - 1)
-            name[*position] = 'z';
+        if (wl_name[wl_position] == 'z' + 1)
+            wl_name[wl_position] = 'a';
+        else if (wl_name[wl_position] == 'a' - 1)
+            wl_name[wl_position] = 'z';
     }
 }
 
@@ -104,7 +98,7 @@ void draw_centered(Font* font, char* s, int x, int y) {
     blit_text(font, s, x - bitmap_string_width(font, s) / 2, y);
 }
 
-void game_win_loose_screen_draw(Game *game, char name[SCORE_NAME_SIZE + 1], int position) {
+void game_win_loose_screen_draw(Game *game) {
     bool win = game->bub->life >= 0;
     Animation** animation;
     char buffer[100];
@@ -135,9 +129,44 @@ void game_win_loose_screen_draw(Game *game, char name[SCORE_NAME_SIZE + 1], int 
     draw_centered(game->font, buffer, WL_BASE_X, WL_BASE_Y - 50);
     strcpy(buffer, "ENTER YOU NAME:");
     draw_centered(game->font, buffer, WL_BASE_X, WL_BASE_Y - 100);
-    draw_centered(game->font, name, WL_BASE_X, WL_BASE_Y - 150);
+    draw_centered(game->font, wl_name, WL_BASE_X, WL_BASE_Y - 150);
     
     strcpy(buffer, "    ");
-    buffer[position] = '_';
+    buffer[wl_position] = '_';
     draw_centered(game->font, buffer, WL_BASE_X, WL_BASE_Y - 155);
+}
+
+int score_cpt = 0;
+
+void game_score_screen_draw(Game *game) {
+    char buffer[BUFF_SCORE];
+    Score* t = game->scores_list;
+    int i = 0;
+
+    score_cpt++;
+
+    while (t != NULL) {
+        sprintf(buffer, "%s %d", t->name, t->score);
+        draw_centered(game->font, buffer, WL_BASE_X, score_cpt * SCORE_SHIFT - (i * game->font->char_height));
+        i++;
+        t = t->next;
+    }
+
+    if (score_cpt > (i * game->font->char_height + WINDOW_HEIGHT) / SCORE_SHIFT + 1)
+        score_cpt = 0;
+}
+
+void game_set_screen(Game* game, int screen) {
+    keys_reset(game);
+    game->key_interval = FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS;
+
+    if (screen >= 0 && screen < SCREEN_NUMBER) {
+        write_log("# set screen %d", screen);
+
+        game->current_screen = screen;
+        game->paused = true;
+
+        if (screen == SCREEN_SCORE)
+            score_cpt = 0;
+    }
 }

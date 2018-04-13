@@ -53,6 +53,9 @@ void game_main_input_management(Game *game) {
 
         if (key_fired(game, E_SHOW_CONTROLS))
             game_set_screen(game, SCREEN_INSTRUCTIONS);
+
+        if (key_fired(game, E_SHOW_SCORE))
+            game_set_screen(game, SCREEN_SCORE);
     }
 }
 

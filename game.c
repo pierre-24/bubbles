@@ -179,10 +179,6 @@ void game_init() {
     write_log("# READY TO START !");
 }
 
-int action = 0;
-int position = 0;
-char name[SCORE_NAME_SIZE + 1] = "aaaa";
-
 void game_loop() {
     // KEY MANAGEMENT:
     keys_update_interval(game);
@@ -202,13 +198,18 @@ void game_loop() {
     }
 
     else if(game->current_screen == SCREEN_WELCOME) {
-        game_welcome_screen_input_management(game, &action);
-        game_welcome_screen_draw(game, action);
+        game_welcome_screen_input_management(game);
+        game_welcome_screen_draw(game);
     }
 
     else if(game->current_screen == SCREEN_WIN || game->current_screen == SCREEN_GAME_OVER) {
-        game_win_loose_screen_input_management(game, name, &position);
-        game_win_loose_screen_draw(game, name, position);
+        game_win_loose_screen_input_management(game);
+        game_win_loose_screen_draw(game);
+    }
+
+    else if(game->current_screen == SCREEN_SCORE) {
+        game_simple_screen_input_management(game, game->main_started);
+        game_score_screen_draw(game);
     }
 
     else {
@@ -295,7 +296,9 @@ char skey_to_internal[] = {
         GLUT_KEY_DOWN, E_DOWN,
         GLUT_KEY_UP, E_UP,
         GLUT_KEY_LEFT, E_LEFT,
-        GLUT_KEY_RIGHT, E_RIGHT
+        GLUT_KEY_RIGHT, E_RIGHT,
+        GLUT_KEY_F1, E_SHOW_SCORE,
+        GLUT_KEY_F2, E_SHOW_CONTROLS,
 };
 
 void game_special_key_down(int key, int x, int y) {
@@ -323,11 +326,9 @@ void game_special_key_up(int key, int x, int y) {
 }
 
 char key_to_internal[] = {
-        'x', E_ACTION_2,
         ' ', E_ACTION_1,
-        'p', E_PAUSE,
-        'm', E_SHOW_SCORE,
-        'c', E_SHOW_CONTROLS,
+        'x', E_ACTION_2,
+        'p', E_FREEZE,
         27, E_QUIT // esc key
 };
 

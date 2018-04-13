@@ -20,7 +20,8 @@ Score* score_new(unsigned int score, char name[SCORE_NAME_SIZE  + 1]);
 void score_delete(Score* score);
 
 Score* scores_new_from_file(FILE* f);
-bool scores_save_in_file(FILE* f, Score* list);
+
+void scores_save_in_file(FILE *f, Score *list);
 
 Score* score_insert(Score *list, unsigned int score, char name[SCORE_NAME_SIZE + 1]);
 void score_print(Score* list);

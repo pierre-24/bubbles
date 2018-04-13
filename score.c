@@ -63,7 +63,7 @@ Score* scores_new_from_file(FILE* f) {
     return list;
 }
 
-bool scores_save_in_file(FILE* f, Score* list) {
+void scores_save_in_file(FILE *f, Score *list) {
     Score* p = list;
     while (p != NULL) {
         fprintf(f, "%s %d\n", p->name, p->score);

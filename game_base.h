@@ -11,6 +11,9 @@
 #define FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS 10 // frames
 #define FRAMES_BETWEEN_KEY_REPEAT_IN_GAME 4
 
+#define WINDOW_WIDTH 512
+#define WINDOW_HEIGHT 432
+
 enum {
     E_NONE,
     E_LEFT,
@@ -19,7 +22,7 @@ enum {
     E_DOWN,
     E_ACTION_1, // i.e. "jump"
     E_ACTION_2, // i.e. "blow"
-    E_PAUSE,
+    E_FREEZE,
     E_SHOW_SCORE,
     E_SHOW_CONTROLS,
     E_QUIT,
@@ -31,7 +34,7 @@ enum {
     SCREEN_INSTRUCTIONS,
     SCREEN_GAME_OVER,
     SCREEN_WIN,
-    SCREEN_UNKNOWN,
+    SCREEN_SCORE,
     SCREEN_NUMBER
 };
 

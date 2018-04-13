@@ -262,7 +262,7 @@ void blit_text(Font* font, char* text, int x, int y) {
                 tx = 0;
                 ty += font->char_height;
             } else {
-                blit_sprite(font->characters[*p], x + tx, y + ty, false, false);
+                blit_sprite(font->characters[(int) *p], x + tx, y + ty, false, false);
                 tx += font->char_width;
             }
 

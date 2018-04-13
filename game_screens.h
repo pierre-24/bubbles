@@ -17,15 +17,19 @@ void game_simple_screen_draw(Game *game);
 #define WS_BASE 182 // pixels
 #define WS_SHIFT 38 // pixels
 
-void game_welcome_screen_input_management(Game *game, int* action);
-void game_welcome_screen_draw(Game *game, int action);
+void game_welcome_screen_input_management(Game *game);
+void game_welcome_screen_draw(Game *game);
 
 
-#define WL_BASE_X 256 // pixels
-#define WL_BASE_Y 250 // pixels
+#define WL_BASE_X (WINDOW_WIDTH / 2)
+#define WL_BASE_Y (WINDOW_HEIGHT / 2)
 #define WL_FRAMERATE 30
 
-void game_win_loose_screen_input_management(Game *game, char name[5], int* position);
-void game_win_loose_screen_draw(Game *game, char name[5], int position);
+void game_win_loose_screen_input_management(Game *game);
+void game_win_loose_screen_draw(Game *game);
+
+#define SCORE_SHIFT 2
+
+void game_score_screen_draw(Game *game);
 
 #endif //BUBBLES_GAME_SCREENS_H

@@ -7,9 +7,6 @@
 #include "game_main.h"
 #include "game_screens.h"
 
-#define WINDOW_WIDTH 512
-#define WINDOW_HEIGHT 432
-
 #define TEXTURE_ITEMS "assets/items.ppm"
 #define TEXTURE_MONSTERS "assets/monsters.ppm"
 #define TEXTURE_LEVELS "assets/levels.ppm"
