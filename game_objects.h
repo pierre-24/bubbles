@@ -125,11 +125,11 @@ typedef struct Bubble_ {
 #define BUBBLE_X 0
 #define BUBBLE_Y 32
 
-#define BUBBLE_K_POS 1.f
+#define BUBBLE_K_POS .5f
 #define BUBBLE_K_INTER 1.f
 #define BUBBLE_REQ_POS .5f
 #define BUBBLE_REQ_INTER 3.f
-#define BUBBLE_MIN_FORCES 10.f // avoid shakiness of the bubbles
+#define BUBBLE_MIN_FORCES 5.f // avoid shakiness of the bubbles
 
 Bubble *bubble_new(MapObject *map_object, Image *texture, bool go_right);
 void bubble_delete(Bubble* bubble);
