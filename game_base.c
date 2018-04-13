@@ -25,7 +25,7 @@ void key_up(Game *game, int key) {
     game->key_pressed[key] = false;
 }
 
-void key_update_interval(Game* game) {
+void keys_update_interval(Game *game) {
     if (game == NULL)
         return;
 
@@ -45,4 +45,9 @@ bool key_fired(Game* game, int key) {
         return false;
 
     return game->key_pressed[key] && game->key_pressed_interval[key] == 0;
+}
+
+void keys_reset(Game *game) {
+    for (int i = 0; i < E_SIZE; ++i)
+        game->key_pressed[i] = false;
 }

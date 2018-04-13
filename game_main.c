@@ -168,11 +168,10 @@ void game_main_draw(Game *game) {
     }
 
     char buffer[25];
+
     sprintf(buffer, "%d", game->bub->life);
-    glRasterPos2f(2 * TILE_WIDTH, 0 * TILE_HEIGHT);
-    glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char*) buffer);
+    blit_text(game->font, buffer,  TILE_WIDTH / 2, 0);
 
     sprintf(buffer, "%06d", game->bub->score);
-    glRasterPos2f(4 * TILE_WIDTH, 25 * TILE_HEIGHT);
-    glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char*) buffer);
+    blit_text(game->font, buffer, 4 * TILE_WIDTH, 25 * TILE_HEIGHT);
 }

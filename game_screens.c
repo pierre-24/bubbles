@@ -5,6 +5,7 @@
 #include "game_screens.h"
 
 void game_set_screen(Game* game, int screen) {
+    keys_reset(game);
     game->key_interval = FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS;
     
     if (screen >= 0 && screen < SCREEN_NUMBER) {
@@ -88,19 +89,18 @@ void game_win_loose_screen_input_management(Game *game, char name[5], int* posit
     }
 }
 
-int bitmap_string_width(void* font, char* s) {
+int bitmap_string_width(Font* font, char* s) {
     int sz = 0;
     while(*s != '\0') {
-        sz += glutBitmapWidth(font, *s);
+        sz += font->char_width;
         s++;
     }
     
     return sz;
 }
 
-void draw_centered(void* font, char* s, int x, int y) {
-    glRasterPos2f(x - bitmap_string_width(font, s) / 2, y);
-    glutBitmapString(font, (unsigned char*) s);
+void draw_centered(Font* font, char* s, int x, int y) {
+    blit_text(font, s, x - bitmap_string_width(font, s) / 2, y);
 }
 
 void game_win_loose_screen_draw(Game *game, char name[5], int position) {
@@ -118,7 +118,7 @@ void game_win_loose_screen_draw(Game *game, char name[5], int position) {
         strcpy(buffer, "DAMN, YOU LOOSE! :(");
     }
         
-    draw_centered(GLUT_BITMAP_HELVETICA_18, buffer, WL_BASE_X, WL_BASE_Y);
+    draw_centered(game->font, buffer, WL_BASE_X, WL_BASE_Y);
     
     (*animation)->framerate = WL_FRAMERATE;
     
@@ -131,12 +131,12 @@ void game_win_loose_screen_draw(Game *game, char name[5], int position) {
             false);
     
     sprintf(buffer, "Your final score is %d", game->bub->score);
-    draw_centered(GLUT_BITMAP_HELVETICA_18, buffer, WL_BASE_X, WL_BASE_Y - 50);
+    draw_centered(game->font, buffer, WL_BASE_X, WL_BASE_Y - 50);
     strcpy(buffer, "ENTER YOU NAME:");
-    draw_centered(GLUT_BITMAP_HELVETICA_18, buffer, WL_BASE_X, WL_BASE_Y - 100);
-    draw_centered(GLUT_BITMAP_9_BY_15, name, WL_BASE_X, WL_BASE_Y - 150);
+    draw_centered(game->font, buffer, WL_BASE_X, WL_BASE_Y - 100);
+    draw_centered(game->font, name, WL_BASE_X, WL_BASE_Y - 150);
     
     strcpy(buffer, "    ");
     buffer[position] = '_';
-    draw_centered(GLUT_BITMAP_9_BY_15, buffer, WL_BASE_X, WL_BASE_Y - 155);
+    draw_centered(game->font, buffer, WL_BASE_X, WL_BASE_Y - 155);
 }

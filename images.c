@@ -63,7 +63,7 @@ Image* image_new_from_file(FILE *f)  {
             image->pixels[(y * image->width + x) * 4 + 2] = (GLubyte) fgetc(f);
 
             if(memcmp(transp, image->pixels + (y * image->width + x) * 4, 3) == 0)
-                image->pixels[(y * image->width + x) * 4 + 3] = 0;
+                memset(image->pixels + (y * image->width + x) * 4, 0, 3 * sizeof(GLubyte)); // transparent black pixel
             else
                 image->pixels[(y * image->width + x) * 4 + 3] = 255;
         }
@@ -196,5 +196,77 @@ void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y) {
         glEnd();
 
         glDisable(GL_TEXTURE_2D);
+    }
+}
+
+Font* font_new(Image* font_image, int char_width, int char_height) {
+    if (font_image == NULL)
+        return NULL;
+
+    Font* font = malloc(sizeof(Font));
+
+    if (font == NULL) {
+        write_log("! cannot allocate font");
+        return NULL;
+    }
+
+#ifdef VERBOSE_MEM
+    printf("+Font\n", font);
+#endif
+
+    font->char_width = char_width;
+    font->char_height = char_height;
+    font->font = font_image;
+
+    memset(font->characters, 0, FONT_MAX_CHAR * sizeof(Sprite*));
+
+    int char_per_line = font_image->width / char_width;
+    int imx, imy;
+
+    for (int i = 0; i < FONT_MAX_CHAR; ++i) {
+        imx = (i % char_per_line) * char_width;
+        imy = i / char_per_line * char_height;
+
+        font->characters[i] = sprite_new(font_image, imx, imy, char_width, char_height);
+
+        if (font->characters[i] == NULL) {
+            font_delete(font);
+            return NULL;
+        }
+    }
+
+    return font;
+}
+
+void font_delete(Font* font) {
+    if (font != NULL) {
+        for (int i = 0; i < 256; ++i) {
+            sprite_delete(font->characters[i]);
+        }
+
+        free(font);
+#ifdef VERBOSE_MEM
+        printf("-Font\n", font);
+#endif
+    }
+}
+
+void blit_text(Font* font, char* text, int x, int y) {
+    if (font != NULL && text != NULL) {
+        int tx = 0;
+        int ty = 0;
+
+        char* p = text;
+        while (*p != '\0') {
+            if (*p == '\n') {
+                tx = 0;
+                ty += font->char_height;
+            } else {
+                blit_sprite(font->characters[*p], x + tx, y + ty, false, false);
+                tx += font->char_width;
+            }
+
+            p++;
+        }
     }
 }

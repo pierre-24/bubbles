@@ -16,6 +16,7 @@
 #define TEXTURE_DRAGONS "assets/dragons.ppm"
 #define TEXTURE_SCREENS "assets/screens.ppm"
 #define TEXTURE_GAME "assets/game.ppm"
+#define TEXTURE_FONT "assets/font.ppm"
 
 #define DEFINITION_ITEMS "data/items.txt"
 #define DEFINITION_MONSTERS "data/monsters.txt"

@@ -35,4 +35,19 @@ Sprite* sprite_copy(Sprite* origin);
 
 void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y);
 
+
+#define FONT_MAX_CHAR 256
+
+typedef struct Font_ {
+	Image* font;
+	Sprite* characters[FONT_MAX_CHAR];
+    int char_width;
+    int char_height;
+} Font;
+
+Font* font_new(Image* font_image, int char_width, int char_height);
+void font_delete(Font* font);
+
+void blit_text(Font* font, char* text, int x, int y);
+
 #endif

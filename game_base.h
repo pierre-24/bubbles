@@ -54,11 +54,14 @@ typedef struct Game_ {
     Image* texture_levels;
     Image* texture_dragons;
     Image* texture_screens;
+    Image* texture_font;
 
     int current_screen;
     Sprite* screens[SCREEN_NUMBER];
 
     Sprite* game_elements[GE_NUMBER];
+
+    Font* font;
     
     // scores
     Score* scores_list;
@@ -88,7 +91,8 @@ typedef struct Game_ {
 
 void key_down(Game *game, int key);
 void key_up(Game *game, int key);
-void key_update_interval(Game* game);
+void keys_update_interval(Game *game);
+void keys_reset(Game *game);
 
 bool key_fired(Game* game, int key);
 

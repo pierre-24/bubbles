@@ -64,6 +64,10 @@ void game_init() {
     if (game->texture_screens == NULL)
         game_fail_exit();
 
+    game->texture_font = load_texture(TEXTURE_FONT);
+    if (game->texture_font == NULL)
+        game_fail_exit();
+
     // sprites for screen
     for (int i = 0; i < SCREEN_NUMBER; ++i) {
         game->screens[i] = sprite_new(game->texture_screens, 0, i * WINDOW_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -81,6 +85,11 @@ void game_init() {
         if (game->game_elements[i] == NULL)
             game_fail_exit();
     }
+
+    // font
+    game->font = font_new(game->texture_font, 16, 32);
+    if (game->font == NULL)
+        game_fail_exit();
 
     // load definition
     game->num_items = 0;
@@ -141,9 +150,11 @@ void game_init() {
 
     game->current_level = game->levels;
 
-    // keys
-    for (int i = 0; i < E_SIZE; ++i)
-        game->key_pressed[i] = false;
+    // set things
+    game->monster_list = NULL;
+    game->item_list = NULL;
+    game->bubble_list = NULL;
+    game->bub = NULL;
 
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -157,11 +168,11 @@ void game_init() {
 
 int action = 0;
 int position = 0;
-char name[SCORE_NAME_SIZE + 1] = "aaaa\0";
+char name[SCORE_NAME_SIZE + 1] = "aaaa";
 
 void game_loop() {
     // KEY MANAGEMENT:
-    key_update_interval(game);
+    keys_update_interval(game);
 
     if (game->key_pressed[E_QUIT])
         exit(EXIT_SUCCESS);
@@ -206,6 +217,7 @@ void game_quit() {
         image_delete(game->texture_dragons);
         image_delete(game->texture_screens);
         image_delete(game->texture_game);
+        image_delete(game->texture_font);
 
         for (int j = 0; j < SCREEN_NUMBER; ++j)
             sprite_delete(game->screens[j]);
@@ -213,6 +225,9 @@ void game_quit() {
         // sprites game elements
         for (int i = 0; i < GE_NUMBER; ++i)
             sprite_delete(game->game_elements[i]);
+
+        // font
+        font_delete(game->font);
 
         // definitions
         if (game->definition_items != NULL)  {
