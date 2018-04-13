@@ -297,7 +297,7 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
     while(position_in_buffer != -1 && index < num) {
         Level* level = level_new_from_string(buffer, &position_in_buffer, image_level, base_monster_defs, num_monster_defs);
         if (level != NULL) {
-            write_log("# - adding level %d", index);
+            write_log("# >>> adding level %d", index);
             if (beg != NULL) {
                 prev->next = level;
                 prev = prev->next;

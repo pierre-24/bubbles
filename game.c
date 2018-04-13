@@ -103,7 +103,7 @@ void game_init() {
         game_fail_exit();
     }
     else
-        write_log("# opening item def file %s", DEFINITION_ITEMS);
+        write_log("# ------> opening item def file %s", DEFINITION_ITEMS);
 
     game->definition_items = item_defs_from_file(f, game->texture_items, &(game->num_items));
     fclose(f);
@@ -118,7 +118,7 @@ void game_init() {
         game_fail_exit();
     }
     else
-        write_log("# opening monster def file %s", DEFINITION_MONSTERS);
+        write_log("# ------> opening monster def file %s", DEFINITION_MONSTERS);
 
     game->definition_monsters = monster_defs_from_file(f, game->texture_monsters, &(game->num_monsters));
     fclose(f);
@@ -137,7 +137,7 @@ void game_init() {
         game_fail_exit();
     }
     else
-        write_log("# opening level file %s", FILE_LEVELS);
+        write_log("# ------> opening level file %s", FILE_LEVELS);
 
     game->levels = levels_new_from_file(f, game->texture_levels, game->definition_monsters, game->num_monsters,
                                         &(game->num_levels));
@@ -155,6 +155,19 @@ void game_init() {
     game->item_list = NULL;
     game->bubble_list = NULL;
     game->bub = NULL;
+
+    // scores (if the file does not exists, it will be created later)
+    game->scores_list = NULL;
+
+    f = fopen(FILE_SCORES, "r");
+    if (f != NULL) {
+        write_log("# ------> inserting scores from file %s", FILE_SCORES);
+        game->scores_list = scores_new_from_file(f);
+        fclose(f);
+    }
+
+    else
+        write_log("# No scores yet");
 
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -254,6 +267,20 @@ void game_quit() {
         monster_delete(game->monster_list);
         bubble_delete(game->bubble_list);
         item_delete(game->item_list);
+
+        // scores
+        if (game->scores_list != NULL) {
+            FILE *f = fopen(FILE_SCORES, "w");
+            if (f != NULL) {
+                scores_save_in_file(f, game->scores_list);
+                fclose(f);
+            }
+
+            else
+                write_log("! unable to open %s to save scores :(", FILE_SCORES);
+
+            score_delete(game->scores_list);
+        }
 
         // and finally:
         free(game);

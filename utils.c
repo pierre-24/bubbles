@@ -45,7 +45,7 @@ char* file_get_content(FILE* f) {
     long length = ftell (f);
     fseek (f, 0, SEEK_SET);
 
-    char* buffer = malloc(length * sizeof(char));
+    char* buffer = malloc((length + 1) * sizeof(char));
     if (buffer == NULL) {
         write_log("! cannot allocate buffer to read file (size=%d)", length);
         fclose(f);
@@ -53,6 +53,7 @@ char* file_get_content(FILE* f) {
     }
 
     fread(buffer, 1, (size_t) length, f);
+    buffer[length] = '\0';
 
     return buffer;
 }

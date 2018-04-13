@@ -22,6 +22,7 @@
 #define DEFINITION_MONSTERS "data/monsters.txt"
 
 #define FILE_LEVELS "data/levels.txt"
+#define FILE_SCORES "data/scores.txt"
 
 void game_special_key_down(int key, int x, int y);
 void game_special_key_up(int key, int x, int y);

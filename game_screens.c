@@ -64,8 +64,9 @@ void game_welcome_screen_draw(Game *game, int action) {
     blit_sprite(game->game_elements[GE_ARROW], 100, WS_BASE - action * WS_SHIFT, false, false);
 }
 
-void game_win_loose_screen_input_management(Game *game, char name[5], int* position) {
+void game_win_loose_screen_input_management(Game *game, char name[SCORE_NAME_SIZE + 1], int* position) {
     if (game->key_pressed[E_ACTION_1]) {
+        game->scores_list = score_insert(game->scores_list, game->bub->score, name);
         game_set_screen(game, SCREEN_WELCOME);
         game->key_pressed[E_ACTION_1] = false;
     }
@@ -103,7 +104,7 @@ void draw_centered(Font* font, char* s, int x, int y) {
     blit_text(font, s, x - bitmap_string_width(font, s) / 2, y);
 }
 
-void game_win_loose_screen_draw(Game *game, char name[5], int position) {
+void game_win_loose_screen_draw(Game *game, char name[SCORE_NAME_SIZE + 1], int position) {
     bool win = game->bub->life >= 0;
     Animation** animation;
     char buffer[100];

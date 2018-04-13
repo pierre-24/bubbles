@@ -8,19 +8,21 @@
 #include "utils.h"
 
 #define SCORE_NAME_SIZE 4
+#define BUFF_SCORE 255
 
 typedef struct Score_ {
     unsigned int score;
-    char name[SCORE_NAME_SIZE];
+    char name[SCORE_NAME_SIZE + 1];
     struct Score_* next;
 } Score;
 
-Score* score_new(unsigned int score, char name[SCORE_NAME_SIZE]);
+Score* score_new(unsigned int score, char name[SCORE_NAME_SIZE  + 1]);
 void score_delete(Score* score);
 
 Score* scores_new_from_file(FILE* f);
 bool scores_save_in_file(FILE* f, Score* list);
 
-Score* score_add(Score* list, unsigned int score, char name[SCORE_NAME_SIZE]);
+Score* score_insert(Score *list, unsigned int score, char name[SCORE_NAME_SIZE + 1]);
+void score_print(Score* list);
 
 #endif //BUBBLES_SCORE_H
