@@ -60,11 +60,16 @@ void game_setup_current_level(Game *game) {
 
 void game_main_input_management(Game *game) {
     if (game != NULL) {
-        if (!game->bub->hit && !game->bub->map_object->falling_from_above) {
+        if (key_fired(game, E_FREEZE)) {
+            game->freeze = !game->freeze;
+            game->key_pressed_interval[E_FREEZE] = FREEZE_EVERY;
+        }
+
+        if (!game->bub->hit && !game->bub->map_object->falling_from_above && !game->freeze) {
             if (key_fired(game, E_LEFT))
                 map_object_move_left(game->bub->map_object, game->current_level);
 
-            else if (key_fired(game, E_RIGHT))
+            if (key_fired(game, E_RIGHT))
                 map_object_move_right(game->bub->map_object, game->current_level);
 
             if (key_fired(game, E_ACTION_1))
@@ -102,7 +107,7 @@ void game_main_update_states(Game *game) {
             game_next_level(game);
         }
 
-        else { // ok, game still running
+        else if (!game->freeze) { // ok, game still running
             counter_tick(game->counter_end_this_level);
 
             // test collisions with items
@@ -188,16 +193,16 @@ void game_main_draw(Game *game) {
             Monster* m = game->monster_list;
             while (m != NULL) {
                 if (!m->in_bubble)
-                    blit_monster(m);
+                    blit_monster(m, game->freeze);
                 m = m->next;
             }
 
-            blit_dragon(game->bub, 0); // dragon
+            blit_dragon(game->bub, game->freeze, 0); // dragon
 
             // bubbles
             Bubble* b = game->bubble_list;
             while (b != NULL) {
-                blit_bubble(b);
+                blit_bubble(b, game->freeze);
                 b = b->next;
             }
 
@@ -221,11 +226,14 @@ void game_main_draw(Game *game) {
             if (game->previous_level != NULL) {
                 int sy = counter_value(game->counter_next_level) * WINDOW_HEIGHT / NEXT_LEVEL_TRANSITION;
                 blit_level(game->previous_level, sy);
-                blit_dragon(game->bub, sy); // dragon
+                blit_dragon(game->bub, NULL, sy); // dragon
             }
 
             blit_level(game->current_level, -WINDOW_HEIGHT + counter_value(game->counter_next_level) * WINDOW_HEIGHT / NEXT_LEVEL_TRANSITION);
         }
+
+        if (game->freeze)
+            blit_text(game->font, "PAUSED", 15 * TILE_WIDTH, 25 * TILE_HEIGHT);
     }
 
 }

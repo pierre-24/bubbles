@@ -42,7 +42,9 @@ enum {
 #define GAME_ELEMENT_HEIGHT 32
 
 #define NEXT_LEVEL_TRANSITION 120 // [frames]
-#define UNTIL_NEXT_LEVEL 120 // [frames]
+#define UNTIL_NEXT_LEVEL 600 // [frames]
+
+#define FREEZE_EVERY 30 // [frames]
 
 enum {
     GE_ARROW,
@@ -52,6 +54,7 @@ enum {
 typedef struct Game_ {
     bool paused;
     bool main_started;
+    bool freeze;
 
     // Image
     Image* texture_game;

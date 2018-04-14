@@ -180,6 +180,7 @@ void game_init() {
 
     // initial screen
     game->main_started = false;
+    game->freeze = false;
     game_set_screen(game, SCREEN_WELCOME); // starts with welcome screen
 
     write_log("# READY TO START !");
@@ -196,7 +197,6 @@ void game_loop() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
-    // update state && draw
     if (!game->paused) {
         game_main_update_states(game);
         game_main_input_management(game);
@@ -338,6 +338,7 @@ char key_to_internal[] = {
         'x', E_ACTION_2,
         'X', E_ACTION_2,
         'p', E_FREEZE,
+        'P', E_FREEZE,
         27, E_QUIT // esc key
 };
 

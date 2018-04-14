@@ -669,14 +669,15 @@ Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture) {
         return bubble;
 }
 
-void blit_monster(Monster* monster) {
+void blit_monster(Monster *monster, bool frozen) {
     if (monster != NULL && !monster->in_bubble) {
         Animation** animation = &(monster->animation[MA_NORMAL]);
 
         if (monster->angry)
             animation = &(monster->animation[MA_ANGRY]);
 
-        animation_animate(animation);
+        if (!frozen)
+            animation_animate(animation);
 
         int px = 0, py = 0;
         compute_real_pixel_positions(monster->map_object, &px, &py);
@@ -691,14 +692,15 @@ void blit_monster(Monster* monster) {
     }
 }
 
-void blit_bubble(Bubble* bubble) {
+void blit_bubble(Bubble *bubble, bool frozen) {
     if (bubble != NULL) {
         Animation** animation = &(bubble->animation);
 
         if (bubble->captured != NULL)
             animation = &(bubble->captured->animation[MA_CAPTURED]);
 
-        animation_animate(animation);
+        if (!frozen)
+            animation_animate(animation);
 
         int px = 0, py = 0;
         compute_real_pixel_positions(bubble->map_object, &px, &py);
@@ -722,7 +724,7 @@ void blit_item(Item* item) {
     }
 }
 
-void blit_dragon(Dragon *dragon, int shift_y) {
+void blit_dragon(Dragon *dragon, bool frozen, int shift_y) {
     if (dragon != NULL) {
         Animation** animation = &(dragon->animations[DA_NORMAL]);
 
@@ -738,7 +740,8 @@ void blit_dragon(Dragon *dragon, int shift_y) {
         else if (!map_object_can_move(dragon->map_object))
             animation = &(dragon->animations[DA_MOVE]);
 
-        animation_animate(animation);
+        if (!frozen)
+            animation_animate(animation);
 
         int px = 0, py = 0;
         compute_real_pixel_positions(dragon->map_object, &px, &py);
