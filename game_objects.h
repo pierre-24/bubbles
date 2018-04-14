@@ -50,7 +50,7 @@ void dragon_delete(Dragon* dragon);
 
 void dragon_adjust(Dragon *dragon, Level *level);
 
-void blit_dragon(Dragon *dragon);
+void blit_dragon(Dragon *dragon, int shift_y);
 
 #define POSITION_BUB (Position) {3, 1}
 

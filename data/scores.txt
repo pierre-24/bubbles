@@ -1,3 +1,8 @@
+azba 11000
+cyec 11000
+xxxx 9000
 xxxx 7000
+xxxx 6000
+baba 5000
 baba 4000
 lose 0

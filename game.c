@@ -151,6 +151,10 @@ void game_init() {
     game->current_level = NULL;
     game->previous_level = NULL;
     game->starting_level = game->levels;
+    game->counter_next_level = counter_new(NEXT_LEVEL_TRANSITION, false, false);
+    counter_stop(game->counter_next_level);
+    game->counter_end_this_level = counter_new(UNTIL_NEXT_LEVEL, false, false);
+    counter_stop(game->counter_end_this_level);
 
     // set things
     game->monster_list = NULL;
@@ -264,6 +268,8 @@ void game_quit() {
 
         // levels
         level_delete(game->levels);
+        counter_delete(game->counter_end_this_level);
+        counter_delete(game->counter_next_level);
 
         // dragons & monster & stuffs
         dragon_delete(game->bub);
@@ -330,6 +336,7 @@ void game_special_key_up(int key, int x, int y) {
 char key_to_internal[] = {
         ' ', E_ACTION_1,
         'x', E_ACTION_2,
+        'X', E_ACTION_2,
         'p', E_FREEZE,
         27, E_QUIT // esc key
 };

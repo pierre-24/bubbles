@@ -653,12 +653,12 @@ bool map_object_in_collision(MapObject* a, MapObject* b) {
         return false;
 }
 
-void blit_level(Level* level) {
+void blit_level(Level *level, int y_shift) {
     if (level != NULL) {
         for (unsigned int y = 0; y < MAP_HEIGHT; ++y) {
             for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
                 if (level->map[position_index((Position) {x, y})]) {
-                    blit_sprite(level->fill_tile, x * TILE_WIDTH, y * TILE_HEIGHT, 0, 0);
+                    blit_sprite(level->fill_tile, x * TILE_WIDTH, y * TILE_HEIGHT + y_shift, 0, 0);
                 }
             }
         }
@@ -666,7 +666,7 @@ void blit_level(Level* level) {
         // repeat the bottom on top
         for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
             if (level->map[position_index((Position) {x, 0})]) {
-                blit_sprite(level->fill_tile, x * TILE_WIDTH, MAP_HEIGHT * TILE_HEIGHT, 0, 0);
+                blit_sprite(level->fill_tile, x * TILE_WIDTH, MAP_HEIGHT * TILE_HEIGHT + y_shift, 0, 0);
             }
         }
     }

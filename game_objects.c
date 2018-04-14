@@ -318,7 +318,7 @@ void item_delete(Item* item) {
     Item* i = item, *t = NULL;
     while (i != NULL) {
         map_object_delete(i->map_object);
-        counter_delete(item->counter_invulnerability);
+        counter_delete(i->counter_invulnerability);
 
         t = i->next;
         free(i);
@@ -493,22 +493,6 @@ void bubble_delete(Bubble* bubble) {
         printf("-Bubble %p\n", next);
 #endif
     }
-}
-
-bool collide_previous_bubble(Bubble *a, Bubble *list) {
-    Bubble* t = list;
-
-    while (t != NULL) {
-        if (t == a)
-            break;
-
-        if (map_object_in_collision(t->map_object, a->map_object))
-            return true;
-
-        t = t->next;
-    }
-
-    return false;
 }
 
 Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
@@ -738,7 +722,7 @@ void blit_item(Item* item) {
     }
 }
 
-void blit_dragon(Dragon *dragon) {
+void blit_dragon(Dragon *dragon, int shift_y) {
     if (dragon != NULL) {
         Animation** animation = &(dragon->animations[DA_NORMAL]);
 
@@ -762,7 +746,7 @@ void blit_dragon(Dragon *dragon) {
         blit_animation(
                 *animation,
                 px,
-                py,
+                py + shift_y,
                 dragon->map_object->move_forward,
                 false);
     }

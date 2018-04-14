@@ -43,7 +43,7 @@ Level *level_new_from_string(char *buffer, int *position, Image *image_level, Mo
 Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monster_defs, int num_monster_defs,
                             unsigned int *num_levels);
 
-void blit_level(Level* level);
+void blit_level(Level *level, int y_shift);
 
 #define MOVE_EVERY 4 // [frames]
 

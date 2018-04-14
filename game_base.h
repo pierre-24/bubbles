@@ -8,8 +8,8 @@
 #include "game_objects.h"
 #include "score.h"
 
-#define FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS 10 // frames
-#define FRAMES_BETWEEN_KEY_REPEAT_IN_GAME 4
+#define FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS 10 // [frames]
+#define FRAMES_BETWEEN_KEY_REPEAT_IN_GAME 4 // [frames]
 
 #define WINDOW_WIDTH 512
 #define WINDOW_HEIGHT 432
@@ -40,6 +40,9 @@ enum {
 
 #define GAME_ELEMENT_WIDTH 32
 #define GAME_ELEMENT_HEIGHT 32
+
+#define NEXT_LEVEL_TRANSITION 120 // [frames]
+#define UNTIL_NEXT_LEVEL 120 // [frames]
 
 enum {
     GE_ARROW,
@@ -81,6 +84,9 @@ typedef struct Game_ {
     Level* previous_level;
     Level* starting_level;
     unsigned int num_levels;
+
+    Counter* counter_next_level;
+    Counter* counter_end_this_level;
 
     // dragons & monsters & bubbles & items
     Dragon* bub;

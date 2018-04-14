@@ -14,6 +14,7 @@ void game_main_start(Game *game) {
             game->key_interval = FRAMES_BETWEEN_KEY_REPEAT_IN_GAME;
             game->main_started = true;
 
+            game->current_level = NULL;
             game_next_level(game);
 
             write_log("# READY TO PLAY !");
@@ -23,8 +24,10 @@ void game_main_start(Game *game) {
 
 void game_next_level(Game *game) {
     if (game != NULL) {
-        if (game->current_level == NULL)
+        if (game->current_level == NULL) {
             game->current_level = game->starting_level;
+            game_setup_current_level(game);
+        }
         else {
             if (game->current_level->next == NULL) {
                 game_set_screen(game, SCREEN_WIN);
@@ -34,10 +37,9 @@ void game_next_level(Game *game) {
             else {
                 game->previous_level = game->current_level;
                 game->current_level = game->current_level->next;
+                counter_restart(game->counter_next_level, -1);
             }
         }
-
-        game_setup_current_level(game);
     }
 }
 
@@ -84,18 +86,25 @@ void game_main_input_management(Game *game) {
 
 void game_main_update_states(Game *game) {
     if (game != NULL) {
-        // check if not win or loose
-        if (game->bub->life < 0) {
+        if (!counter_stopped(game->counter_next_level)) {
+            counter_tick(game->counter_next_level);
+
+            if (counter_stopped(game->counter_next_level))
+                game_setup_current_level(game);
+        }
+
+        else if (game->bub->life < 0) { // loose ?
             game->main_started = false;
             game_set_screen(game, SCREEN_GAME_OVER);
         }
 
-        else if(game->monster_list == NULL && game->item_list == NULL){
-            game->main_started = false;
-            game_set_screen(game, SCREEN_WIN);
+        else if(game->monster_list == NULL && (counter_stopped(game->counter_end_this_level) || game->item_list == NULL)) {
+            game_next_level(game);
         }
 
         else { // ok, game still running
+            counter_tick(game->counter_end_this_level);
+
             // test collisions with items
             Item* it = game->item_list, *x = NULL;
             while (it != NULL) {
@@ -110,6 +119,8 @@ void game_main_update_states(Game *game) {
 
             // test collision between dragon and bubbles (burst bubbles & generate item)
             Bubble* b = game->bubble_list, * t;
+            bool monsters_alive = game->monster_list != NULL;
+
             while (b != NULL) {
                 if (map_object_in_collision(game->bub->map_object, b->map_object) && counter_value(b->counter_momentum) < BUBBLE_MOMENTUM - 2) {
                     t = b->next;
@@ -126,6 +137,9 @@ void game_main_update_states(Game *game) {
                 else
                     b = b->next;
             }
+
+            if (monsters_alive && game->monster_list == NULL) // all monsters were killed
+                counter_restart(game->counter_end_this_level, -1);
 
             // test collisions with monster
             if (!game->bub->map_object->falling_from_above) {
@@ -154,7 +168,6 @@ void game_main_update_states(Game *game) {
                 }
             }
 
-
             // adjust everything
             monsters_adjust(game->monster_list, game->current_level, game->bub->map_object);
             dragon_adjust(game->bub, game->current_level);
@@ -168,39 +181,51 @@ void game_main_update_states(Game *game) {
 
 void game_main_draw(Game *game) {
     if (game != NULL) {
-        blit_level(game->current_level); // level
-
         // monsters
-        Monster* m = game->monster_list;
-        while (m != NULL) {
-            if (!m->in_bubble)
-                blit_monster(m);
-            m = m->next;
+        if (counter_stopped(game->counter_next_level)) {
+            blit_level(game->current_level, 0); // level
+
+            Monster* m = game->monster_list;
+            while (m != NULL) {
+                if (!m->in_bubble)
+                    blit_monster(m);
+                m = m->next;
+            }
+
+            blit_dragon(game->bub, 0); // dragon
+
+            // bubbles
+            Bubble* b = game->bubble_list;
+            while (b != NULL) {
+                blit_bubble(b);
+                b = b->next;
+            }
+
+            // items
+            Item* it = game->item_list;
+            while (it != NULL) {
+                blit_item(it);
+                it = it->next;
+            }
+
+            char buffer[25];
+
+            sprintf(buffer, "%d", game->bub->life);
+            blit_text(game->font, buffer,  TILE_WIDTH / 2, 0);
+
+            sprintf(buffer, "%06d", game->bub->score);
+            blit_text(game->font, buffer, 4 * TILE_WIDTH, 25 * TILE_HEIGHT);
         }
 
-        blit_dragon(game->bub); // dragon
+        else {
+            if (game->previous_level != NULL) {
+                int sy = counter_value(game->counter_next_level) * WINDOW_HEIGHT / NEXT_LEVEL_TRANSITION;
+                blit_level(game->previous_level, sy);
+                blit_dragon(game->bub, sy); // dragon
+            }
 
-        // bubbles
-        Bubble* b = game->bubble_list;
-        while (b != NULL) {
-            blit_bubble(b);
-            b = b->next;
+            blit_level(game->current_level, -WINDOW_HEIGHT + counter_value(game->counter_next_level) * WINDOW_HEIGHT / NEXT_LEVEL_TRANSITION);
         }
-
-        // items
-        Item* it = game->item_list;
-        while (it != NULL) {
-            blit_item(it);
-            it = it->next;
-        }
-
-        char buffer[25];
-
-        sprintf(buffer, "%d", game->bub->life);
-        blit_text(game->font, buffer,  TILE_WIDTH / 2, 0);
-
-        sprintf(buffer, "%06d", game->bub->score);
-        blit_text(game->font, buffer, 4 * TILE_WIDTH, 25 * TILE_HEIGHT);
     }
 
 }
