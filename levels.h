@@ -59,6 +59,10 @@ typedef struct MapObject_ {
     Counter* counter_chase;
     
     bool is_falling;
+
+    // for the begining of a level
+	bool falling_from_above;
+    Position target_position;
 } MapObject;
 
 MapObject *map_object_new(Position position, int width, int height);
@@ -81,7 +85,11 @@ void map_object_adjust(MapObject *representation, Level* level);
 
 void map_object_chase(MapObject *moving, MapObject *target, Level *level, int speed);
 
-typedef struct EfFectivePosition_ {
+#define FALLING_FROM (MAP_HEIGHT + 2)
+
+void map_object_set_falling_from_above(MapObject *obj, Position target);
+
+typedef struct EffectivePosition_ {
 	float x;
 	float y;
 } EffectivePosition;

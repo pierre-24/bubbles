@@ -53,15 +53,18 @@ void dragon_adjust(Dragon *dragon, Level *level);
 void blit_dragon(Dragon *dragon);
 
 #define POSITION_BUB (Position) {3, 1}
-#define POSITION_BOB (Position) {27, 1}
 
 Dragon* create_bub(Image* texture, int y);
+
+/*
 Dragon* create_bob(Image* texture, int y);
+#define POSITION_BOB (Position) {27, 1}*/
 
 #define MONSTER_WIDTH 32
 #define MONSTER_HEIGHT 32
 #define MONSTER_FRAMERATE 10
 #define MONSTER_JUMP 6 // height of jump
+#define BUB_Y 0
 
 typedef struct Monster_ {
     MapObject* map_object;

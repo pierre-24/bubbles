@@ -123,7 +123,7 @@ Dragon* create_bub(Image* texture, int y) {
     return dragon;
 }
 
-Dragon* create_bob(Image* texture, int y) {
+/*Dragon* create_bob(Image* texture, int y) {
     Dragon* dragon = create_bub(texture, y);
     if (dragon != NULL) {
         dragon->is_bub = false;
@@ -131,7 +131,7 @@ Dragon* create_bob(Image* texture, int y) {
     }
 
     return dragon;
-}
+}*/
 
 void dragon_adjust(Dragon *dragon, Level *level) {
     map_object_adjust(dragon->map_object, level);
@@ -141,7 +141,6 @@ void dragon_adjust(Dragon *dragon, Level *level) {
     counter_tick(dragon->counter_hit);
 
     if (dragon->hit) {
-
         if (counter_stopped(dragon->counter_hit)) {
 
             dragon->hit = false;
@@ -149,6 +148,7 @@ void dragon_adjust(Dragon *dragon, Level *level) {
             counter_restart(dragon->counter_invincible, -1);
 
             dragon->map_object->position = dragon->respawn_position;
+            dragon->map_object->move_forward = true;
             dragon->life--;
         }
     }
@@ -219,10 +219,12 @@ void monster_delete(Monster* monster) {
 Monster* monsters_new_from_level(Level* level) {
     Monster* m = NULL, *t = NULL, *beg = NULL;
     for (int i = 0; i < level->num_monsters; ++i) {
-        MapObject* obj = map_object_new(level->monster_positions[i], MONSTER_WIDTH / TILE_WIDTH,
-                                        MONSTER_HEIGHT / TILE_HEIGHT);
+        MapObject* obj = map_object_new(level->monster_positions[i], MONSTER_WIDTH / TILE_WIDTH, MONSTER_HEIGHT / TILE_HEIGHT);
+
         if (obj == NULL)
             continue;
+
+        map_object_set_falling_from_above(obj, level->monster_positions[i]);
 
         t = monster_new(obj, level->monsters[i]);
 

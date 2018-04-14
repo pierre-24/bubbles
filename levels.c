@@ -343,6 +343,9 @@ MapObject *map_object_new(Position position, int width, int height) {
     
     obj->move_forward = false;
     obj->is_falling = false;
+
+    obj->falling_from_above = false;
+    obj->target_position = (Position) {0, 0};
     
     obj->counter_x = counter_new(MOVE_EVERY, false, true);
     counter_stop(obj->counter_x);
@@ -524,22 +527,33 @@ void map_object_adjust(MapObject *obj, Level* level) {
         else
 			counter_stop(obj->counter_jump);
     } else if (obj->is_falling) {
-        if (map_object_test_down(obj, level)) {
-            if (counter_stopped(obj->counter_y)) {
+        if (!obj->falling_from_above) {
+            if (map_object_test_down(obj, level)) {
+                if (counter_stopped(obj->counter_y)) {
+                    obj->position.y -= 1;
+                    counter_restart(obj->counter_y, -1);
+                }
+            } else {
+                obj->is_falling = false;
+                counter_stop(obj->counter_y);
+            }
+        }
+
+        else if (counter_stopped(obj->counter_y)) {
+            if (obj->position.y > obj->target_position.y) {
                 obj->position.y -= 1;
                 counter_restart(obj->counter_y, -1);
-            }
-        } else {
-            obj->is_falling = false;
-            counter_stop(obj->counter_y);
-		}
+            } else
+                obj->falling_from_above = false;
+        }
+
     } else if (map_object_test_down(obj, level) && counter_stopped(obj->counter_y)) {
         obj->is_falling = true;
     }
 }
 
 void map_object_chase(MapObject *moving, MapObject *target, Level *level, int speed) {
-    if (map_object_can_move(moving)) {
+    if (map_object_can_move(moving) && !moving->falling_from_above && !target->falling_from_above) {
         if (counter_stopped(moving->counter_chase)) {
             counter_restart(moving->counter_chase, speed);
 
@@ -597,6 +611,14 @@ void map_object_chase(MapObject *moving, MapObject *target, Level *level, int sp
             }
         }
     }
+}
+
+void map_object_set_falling_from_above(MapObject *obj, Position target) {
+    obj->falling_from_above = true;
+    obj->target_position = target;
+    obj->position = target;
+    obj->position.y = FALLING_FROM;
+    obj->is_falling = true;
 }
 
 EffectivePosition map_object_to_effective_position(MapObject* mobj) {

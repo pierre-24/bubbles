@@ -148,7 +148,9 @@ void game_init() {
         game_fail_exit();
     }
 
-    game->current_level = game->levels;
+    game->current_level = NULL;
+    game->previous_level = NULL;
+    game->starting_level = game->levels;
 
     // set things
     game->monster_list = NULL;

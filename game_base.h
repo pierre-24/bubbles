@@ -78,6 +78,8 @@ typedef struct Game_ {
     // levels
     Level* levels;
     Level* current_level;
+    Level* previous_level;
+    Level* starting_level;
     unsigned int num_levels;
 
     // dragons & monsters & bubbles & items

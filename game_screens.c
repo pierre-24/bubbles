@@ -28,7 +28,7 @@ int welcome_screen_action = 0;
 void game_welcome_screen_input_management(Game *game) {
     if (game->key_pressed[E_ACTION_1]) {
         if (welcome_screen_action == 0) {
-            game_main_start(game, game->current_level);
+            game_main_start(game);
             game->paused = false;
             game->key_interval = FRAMES_BETWEEN_KEY_REPEAT_IN_GAME;
         } else if (welcome_screen_action == 1) {
