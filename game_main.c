@@ -54,6 +54,8 @@ void game_setup_current_level(Game *game) {
         item_delete(game->item_list);
         game->item_list = NULL;
 
+        counter_restart(game->counter_start_level, -1);
+
         map_object_set_falling_from_above(game->bub->map_object, game->bub->respawn_position);
     }
 }
@@ -103,12 +105,25 @@ void game_main_update_states(Game *game) {
             game_set_screen(game, SCREEN_GAME_OVER);
         }
 
-        else if(game->monster_list == NULL && (counter_stopped(game->counter_end_this_level) || game->item_list == NULL)) {
+        else if(game->monster_list == NULL && (counter_stopped(game->counter_end_this_level) || game->item_list == NULL)) { // next level?
             game_next_level(game);
         }
 
-        else if (!game->freeze) { // ok, game still running
+        else if (!game->freeze) { // ok, game is running
             counter_tick(game->counter_end_this_level);
+            counter_tick(game->counter_start_level);
+
+            if (counter_stopped(game->counter_start_level) && game->monster_list != NULL) { // to slow, send a monster after him
+                printf("hurry up!");
+                Monster* last = game->monster_list;
+                while (last->next != NULL)
+                    last = last->next;
+
+                last->next = monster_new(game->bub->map_object, game->definition_monsters[game->num_monsters_defined - 1]);
+                map_object_set_falling_from_above(last->next->map_object, game->bub->map_object->position);
+
+                counter_restart(game->counter_start_level, -1);
+            }
 
             // test collisions with items
             Item* it = game->item_list, *x = NULL;
@@ -135,8 +150,8 @@ void game_main_update_states(Game *game) {
                     if (b->captured != NULL) {
                         game->monster_list = monster_kill(game->monster_list, b->captured);
                         game->item_list = item_create(b->map_object, game->item_list, game->definition_items,
-                                                      game->num_items, game->current_level,
-                                                      game->bub->map_object->move_forward);
+                                                      game->num_items_defined, game->current_level,
+                                                      counter_value(game->counter_start_level));
                     }
 
                     game->bubble_list = bubble_burst(game->bubble_list, b, false);

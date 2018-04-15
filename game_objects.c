@@ -362,7 +362,7 @@ void item_delete(Item* item) {
 }
 
 Item *item_create(MapObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level,
-                  bool look_right) {
+                  int value_counter_level) {
 
     if (position == NULL || num_item_definitions == 0)
         return list;
@@ -370,10 +370,10 @@ Item *item_create(MapObject *position, Item *list, ItemDef **definitions, int nu
     int item_index = 0;
     int prev = 0;
     int max = num_item_definitions * (num_item_definitions + 1) / 2;
-    int random = rand() % max;
+    int item_p = (int) ((float) (MAX_LEVEL_TIME - value_counter_level) / MAX_LEVEL_TIME * max) + (rand() % max - max / 2) / 4;
 
     for (int i = 0; i < num_item_definitions; i++) {
-        if (random < prev + num_item_definitions - i) {
+        if (item_p < prev + num_item_definitions - i) {
             item_index = i;
             break;
         }

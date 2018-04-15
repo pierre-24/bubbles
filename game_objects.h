@@ -101,7 +101,7 @@ Item* item_new(MapObject* map_object, ItemDef* definition);
 void item_delete(Item* item);
 
 Item *item_create(MapObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level,
-                  bool look_right);
+                  int value_counter_level);
 Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item);
 
 void items_adjust(Item* list, Level* level);

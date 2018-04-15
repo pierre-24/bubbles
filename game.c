@@ -92,9 +92,9 @@ void game_init() {
         game_fail_exit();
 
     // load definition
-    game->num_items = 0;
+    game->num_items_defined = 0;
     game->definition_items = NULL;
-    game->num_monsters = 0;
+    game->num_monsters_defined = 0;
     game->definition_monsters = NULL;
 
     f = fopen(DEFINITION_ITEMS, "r");
@@ -105,9 +105,9 @@ void game_init() {
     else
         write_log("# ------> opening item def file %s", DEFINITION_ITEMS);
 
-    game->definition_items = item_defs_from_file(f, game->texture_items, &(game->num_items));
+    game->definition_items = item_defs_from_file(f, game->texture_items, &(game->num_items_defined));
     fclose(f);
-    if (game->definition_items == NULL || game->num_items == 0) {
+    if (game->definition_items == NULL || game->num_items_defined == 0) {
         write_log("! no game items, exiting");
         game_fail_exit();
     }
@@ -120,9 +120,9 @@ void game_init() {
     else
         write_log("# ------> opening monster def file %s", DEFINITION_MONSTERS);
 
-    game->definition_monsters = monster_defs_from_file(f, game->texture_monsters, &(game->num_monsters));
+    game->definition_monsters = monster_defs_from_file(f, game->texture_monsters, &(game->num_monsters_defined));
     fclose(f);
-    if (game->definition_monsters == NULL || game->num_monsters == 0) {
+    if (game->definition_monsters == NULL || game->num_monsters_defined == 0) {
         write_log("! no game monsters, exiting");
         game_fail_exit();
     }
@@ -139,7 +139,7 @@ void game_init() {
     else
         write_log("# ------> opening level file %s", FILE_LEVELS);
 
-    game->levels = levels_new_from_file(f, game->texture_levels, game->definition_monsters, game->num_monsters,
+    game->levels = levels_new_from_file(f, game->texture_levels, game->definition_monsters, game->num_monsters_defined,
                                         &(game->num_levels));
     fclose(f);
 
@@ -155,6 +155,8 @@ void game_init() {
     counter_stop(game->counter_next_level);
     game->counter_end_this_level = counter_new(UNTIL_NEXT_LEVEL, false, false);
     counter_stop(game->counter_end_this_level);
+    game->counter_start_level = counter_new(MAX_LEVEL_TIME, false, false);
+    counter_stop(game->counter_start_level);
 
     // set things
     game->monster_list = NULL;
@@ -251,7 +253,7 @@ void game_quit() {
 
         // definitions
         if (game->definition_items != NULL)  {
-            for (int i = 0; i < game->num_items; ++i) {
+            for (int i = 0; i < game->num_items_defined; ++i) {
                 item_def_delete(game->definition_items[i]);
             }
 
@@ -259,7 +261,7 @@ void game_quit() {
         }
 
         if (game->definition_monsters != NULL)  {
-            for (int i = 0; i < game->num_monsters; ++i) {
+            for (int i = 0; i < game->num_monsters_defined; ++i) {
                 monster_def_delete(game->definition_monsters[i]);
             }
 

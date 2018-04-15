@@ -46,6 +46,8 @@ enum {
 
 #define FREEZE_EVERY 30 // [frames]
 
+#define MAX_LEVEL_TIME (30 * 60) // [frames]
+
 enum {
     GE_ARROW,
     GE_NUMBER
@@ -77,9 +79,9 @@ typedef struct Game_ {
 
     // definitions
     ItemDef** definition_items;
-    unsigned int num_items;
+    unsigned int num_items_defined;
     MonsterDef** definition_monsters;
-    unsigned int num_monsters;
+    unsigned int num_monsters_defined;
 
     // levels
     Level* levels;
@@ -90,6 +92,7 @@ typedef struct Game_ {
 
     Counter* counter_next_level;
     Counter* counter_end_this_level;
+    Counter* counter_start_level;
 
     // dragons & monsters & bubbles & items
     Dragon* bub;
