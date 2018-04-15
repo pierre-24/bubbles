@@ -272,6 +272,7 @@ void game_quit() {
         level_delete(game->levels);
         counter_delete(game->counter_end_this_level);
         counter_delete(game->counter_next_level);
+        counter_delete(game->counter_start_level);
 
         // dragons & monster & stuffs
         dragon_delete(game->bub);
