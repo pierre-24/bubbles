@@ -82,6 +82,8 @@ Monster* monsters_new_from_level(Level* level);
 Monster* monster_kill(Monster* list, Monster* monster);
 void monsters_adjust(Monster* list, Level* level, MapObject* target);
 
+bool test_collide_other_monsters(Monster* moving, Monster* list, MapObject* npos);
+
 void blit_monster(Monster *monster, bool frozen);
 
 #define ITEM_JUMP 8

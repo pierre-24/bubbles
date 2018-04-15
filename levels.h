@@ -15,7 +15,7 @@
 #define MAP_WIDTH 32 // cases
 #define MAP_HEIGHT 24 // cases
 
-#define CONTACT_DISTANCE 3 // [cases²]
+#define CONTACT_DISTANCE 4 // [cases²]
 
 typedef struct Position_ {
     unsigned int x;

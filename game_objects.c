@@ -275,14 +275,45 @@ Monster* monster_kill(Monster* list, Monster* monster) {
 
 void monsters_adjust(Monster* list, Level* level, MapObject* target) {
     Monster* m = list;
+    MapObject* current_position;
+
     while (m != NULL) {
         if (!m->in_bubble) {
-            map_object_chase(m->map_object, target, level, m->definition->speed / (m->angry ? 2 : 1));
+            if (!m->map_object->falling_from_above) {
+                current_position = map_object_copy(m->map_object);
+                map_object_chase(m->map_object, target, level, m->definition->speed / (m->angry ? 2 : 1));
+
+                if (test_collide_other_monsters(m, list, m->map_object )) {
+                    map_object_delete(m->map_object);
+                    m->map_object = map_object_copy(current_position);
+                }
+
+                map_object_delete(current_position);
+            }
+
             map_object_adjust(m->map_object, level);
         }
 
         m = m->next;
     }
+}
+
+bool test_collide_other_monsters(Monster* moving, Monster* list, MapObject* npos) {
+    if (moving != NULL && list != NULL && npos != NULL && !moving->in_bubble) {
+
+        Monster* p = list;
+        bool collision = false;
+
+        while (p != NULL && !collision) {
+            if (p != moving && !p->in_bubble)
+                collision = npos->position.x == p->map_object->position.x && npos->position.y == p->map_object->position.y;
+            p = p->next;
+        }
+
+        return collision;
+    }
+
+    return false;
 }
 
 Item* item_new(MapObject* map_object, ItemDef* definition) {
@@ -398,6 +429,17 @@ Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item) {
             }
 
             write_log("# Consuming item (gives %d points)", it->definition->points_given);
+
+            if (it->definition->extra_power == EP_ADD_LIFE && dragon->life < dragon->max_life)
+                dragon->life++;
+
+            else if (it->definition->extra_power == EP_ADD_EXTRA_LIFE) {
+                dragon->life++;
+                dragon->max_life++;
+            }
+
+            else if (it->definition->extra_power == EP_FULL_HEAL)
+                dragon->life = dragon->max_life;
 
             it->next = NULL;
             item_delete(item);

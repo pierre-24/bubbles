@@ -122,6 +122,9 @@ void game_main_update_states(Game *game) {
                     it = it->next;
             }
 
+            // adjust bubble (before collision with bubble and monster)
+            game->bubble_list = bubbles_adjust(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
+
             // test collision between dragon and bubbles (burst bubbles & generate item)
             Bubble* b = game->bubble_list, * t;
             bool monsters_alive = game->monster_list != NULL;
@@ -176,7 +179,6 @@ void game_main_update_states(Game *game) {
             // adjust everything
             monsters_adjust(game->monster_list, game->current_level, game->bub->map_object);
             dragon_adjust(game->bub, game->current_level);
-            game->bubble_list = bubbles_adjust(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
             items_adjust(game->item_list, game->current_level);
         }
     }

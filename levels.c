@@ -530,6 +530,9 @@ void map_object_adjust(MapObject *obj, Level* level) {
         if (!obj->falling_from_above) {
             if (map_object_test_down(obj, level)) {
                 if (counter_stopped(obj->counter_y)) {
+                    if (obj->position.y == 0)
+                        obj->position.y = MAP_HEIGHT;
+
                     obj->position.y -= 1;
                     counter_restart(obj->counter_y, -1);
                 }

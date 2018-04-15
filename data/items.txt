@@ -1,6 +1,14 @@
-4 # 4 items
-1000 0 0 0
-2000 0 32 0
-5000 0 64 0
-10000 0 0 32
+11 # items
+1000 0 0 0  # pepper
+2000 0 32 0 # eggplant
+3000 0 64 0 # carrot
+5000 0 0 64 # grapefruit
+500 1 64 64  # pink candy, +1 life
+10000 0 96 0 # onion (taste bad, but gives good)
+20000 0 32 32 # ice
+40000 0 96 32 # ice (2)
+3000 2 96 64 # purple candy, +1 life and +1 max life
+80000 0 64 32 # double ice
+100000 0 32 64 # pinapple. I like pinapple.
+3000 3 0 32  # beer, full heal
 # END

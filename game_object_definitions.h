@@ -10,6 +10,7 @@ typedef enum extra_power_t_ {
 	EP_NONE,
 	EP_ADD_LIFE,
 	EP_ADD_EXTRA_LIFE,
+	EP_FULL_HEAL,
 	EP_NUMBER
 } extra_power_t;
 
