@@ -7,6 +7,8 @@
 FILE* log_file = NULL;
 
 void init_log() {
+    /* Open the log file, once and for all.
+     * */
     log_file = fopen(LOG_FILE, "w");
     if (log_file == NULL) {
         printf("! unable to open log file!\n");
@@ -15,7 +17,10 @@ void init_log() {
 }
 
 void write_log(char* format, ...) {
-    /* The following piece of code is adapted from to http://stackoverflow.com/a/1056423 */
+    /* Write a line into the log file. Use a printf-like syntax (thanks to `vfprintf()`).
+     * 
+     * Note: he following piece of code is adapted from to http://stackoverflow.com/a/1056423 
+     * */
 
     va_list argptr;
     va_start(argptr, format);
@@ -33,6 +38,8 @@ void write_log(char* format, ...) {
 }
 
 void close_log()  {
+    /* Close the log file 
+     * */
     if (log_file != NULL)
         fclose(log_file);
 
@@ -40,7 +47,10 @@ void close_log()  {
 }
 
 char* file_get_content(FILE* f) {
-
+    /* Read the whole content of a file (`f`) and return a string.
+     * The programer must delete the string after use.
+     * */
+    
     fseek (f, 0, SEEK_END);
     long length = ftell (f);
     fseek (f, 0, SEEK_SET);
@@ -59,6 +69,10 @@ char* file_get_content(FILE* f) {
 }
 
 char *strnextspace(char *str) {
+    /* Return the adress of the next space (according to `isspace()`, wich includes `\t`, `\n`, ..) in the string, 
+     * or NULL if it reaches the end of the string.
+     * Note that the search starts from the current position.
+     * */
     if (str == NULL)
         return NULL;
 
@@ -74,6 +88,9 @@ char *strnextspace(char *str) {
 }
 
 char *strnextline(char *str) {
+    /* Return the adress of the next `\n` in the string, or NULL if it reaches the end of the string.
+     * Note that the search starts from the current position.
+     * */
     if (str == NULL)
         return NULL;
 
@@ -90,6 +107,10 @@ char *strnextline(char *str) {
 
 
 char *strnextnspace(char *str) {
+    /* Return the adress of the next non-space character (according to `!isspace()`) in the string, 
+     * or NULL if it reaches the end of the string.
+     * Note that the search starts from the current position.
+     * */
     if (str == NULL)
         return NULL;
 
@@ -106,6 +127,8 @@ char *strnextnspace(char *str) {
 
 
 Counter* counter_new(int max, bool infinite, bool decrement) {
+    /* Create a counter
+     * */
 	Counter* counter = malloc(sizeof(Counter));
 	
 	if (counter == NULL) {
@@ -128,6 +151,8 @@ Counter* counter_new(int max, bool infinite, bool decrement) {
 
 
 Counter* counter_copy(Counter* src) {
+    /* Copy a counter. 
+     * */
 	Counter* counter = malloc(sizeof(Counter));
 	
 	if (counter == NULL) {
@@ -144,6 +169,8 @@ Counter* counter_copy(Counter* src) {
 }
 
 void counter_delete(Counter* counter) {
+    /* Delete a counter
+     * */
 	if (counter != NULL) {
 		free(counter);
 
@@ -154,6 +181,9 @@ void counter_delete(Counter* counter) {
 }
 
 void counter_restart(Counter* counter, int nmax) {
+    /* Restart (set to its "minimum" position) a counter.
+     * The `nmax` set a new `max` if > 0 (otherwise it use the current maximum).
+     * */
 	if (nmax > 0)
 		counter->max = nmax;
 		
@@ -164,6 +194,8 @@ void counter_restart(Counter* counter, int nmax) {
 }
 
 void counter_stop(Counter* counter) {
+    /* Stop (set to its "maximum" position) a counter.
+     * */
 	if (!counter->decrement)
 		counter->value = counter->max - 1;
 	else
@@ -171,6 +203,8 @@ void counter_stop(Counter* counter) {
 }
 
 bool counter_stopped(Counter* counter) {
+    /* Test if a counter value equals its "maximum".
+     * */
     if (!counter->decrement)
         return counter->value == counter->max - 1;
     else
@@ -178,6 +212,9 @@ bool counter_stopped(Counter* counter) {
 }
 
 int counter_tick(Counter* counter) {
+    /* Increase (or decrease) the value.
+     * Also restart the counter if stopped, but infinite.
+     * */
     if (counter_stopped(counter)) {
         if (counter->infinite)
             counter_restart(counter, -1);
@@ -191,5 +228,7 @@ int counter_tick(Counter* counter) {
 }
 
 int counter_value(Counter* counter) {
+    /* Get the counter current value.
+     * */
 	return counter->value;
 }

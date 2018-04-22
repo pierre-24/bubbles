@@ -32,6 +32,14 @@ char *strnextline(char *str);
 char *strnextnspace(char *str);
 
 typedef struct Counter_ {
+    /* Define a counter.
+     * 
+     * A counter ticks until a given value (`max`). 
+     * The "direction" is given by `decrement`. The value is between [0;max[, and the counter is set to its "mininmum":
+     * - `max` if decrement=true, 
+     * - 0 otherwise.
+     * A counter may ticks infinitelly (`infinite`): if it gets to the maximum, the counter is set to its "minimum".
+     * */
     int value;
     int max;
     bool infinite;
