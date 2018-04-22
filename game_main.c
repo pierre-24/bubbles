@@ -116,7 +116,6 @@ void game_main_update_states(Game *game) {
             counter_tick(game->counter_start_level);
 
             if (counter_stopped(game->counter_start_level) && game->monster_list != NULL) { // to slow, send a monster after him
-                printf("hurry up!");
                 Monster* last = game->monster_list;
                 while (last->next != NULL)
                     last = last->next;

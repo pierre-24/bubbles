@@ -81,7 +81,7 @@ void game_init() {
 
     // sprites game elements
     for (int i = 0; i < GE_NUMBER; ++i) {
-        game->game_elements[i] = sprite_new(game->texture_game, 0, i * GAME_ELEMENT_WIDTH, GAME_ELEMENT_WIDTH, GAME_ELEMENT_WIDTH);
+        game->game_elements[i] = sprite_new(game->texture_game, 0, i * GAME_ELEMENT_HEIGHT, GAME_ELEMENT_WIDTH, GAME_ELEMENT_HEIGHT);
         if (game->game_elements[i] == NULL)
             game_fail_exit();
     }
