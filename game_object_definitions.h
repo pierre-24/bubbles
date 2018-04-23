@@ -1,7 +1,6 @@
 #ifndef GAME_OBJECT_DEFINITIONS_H
 #define GAME_OBJECT_DEFINITIONS_H
 
-#include "images.h"
 #include "animations.h"
 #include "datafile.h"
 

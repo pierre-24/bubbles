@@ -11,6 +11,11 @@
 #define BUFF_SCORE 255
 
 typedef struct Score_ {
+    /* Define a score.
+     *
+     * A score is a name (of `SCORE_NAME_SIZE` characters) and a (positive) integer score.
+     * This is a NULL terminated chained list.
+     * */
     unsigned int score;
     char name[SCORE_NAME_SIZE + 1];
     struct Score_* next;
