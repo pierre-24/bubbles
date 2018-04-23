@@ -9,6 +9,11 @@
 #include "utils.h"
 
 typedef struct Animation_ {
+    /* Define an animation.
+     * 
+     * An animation is a circular chained list, which contain a set of sprites (frames) that are shown for a given time (`framerate`).
+     * The `counter` value helps to determine wheter to change frame or not.
+     */
     Sprite* frame;
     struct Animation_* next_frame;
     int framerate;
