@@ -12,6 +12,7 @@ typedef struct Animation_ {
     /* Define an animation.
      * 
      * An animation is a circular chained list, which contain a set of sprites (frames) that are shown for a given time (`framerate`).
+     * The sentinel of this list is a structure with a NULL `frame`.
      * The `counter` value helps to determine wheter to change frame or not.
      */
     Sprite* frame;
