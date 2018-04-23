@@ -5,7 +5,18 @@
 #include "datafile.h"
 
 int datafile_line_field_positions(char* text, unsigned int num_data, char** positions, char** nextstart) {
-    if (text == NULL)
+    /* Set `position` so that each of the case point to the begining of a "field". 
+     * A field is separated from another by (at least) one space.
+     * A line may contain a "#" character: everything after this character is ignored. 
+     * If the line start by "#", the line is ignored.
+     *
+     * Expect `num_data` fields.
+     * Set `nextstart` to the begining of the end of the line.
+     *
+     * Return 0 if erything is ok, -1 if a pointer is set incorectly, -2 if there is less or more field than expected and 1 if it is just a comment line.
+     * So < 0 means error.
+     */
+    if (text == NULL || positions == NULL || nextstart == NULL)
         return -1;
 
     unsigned int found = 0;
