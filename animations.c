@@ -6,6 +6,10 @@
 #include "animations.h"
 
 Animation *animation_new(int framerate) {
+    /* Create an animation.
+     *
+     * Only create the sentinel.
+     * */
     Animation* a = malloc(sizeof(Animation));
 
     if (a == NULL) {
@@ -26,6 +30,8 @@ Animation *animation_new(int framerate) {
 }
 
 void animation_delete(Animation* animation) {
+    /* Delete an animation (and the sprites)
+     * */
     if (animation != NULL) {
         Animation* p = animation, *n = NULL;
 
@@ -54,6 +60,14 @@ void animation_delete(Animation* animation) {
 }
 
 Animation * animation_add_frame(Animation *animation, Sprite *frame) {
+    /* Add a frame to the animation.
+     *
+     * Insert the frame as the last frame of the animation.
+     * */
+
+    if (animation == NULL || frame == NULL)
+        return NULL;
+
     // find end
     Animation* p = animation, *q = animation;
     if (p->frame == NULL)
@@ -89,32 +103,48 @@ Animation * animation_add_frame(Animation *animation, Sprite *frame) {
 }
 
 Animation * animation_next(Animation *animation) {
+    /* Get the next frame, no matter the value of the counter.
+     *
+     * Also set the counter for this next frame.
+     * */
     if (animation == NULL)
         return NULL;
 
     if (animation->next_frame == NULL)
-        return animation;
+        return animation; // return the sentinel if that is the only frame
 
     Animation* n = animation->next_frame;
-    if (n->frame == NULL)
-        return n->next_frame;
+    if (n->frame == NULL) // skip sentinel
+        n =  n->next_frame;
 
+    n->counter = n->framerate;
     return n;
 }
 
 void animation_animate(Animation **animation) {
-    if ((*(animation))->framerate > 0) {
-        if ((*(animation))->counter < 1) {
-            *animation = animation_next(*animation);
-            (*(animation))->counter = (*(animation))->framerate;
-        }
+    /* Tick the counter and set the frame accordingly.
+     * */
 
-        else
-            (*(animation))->counter--;
+    if (animation != NULL && *animation != NULL) {
+        if ((*(animation))->framerate > 0) {
+            if ((*(animation))->counter < 1) {
+                *animation = animation_next(*animation);
+            }
+
+            else
+                (*(animation))->counter--;
+        }
     }
+
 }
 
 Animation* animation_copy(Animation* src) {
+    /* Copy the animation (and the sprites)
+     * */
+
+    if (src == NULL)
+        return NULL;
+
     Animation* p = src;
     Animation* dest = animation_new(src->framerate);
 
@@ -137,6 +167,10 @@ Animation* animation_copy(Animation* src) {
 }
 
 void blit_animation(Animation *animation, int sx, int sy, bool flip_x, bool flip_y) {
+    /* Blit the animation.
+     *
+     * Take the same parameters as `blit_sprite()`.
+     * */
     if (animation != NULL && animation->frame != NULL) {
         blit_sprite(animation->frame, sx, sy, flip_x, flip_y);
     }
