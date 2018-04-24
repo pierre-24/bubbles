@@ -4,7 +4,12 @@
 #define MAGIC_WHITESPACE "%*[ \n\t]"
 
 Image* image_new_from_file(FILE *f)  {
-    // read a PPM (see http://netpbm.sourceforge.net/doc/ppm.html)
+    /* Create and return an image.
+     *
+     * Read the PPM format (see http://netpbm.sourceforge.net/doc/ppm.html).
+     *
+     * */
+    //
     if (f == NULL)
         return NULL;
     
@@ -74,6 +79,8 @@ Image* image_new_from_file(FILE *f)  {
 }
 
 void image_delete(Image *image) {
+    /* Delete an image (and its pixels).
+     * */
     if (image != NULL) {
         if (image->pixels != NULL)
             free(image->pixels);
@@ -86,6 +93,13 @@ void image_delete(Image *image) {
 }
 
 Sprite* sprite_new(Image *image, int x, int y, int w, int h) {
+    /* Create a sprite (of the size `w`x`h`, located at the `x` and `y` position) from an image.
+     *
+     * Note that this function deals with sprite that are too large or with negative positions by changing the parameters accordingly so that a sprite fit in the image.
+     * Therefore the sprite created may be a 0x0 area.
+     *
+     * If `w` or `h` is negative, it is set to the size of the image.
+     * */
     if (image == NULL)
         return NULL;
 
@@ -158,6 +172,10 @@ Sprite* sprite_new(Image *image, int x, int y, int w, int h) {
 }
 
 void sprite_delete(Sprite* sprite) {
+    /* Delete a sprite.
+     *
+     * Does NOT delete the corresponding texture id.
+     * */
     if (sprite != NULL) {
         free(sprite);
 
@@ -184,6 +202,14 @@ Sprite* sprite_copy(Sprite* origin) {
 }
 
 void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y) {
+    /* Blit (show) the sprite in a given position.
+     *
+     * Note: OpenGL set its origin to be on the bottom left corner, so `sy` must be given with that reference.
+     * Therefore, this function reverse the sprite so that it is blitted correctly.
+     *
+     * Use `flip_x` and `flip_y` to reverse the sprite.
+     * */
+
     if (sprite != NULL) {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
@@ -200,6 +226,10 @@ void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y) {
 }
 
 Font* font_new(Image* font_image, int char_width, int char_height) {
+    /* Create a font.
+     *
+     * Expect an image for which the width is a multiple of `char_width` and the height is a multiple of `char_height` (it is used to determine the number or character in a line)
+     * */
     if (font_image == NULL)
         return NULL;
 
@@ -239,6 +269,8 @@ Font* font_new(Image* font_image, int char_width, int char_height) {
 }
 
 void font_delete(Font* font) {
+    /* Delete a font (and each sprite)
+     * */
     if (font != NULL) {
         for (int i = 0; i < 256; ++i) {
             sprite_delete(font->characters[i]);
@@ -252,6 +284,11 @@ void font_delete(Font* font) {
 }
 
 void blit_text(Font* font, char* text, int x, int y) {
+    /* Blit a text on the screen using a font (so every letter have its own texture).
+     *
+     * Uses `char_width` to know where to blit the next character
+     * and `char_height` to know where to blit the next line (if there is a line return in the string).
+     * */
     if (font != NULL && text != NULL) {
         int tx = 0;
         int ty = 0;
