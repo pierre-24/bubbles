@@ -240,7 +240,7 @@ Monster* monsters_new_from_level(Level* level) {
             m = t;
         }
 
-        free(obj);
+        map_object_delete(obj);
     }
 
     return beg;
