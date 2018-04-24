@@ -55,11 +55,14 @@ void animation_delete(Animation* animation) {
 
 Animation * animation_add_frame(Animation *animation, Sprite *frame) {
     // find end
-    Animation* p = animation, *q = NULL;
-    while (p->frame != NULL)
+    Animation* p = animation, *q = animation;
+    if (p->frame == NULL)
         p = p->next_frame;
 
-    q = p->next_frame;
+    while (p->frame != NULL) {
+        q = p;
+        p = p->next_frame;
+    } // now, p contains the sentinel, q the frame before (or the sentinel, if that's the only frame)
 
     Animation* nx = malloc(sizeof(Animation));
     if (nx != NULL) {
@@ -75,8 +78,8 @@ Animation * animation_add_frame(Animation *animation, Sprite *frame) {
         nx->framerate = p->framerate;
         nx->counter = p->framerate;
 
-        nx->next_frame = q;
-        p->next_frame = nx;
+        nx->next_frame = p;
+        q->next_frame = nx;
 
         return nx;
     }
