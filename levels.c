@@ -323,16 +323,16 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
     return beg;
 }
 
-MapObject *map_object_new(Position position, int width, int height) {
-    MapObject* obj = malloc(sizeof(MapObject));
+LevelObject *level_object_new(Position position, int width, int height) {
+    LevelObject* obj = malloc(sizeof(LevelObject));
 
     if (obj == NULL) {
-        write_log("! can not allocate MapObject");
+        write_log("! can not allocate LevelObject");
         return NULL;
     }
 
 #ifdef VERBOSE_MEM
-    printf("+MapObject %p\n", obj);
+    printf("+LevelObject %p\n", obj);
 #endif
 
     obj->position.x = position.x;
@@ -357,14 +357,14 @@ MapObject *map_object_new(Position position, int width, int height) {
     counter_stop(obj->counter_chase);
     
     if (obj->counter_x == NULL || obj->counter_y == NULL || obj->counter_jump == NULL) {
-		map_object_delete(obj);
+        level_object_delete(obj);
 		return NULL;
 	}
 
     return obj;
 }
 
-void map_object_delete(MapObject *obj) {
+void level_object_delete(LevelObject *obj) {
     if (obj != NULL) {
 		counter_delete(obj->counter_x);
 		counter_delete(obj->counter_y);
@@ -373,27 +373,27 @@ void map_object_delete(MapObject *obj) {
         free(obj);
 
 #ifdef VERBOSE_MEM
-    printf("-MapObject %p\n", obj);
+    printf("-LevelObject %p\n", obj);
 #endif
 	}
 }
 
-MapObject* map_object_copy(MapObject *src) {
+LevelObject* level_object_copy(LevelObject *src) {
     if (src == NULL)
         return NULL;
 
-    MapObject* obj = malloc(sizeof(MapObject));
+    LevelObject* obj = malloc(sizeof(LevelObject));
 
     if (obj == NULL) {
-        write_log("! can not allocate MapObject");
+        write_log("! can not allocate LevelObject");
         return NULL;
     }
 
 #ifdef VERBOSE_MEM
-    printf("+MapObject %p (by copy)\n", obj);
+    printf("+LevelObject %p (by copy)\n", obj);
 #endif
 
-    memcpy(obj, src, sizeof(MapObject));
+    memcpy(obj, src, sizeof(LevelObject));
     obj->counter_x = counter_copy(src->counter_x);
     obj->counter_y = counter_copy(src->counter_y);
     obj->counter_jump = counter_copy(src->counter_jump);
@@ -403,7 +403,7 @@ MapObject* map_object_copy(MapObject *src) {
 }
 
 
-bool map_object_test_left(MapObject *obj, Level* level) {
+bool level_object_test_left(LevelObject *obj, Level *level) {
     Position n = {obj->position.x - 1, obj->position.y};
 
     if (n.x < 0)
@@ -418,7 +418,7 @@ bool map_object_test_left(MapObject *obj, Level* level) {
     return true;
 }
 
-bool map_object_test_right(MapObject *obj, Level* level) {
+bool level_object_test_right(LevelObject *obj, Level *level) {
     Position n = {obj->position.x + obj->width, obj->position.y};
 
     if (n.x >= MAP_WIDTH)
@@ -434,7 +434,7 @@ bool map_object_test_right(MapObject *obj, Level* level) {
 }
 
 
-bool map_object_test_up(MapObject *obj, Level* level) {
+bool level_object_test_up(LevelObject *obj, Level *level) {
     Position n = {obj->position.x, obj->position.y + obj->height};
 
     if (n.y >= MAP_HEIGHT)
@@ -443,7 +443,7 @@ bool map_object_test_up(MapObject *obj, Level* level) {
     return true;
 }
 
-bool map_object_test_down(MapObject *obj, Level* level) {
+bool level_object_test_down(LevelObject *obj, Level *level) {
     Position n = {obj->position.x, obj->position.y - 1};
 
     if (n.y < 0)
@@ -458,18 +458,18 @@ bool map_object_test_down(MapObject *obj, Level* level) {
     return true;
 }
 
-bool map_object_can_move(MapObject* obj) {
+bool level_object_can_move(LevelObject *obj) {
 	return counter_stopped(obj->counter_x);
 }
 
-bool map_object_can_jump(MapObject* obj) {
+bool level_object_can_jump(LevelObject *obj) {
 	return !obj->is_falling && counter_stopped(obj->counter_jump);
 }
 
-bool map_object_move_left(MapObject *obj, Level *level) {
+bool level_object_move_left(LevelObject *obj, Level *level) {
     obj->move_forward = false;
 
-    if (map_object_test_left(obj, level) && map_object_can_move(obj)) {
+    if (level_object_test_left(obj, level) && level_object_can_move(obj)) {
         obj->position.x -= 1;
         counter_restart(obj->counter_x, -1);
 
@@ -482,10 +482,10 @@ bool map_object_move_left(MapObject *obj, Level *level) {
     return false;
 }
 
-bool map_object_move_right(MapObject *obj, Level *level) {
+bool level_object_move_right(LevelObject *obj, Level *level) {
     obj->move_forward = true;
 
-    if (map_object_test_right(obj, level) && map_object_can_move(obj)) {
+    if (level_object_test_right(obj, level) && level_object_can_move(obj)) {
         obj->position.x += 1;
         counter_restart(obj->counter_x, -1);
 
@@ -498,11 +498,11 @@ bool map_object_move_right(MapObject *obj, Level *level) {
     return false;
 }
 
-bool map_object_jump(MapObject *obj, Level *level, int jump) {
+bool level_object_jump(LevelObject *obj, Level *level, int jump) {
 	if (jump <= 0)
 		return false;
 	
-    if (map_object_can_jump(obj) && map_object_test_up(obj, level)) {
+    if (level_object_can_jump(obj) && level_object_test_up(obj, level)) {
         counter_stop(obj->counter_y);
         counter_restart(obj->counter_jump, jump);
         return true;
@@ -511,13 +511,13 @@ bool map_object_jump(MapObject *obj, Level *level, int jump) {
     return false;
 }
 
-void map_object_adjust(MapObject *obj, Level* level) {
+void level_object_adjust(LevelObject *obj, Level *level) {
     counter_tick(obj->counter_x);
     counter_tick(obj->counter_y);
     counter_tick(obj->counter_chase);
 
     if (!counter_stopped(obj->counter_jump)) {
-        if (map_object_test_up(obj, level)) {
+        if (level_object_test_up(obj, level)) {
             if (counter_stopped(obj->counter_y)) {
 				counter_tick(obj->counter_jump);
                 obj->position.y += 1;
@@ -528,7 +528,7 @@ void map_object_adjust(MapObject *obj, Level* level) {
 			counter_stop(obj->counter_jump);
     } else if (obj->is_falling) {
         if (!obj->falling_from_above) {
-            if (map_object_test_down(obj, level)) {
+            if (level_object_test_down(obj, level)) {
                 if (counter_stopped(obj->counter_y)) {
                     if (obj->position.y == 0)
                         obj->position.y = MAP_HEIGHT;
@@ -550,31 +550,31 @@ void map_object_adjust(MapObject *obj, Level* level) {
                 obj->falling_from_above = false;
         }
 
-    } else if (map_object_test_down(obj, level) && counter_stopped(obj->counter_y)) {
+    } else if (level_object_test_down(obj, level) && counter_stopped(obj->counter_y)) {
         obj->is_falling = true;
     }
 }
 
-void map_object_chase(MapObject *moving, MapObject *target, Level *level, int speed) {
-    if (map_object_can_move(moving) && !moving->falling_from_above && !target->falling_from_above) {
+void level_object_chase(LevelObject *moving, LevelObject *target, Level *level, int speed) {
+    if (level_object_can_move(moving) && !moving->falling_from_above && !target->falling_from_above) {
         if (counter_stopped(moving->counter_chase)) {
             counter_restart(moving->counter_chase, speed);
 
             if (moving->position.y > target->position.y){
                 // look for a hole
                 bool look_left = true, look_right = true;
-                MapObject* m = map_object_copy(moving);
+                LevelObject* m = level_object_copy(moving);
 
                 for (int i = 1; i < MAP_HEIGHT; ++i) {
                     if(look_right) {
                         m->position = (Position) {moving->position.x + i, moving->position.y};
-                        if (!map_object_test_right(m, level)) {
+                        if (!level_object_test_right(m, level)) {
                             look_right = false;
                             continue;
                         }
 
-                        if (map_object_test_down(m, level)) {
-                            map_object_move_right(moving, level);
+                        if (level_object_test_down(m, level)) {
+                            level_object_move_right(moving, level);
                             break;
                         }
                     }
@@ -582,33 +582,33 @@ void map_object_chase(MapObject *moving, MapObject *target, Level *level, int sp
                     if(look_left) {
                         m->position = (Position) {moving->position.x - i, moving->position.y};
 
-                        if (!map_object_test_left(m, level)) {
+                        if (!level_object_test_left(m, level)) {
                             look_left = false;
                             continue;
                         }
 
-                        if (map_object_test_down(m, level)) {
-                            map_object_move_left(moving, level);
+                        if (level_object_test_down(m, level)) {
+                            level_object_move_left(moving, level);
                             break;
                         }
                     }
                 }
 
-                map_object_delete(m);
+                level_object_delete(m);
             }
 
             else {
                 bool action = false;
 
-                if (moving->position.y < target->position.y && map_object_can_jump(target)) {
-                    action = map_object_jump(moving, level, MONSTER_JUMP);
+                if (moving->position.y < target->position.y && level_object_can_jump(target)) {
+                    action = level_object_jump(moving, level, MONSTER_JUMP);
                 }
                 if (!action && moving->position.x < target->position.x) {
-                    action = map_object_move_right(moving, level);
+                    action = level_object_move_right(moving, level);
                 }
 
                 if (!action && moving->position.x > target->position.x) {
-                    map_object_move_left(moving, level);
+                    level_object_move_left(moving, level);
                 }
 
             }
@@ -616,7 +616,7 @@ void map_object_chase(MapObject *moving, MapObject *target, Level *level, int sp
     }
 }
 
-void map_object_set_falling_from_above(MapObject *obj, Position target) {
+void map_object_set_falling_from_above(LevelObject *obj, Position target) {
     obj->falling_from_above = true;
     obj->target_position = target;
     obj->position = target;
@@ -624,7 +624,7 @@ void map_object_set_falling_from_above(MapObject *obj, Position target) {
     obj->is_falling = true;
 }
 
-EffectivePosition map_object_to_effective_position(MapObject* mobj) {
+EffectivePosition level_object_to_effective_position(LevelObject *mobj) {
 	EffectivePosition p;
 	p.x = (float) mobj->position.x;
 	p.y = (float) mobj->position.y;
@@ -645,8 +645,8 @@ EffectivePosition map_object_to_effective_position(MapObject* mobj) {
 	return p;
 }
 
-bool map_object_in_collision(MapObject* a, MapObject* b) {
-	EffectivePosition pa = map_object_to_effective_position(a), pb = map_object_to_effective_position(b);
+bool level_object_in_collision(LevelObject *a, LevelObject *b) {
+	EffectivePosition pa = level_object_to_effective_position(a), pb = level_object_to_effective_position(b);
 
     double square_dist = pow(pa.x - pb.x, 2) + pow(pa.y - pb.y, 2);
 
@@ -675,8 +675,8 @@ void blit_level(Level *level, int y_shift) {
     }
 }
 
-void compute_real_pixel_positions(MapObject *obj, int *px, int *py) {
-    EffectivePosition p = map_object_to_effective_position(obj);
+void compute_real_pixel_positions(LevelObject *obj, int *px, int *py) {
+    EffectivePosition p = level_object_to_effective_position(obj);
 
     *px = (int) (p.x * TILE_WIDTH);
     *py = (int) (p.y * TILE_HEIGHT);

@@ -70,13 +70,13 @@ void game_main_input_management(Game *game) {
 
         if (counter_stopped(game->counter_next_level) && game->current_level != NULL && !game->bub->hit && !game->bub->map_object->falling_from_above && !game->freeze) {
             if (key_fired(game, E_LEFT))
-                map_object_move_left(game->bub->map_object, game->current_level);
+                level_object_move_left(game->bub->map_object, game->current_level);
 
             if (key_fired(game, E_RIGHT))
-                map_object_move_right(game->bub->map_object, game->current_level);
+                level_object_move_right(game->bub->map_object, game->current_level);
 
             if (key_fired(game, E_ACTION_1))
-                map_object_jump(game->bub->map_object, game->current_level, DRAGON_JUMP);
+                level_object_jump(game->bub->map_object, game->current_level, DRAGON_JUMP);
 
             if (key_fired(game, E_ACTION_2)) {
                 game->bubble_list = dragon_blow(game->bub, game->bubble_list, game->texture_levels);
@@ -129,7 +129,7 @@ void game_main_update_states(Game *game) {
             // test collisions with items
             Item* it = game->item_list, *x = NULL;
             while (it != NULL) {
-                if (map_object_in_collision(it->map_object, game->bub->map_object) && counter_stopped(it->counter_invulnerability)) {
+                if (level_object_in_collision(it->map_object, game->bub->map_object) && counter_stopped(it->counter_invulnerability)) {
                     x = it->next;
                     game->item_list = dragon_consume_item(game->bub, game->item_list, it);
                     it = x;
@@ -146,7 +146,7 @@ void game_main_update_states(Game *game) {
             bool monsters_alive = game->monster_list != NULL;
 
             while (b != NULL) {
-                if (map_object_in_collision(game->bub->map_object, b->map_object) && counter_value(b->counter_momentum) < BUBBLE_MOMENTUM - 2) {
+                if (level_object_in_collision(game->bub->map_object, b->map_object) && counter_value(b->counter_momentum) < BUBBLE_MOMENTUM - 2) {
                     t = b->next;
                     if (b->captured != NULL) {
                         game->monster_list = monster_kill(game->monster_list, b->captured);
@@ -170,7 +170,7 @@ void game_main_update_states(Game *game) {
                 Monster* m = game->monster_list;
                 while (m != NULL) {
                     if (!m->in_bubble && !m->map_object->falling_from_above) {
-                        if (map_object_in_collision(m->map_object, game->bub->map_object) && !game->bub->hit && !game->bub->invincible) {
+                        if (level_object_in_collision(m->map_object, game->bub->map_object) && !game->bub->hit && !game->bub->invincible) {
                             game->bub->hit = true;
                             counter_restart(game->bub->counter_hit, -1);
                         }
@@ -178,7 +178,7 @@ void game_main_update_states(Game *game) {
                         // eventually capture monster in bubbles
                         b = game->bubble_list;
                         while (b != NULL) {
-                            if (map_object_in_collision(m->map_object, b->map_object) && b->captured == NULL && b->counter_momentum > 0) {
+                            if (level_object_in_collision(m->map_object, b->map_object) && b->captured == NULL && b->counter_momentum > 0) {
                                 m->in_bubble = true;
                                 b->captured = m;
                                 break;
