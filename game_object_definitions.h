@@ -6,6 +6,8 @@
 
 // items
 typedef enum extra_power_t_ {
+	/* Define some power that objects may have (other than giving points).
+	 * */
 	EP_NONE,
 	EP_ADD_LIFE,
 	EP_ADD_EXTRA_LIFE,
@@ -14,6 +16,10 @@ typedef enum extra_power_t_ {
 } extra_power_t;
 
 typedef struct ItemDef_ {
+    /* Define an item definition (an type of item):
+     * - Number of point given ;
+     * - Sprite to draw.
+     * */
 	unsigned int points_given;
 	Sprite* sprite;
 	extra_power_t extra_power;
@@ -29,6 +35,8 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
 
 // monsters
 enum {
+    /* Define the different possible animation for a monster.
+     * */
     MA_NORMAL,
     MA_ANGRY,
     MA_CAPTURED,
@@ -36,6 +44,10 @@ enum {
 };
 
 typedef struct MonsterDef_ {
+    /* Define a monster definition:
+     * - Speed (for the chasing),
+     * - Animations.
+     * */
 	Animation* animation[MA_NUMBER];
 	unsigned int speed; // number of frames between two movements
 } MonsterDef;

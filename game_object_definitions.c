@@ -5,6 +5,8 @@
 #include "game_object_definitions.h"
 
 ItemDef *item_def_new(unsigned int points_given, extra_power_t extra_power, Sprite *sprite) {
+    /* Create an item definition (and copy the sprite).
+     * */
     if (sprite == NULL)
         return NULL;
 
@@ -32,6 +34,8 @@ ItemDef *item_def_new(unsigned int points_given, extra_power_t extra_power, Spri
 }
 
 void item_def_delete(ItemDef* item) {
+    /* Delete an item.
+     * */
     if (item != NULL) {
         if (item->sprite != NULL)
             sprite_delete(item->sprite);
@@ -44,6 +48,11 @@ void item_def_delete(ItemDef* item) {
 }
 
 ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size) {
+    /* Create an item array (of `size`) from a file.
+     *
+     * - The file starts with the number of items
+     * - For each item, the points given, the extra power, and the sprite position (the sprite size is assumed to be `ITEM_WIDTH`x`ITEM_HEIGHT`).
+     * */
     *size = 0;
 
     if (f == NULL)
@@ -141,6 +150,8 @@ ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size)
 }
 
 MonsterDef* monster_def_new(Animation **sprite_animation, unsigned int speed) {
+    /* Create a monster definition (copy animations).
+     * */
     if (sprite_animation == NULL)
         return NULL;
 
@@ -170,6 +181,8 @@ MonsterDef* monster_def_new(Animation **sprite_animation, unsigned int speed) {
 }
 
 void monster_def_delete(MonsterDef* item) {
+    /* Delete a monster
+     * */
     if (item != NULL) {
         for (int i = 0; i < MA_NUMBER; ++i) {
             animation_delete(item->animation[i]);
@@ -183,6 +196,13 @@ void monster_def_delete(MonsterDef* item) {
 }
 
 MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int* size) {
+    /* Create a monster array (of `size`) from a file.
+     *
+     * - The file starts with the number of monsters
+     * - For each monster, the speed and the sprite y position.
+     *   The sprite size is assumed to be `ITEM_WIDTH`x`ITEM_HEIGHT`, and the different sprites for the animation are assumed to be on the same line.
+     *   Two frame per animation, `MA_NUMBER` animations.
+     * */
     *size = 0;
     if (f == NULL)
         return NULL;
