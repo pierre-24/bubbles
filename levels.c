@@ -7,6 +7,8 @@
 #include "levels.h"
 
 int position_index(Position pos) {
+    /* Return the position in the 1D array from the 2D position.
+     * */
     if (pos.x >= MAP_WIDTH || pos.y >= MAP_HEIGHT) {
         return -1;
     }
@@ -17,6 +19,8 @@ int position_index(Position pos) {
 
 Level* level_new(bool *map, Position bubble_endpoint, Sprite *fill_tile, unsigned int num_monsters,
                  MonsterDef **monsters, Position *monster_positions) {
+    /* Create and return a level.
+     * */
 
     if (fill_tile == NULL || monster_positions == NULL || monsters == NULL)
         return NULL;
@@ -60,6 +64,8 @@ Level* level_new(bool *map, Position bubble_endpoint, Sprite *fill_tile, unsigne
     return level;
 }
 void level_delete(Level* level) {
+    /* Delete a level.
+     * */
     Level* next = level, *t = NULL;
     while (next != NULL) {
         t = next->next;
@@ -84,6 +90,14 @@ void level_delete(Level* level) {
 
 Level *level_new_from_string(char *buffer, int *position_in_buff, Image *image_level, MonsterDef **base_monster_defs,
                              int num_monster_defs) {
+    /* Create a level from a string.
+     *
+     * The string contains different lines:
+     *
+     * 1. The first line contains the number of monsters, the position of the bubble and the sprite position (sprite size is assumed to be `TILE_WIDTH`x`TILE_HEIGHT`.
+     * 2. For each monster (one line per monster), its id (definition) and its initial position.
+     * 3. `MAP_HEIGHT` line, containing `MAP_WIDTH` 0 or 1 (anything different from 0 actually means "wall").
+     * */
     if (buffer == NULL || position_in_buff == NULL || base_monster_defs == NULL || image_level == NULL)
         return NULL;
 
@@ -261,6 +275,10 @@ Level *level_new_from_string(char *buffer, int *position_in_buff, Image *image_l
 
 Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monster_defs, int num_monster_defs,
                             unsigned int *num_levels) {
+    /* Create a series of levels from a file.
+     *
+     * The file starts by the number of level. Then, `level_new_from_string()` reads the levels.
+     * */
     if (f == NULL || base_monster_defs == NULL || num_levels == NULL || image_level == NULL)
         return NULL;
 
@@ -324,6 +342,8 @@ Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monst
 }
 
 LevelObject *level_object_new(Position position, int width, int height) {
+    /* Create and return a new level object.
+     * */
     LevelObject* obj = malloc(sizeof(LevelObject));
 
     if (obj == NULL) {
@@ -365,6 +385,8 @@ LevelObject *level_object_new(Position position, int width, int height) {
 }
 
 void level_object_delete(LevelObject *obj) {
+    /* Delete a level object.
+     * */
     if (obj != NULL) {
 		counter_delete(obj->counter_x);
 		counter_delete(obj->counter_y);
@@ -379,6 +401,8 @@ void level_object_delete(LevelObject *obj) {
 }
 
 LevelObject* level_object_copy(LevelObject *src) {
+    /* Copy a level object (and its counters).
+     * */
     if (src == NULL)
         return NULL;
 
@@ -404,14 +428,20 @@ LevelObject* level_object_copy(LevelObject *src) {
 
 
 bool level_object_test_left(LevelObject *obj, Level *level) {
+    /* Test if an object can go left.
+     * */
     Position n = {obj->position.x - 1, obj->position.y};
 
     if (n.x < 0)
         return false;
 
     for (int i = 0; i < obj->height; ++i) {
-        if (level->map[position_index(n)])
-            return false;
+        n.x = obj->position.x - 1;
+        for (int j = 0; j < obj->width; ++j) {
+            if (level->map[position_index(n)])
+                return false;
+            n.x += 1;
+        }
         n.y += 1;
     }
 
@@ -419,14 +449,20 @@ bool level_object_test_left(LevelObject *obj, Level *level) {
 }
 
 bool level_object_test_right(LevelObject *obj, Level *level) {
-    Position n = {obj->position.x + obj->width, obj->position.y};
+    /* Test if an object can go right.
+     * */
+    Position n = {obj->position.x + 1, obj->position.y};
 
     if (n.x >= MAP_WIDTH)
         return false;
 
     for (int i = 0; i < obj->height; ++i) {
-        if (level->map[position_index(n)])
-            return false;
+        n.x = obj->position.x + 1;
+        for (int j = 0; j < obj->width; ++j) {
+            if (level->map[position_index(n)])
+                return false;
+            n.x += 1;
+        }
         n.y += 1;
     }
 
@@ -435,6 +471,8 @@ bool level_object_test_right(LevelObject *obj, Level *level) {
 
 
 bool level_object_test_up(LevelObject *obj, Level *level) {
+    /* Test if an object can go up.
+     * */
     Position n = {obj->position.x, obj->position.y + obj->height};
 
     if (n.y >= MAP_HEIGHT)
@@ -444,14 +482,20 @@ bool level_object_test_up(LevelObject *obj, Level *level) {
 }
 
 bool level_object_test_down(LevelObject *obj, Level *level) {
+    /* Test if an object can go down.
+     * */
     Position n = {obj->position.x, obj->position.y - 1};
 
     if (n.y < 0)
         return false;
 
     for (int i = 0; i < obj->width; ++i) {
-        if (level->map[position_index(n)])
-            return false;
+        n.y = obj->position.y-1;
+        for (int j = 0; j < obj->height; ++j) {
+            if (level->map[position_index(n)])
+                return false;
+            n.y += 1;
+        }
         n.x += 1;
     }
 
@@ -459,14 +503,22 @@ bool level_object_test_down(LevelObject *obj, Level *level) {
 }
 
 bool level_object_can_move(LevelObject *obj) {
+    /* Test if an object can perform a movement in left or right direction (but not if the movement is possible)
+     * */
 	return counter_stopped(obj->counter_x);
 }
 
 bool level_object_can_jump(LevelObject *obj) {
+    /* Test if an object can perform a jump (but not if the jump is possible).
+     * */
 	return !obj->is_falling && counter_stopped(obj->counter_jump);
 }
 
 bool level_object_move_left(LevelObject *obj, Level *level) {
+    /* Move an object to the left, if possible.
+     *
+     * Return true if the movement was performed, false otherwise.
+     * */
     obj->move_forward = false;
 
     if (level_object_test_left(obj, level) && level_object_can_move(obj)) {
@@ -483,6 +535,10 @@ bool level_object_move_left(LevelObject *obj, Level *level) {
 }
 
 bool level_object_move_right(LevelObject *obj, Level *level) {
+    /* Move an object to the right, if possible.
+     *
+     * Return true if the movement was performed, false otherwise.
+     * */
     obj->move_forward = true;
 
     if (level_object_test_right(obj, level) && level_object_can_move(obj)) {
@@ -499,6 +555,10 @@ bool level_object_move_right(LevelObject *obj, Level *level) {
 }
 
 bool level_object_jump(LevelObject *obj, Level *level, int jump) {
+    /* Jump, if possible.
+     *
+     * Return true if the movement was performed, false otherwise.
+     * */
 	if (jump <= 0)
 		return false;
 	
@@ -512,6 +572,8 @@ bool level_object_jump(LevelObject *obj, Level *level, int jump) {
 }
 
 void level_object_adjust(LevelObject *obj, Level *level) {
+    /* "Adjust" an object: update counters, make it fall if needed, stop falling if needed.
+     * */
     counter_tick(obj->counter_x);
     counter_tick(obj->counter_y);
     counter_tick(obj->counter_chase);
@@ -556,6 +618,12 @@ void level_object_adjust(LevelObject *obj, Level *level) {
 }
 
 void level_object_chase(LevelObject *moving, LevelObject *target, Level *level, int speed) {
+    /* Make an object chase another.
+     *
+     * Every `speed` frame, set the direction in order to get closer to the target.
+     *
+     * Note that if the target is below the object, it will find the closer hole to get closer.
+     * */
     if (level_object_can_move(moving) && !moving->falling_from_above && !target->falling_from_above) {
         if (counter_stopped(moving->counter_chase)) {
             counter_restart(moving->counter_chase, speed);
@@ -617,6 +685,8 @@ void level_object_chase(LevelObject *moving, LevelObject *target, Level *level, 
 }
 
 void map_object_set_falling_from_above(LevelObject *obj, Position target) {
+    /* Set the object in order to "fall from above" the level, to a given `target` position.
+     * */
     obj->falling_from_above = true;
     obj->target_position = target;
     obj->position = target;
@@ -625,6 +695,8 @@ void map_object_set_falling_from_above(LevelObject *obj, Position target) {
 }
 
 EffectivePosition level_object_to_effective_position(LevelObject *mobj) {
+    /* From the position and the `counter_x`/`counter_y` counters, get the effective position.
+     * */
 	EffectivePosition p;
 	p.x = (float) mobj->position.x;
 	p.y = (float) mobj->position.y;
@@ -646,6 +718,9 @@ EffectivePosition level_object_to_effective_position(LevelObject *mobj) {
 }
 
 bool level_object_in_collision(LevelObject *a, LevelObject *b) {
+    /* Test if objects are in collision, but not using a bounding box, but a minimal `sqrt(CONTACT_DISTANCE)` distance between the two objects.
+     *
+     * */
 	EffectivePosition pa = level_object_to_effective_position(a), pb = level_object_to_effective_position(b);
 
     double square_dist = pow(pa.x - pb.x, 2) + pow(pa.y - pb.y, 2);
@@ -657,6 +732,8 @@ bool level_object_in_collision(LevelObject *a, LevelObject *b) {
 }
 
 void blit_level(Level *level, int y_shift) {
+    /* Blit a whole level on the screen, using `fill_tile`.
+     * */
     if (level != NULL) {
         for (unsigned int y = 0; y < MAP_HEIGHT; ++y) {
             for (unsigned int x = 0; x < MAP_WIDTH; ++x) {
@@ -676,6 +753,8 @@ void blit_level(Level *level, int y_shift) {
 }
 
 void compute_real_pixel_positions(LevelObject *obj, int *px, int *py) {
+    /* Get the position in pixels on screen, from the effective position.
+     * */
     EffectivePosition p = level_object_to_effective_position(obj);
 
     *px = (int) (p.x * TILE_WIDTH);
