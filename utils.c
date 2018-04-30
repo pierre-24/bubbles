@@ -48,12 +48,13 @@ void close_log()  {
 
 char* file_get_content(FILE* f) {
     /* Read the whole content of a file (`f`) and return a string.
-     * The programer must delete the string after use.
+     * The programmer must delete the string after use.
      * */
-    
-    fseek (f, 0, SEEK_END);
-    long length = ftell (f);
-    fseek (f, 0, SEEK_SET);
+
+    long curr_pos = ftell(f); // get current
+    fseek (f, 0, SEEK_END); // go to end
+    long length = ftell(f) - curr_pos;
+    fseek (f, curr_pos, SEEK_SET); // go back to current
 
     char* buffer = malloc((length + 1) * sizeof(char));
     if (buffer == NULL) {
@@ -69,8 +70,7 @@ char* file_get_content(FILE* f) {
 }
 
 char *strnextspace(char *str) {
-    /* Return the adress of the next space (according to `isspace()`, wich includes `\t`, `\n`, ..) in the string, 
-     * or NULL if it reaches the end of the string.
+    /* Return the adress of the next space (according to `isspace()`, wich includes `\t`, `\n`, ..) in the string, or NULL if it reaches the end of the string.
      * Note that the search starts from the current position.
      * */
     if (str == NULL)
@@ -107,8 +107,7 @@ char *strnextline(char *str) {
 
 
 char *strnextnspace(char *str) {
-    /* Return the adress of the next non-space character (according to `!isspace()`) in the string, 
-     * or NULL if it reaches the end of the string.
+    /* Return the adress of the next non-space character (according to `!isspace()`) in the string, or NULL if it reaches the end of the string.
      * Note that the search starts from the current position.
      * */
     if (str == NULL)

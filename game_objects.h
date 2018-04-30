@@ -10,6 +10,8 @@
 #include "levels.h"
 
 enum {
+    /* Define dragon animations
+     * */
     DA_NORMAL,
     DA_MOVE,
     DA_BLOW,
@@ -24,13 +26,22 @@ enum {
 
 #define DRAGON_LIFE 3
 
-#define DRAGON_JUMP 6 // [height] of jump
+#define DRAGON_JUMP 6 // [cases] of jump
 #define DRAGON_INVINCIBILITY 120 // [frames]
 #define DRAGON_HIT 60 // [frames]
 #define DRAGON_BLOW 4 // [frames]
 
 typedef struct Dragon_ {
-    bool is_bub; // if not, this is Bob
+    /* Define a dragon:
+     *
+     * - Map object and respawn position (where the dragon ends up when killed) ;
+     * - Animations (`DA_NUMBER`) ;
+     * - Life and maximum life (so that `life` cannot go higher than `max_life`) ;
+     * - `hit` and `hit_counter`: if the first one is set to true, the second one count the number of frame before the dragon is killed (in order to animate the hit) ;
+     * - `invincible` and `invincibility_counter`: amount of time where the dragon is invincible (cannot be hit by monsters) ;
+     * - `counter_blow`: time to animate the blowing ;
+     * - Score
+     * */
     LevelObject* map_object;
     Position respawn_position; // to respawn
     Animation* animations[DA_NUMBER]; // animations
@@ -45,7 +56,7 @@ typedef struct Dragon_ {
     Counter* counter_invincible;
 } Dragon;
 
-Dragon* dragon_new(LevelObject *map_object, bool is_bub, Animation **animation);
+Dragon *dragon_new(LevelObject *map_object, Animation **animation);
 void dragon_delete(Dragon* dragon);
 
 void dragon_adjust(Dragon *dragon, Level *level);
@@ -56,10 +67,6 @@ void blit_dragon(Dragon *dragon, bool frozen, int shift_y);
 
 Dragon* create_bub(Image* texture, int y);
 
-/*
-Dragon* create_bob(Image* texture, int y);
-#define POSITION_BOB (Position) {27, 1}*/
-
 #define MONSTER_WIDTH 32
 #define MONSTER_HEIGHT 32
 #define MONSTER_FRAMERATE 10
@@ -67,6 +74,13 @@ Dragon* create_bob(Image* texture, int y);
 #define BUB_Y 0
 
 typedef struct Monster_ {
+    /* Define a monster (NULL terminated chained list):
+     *
+     * - Level object and animation ;
+     * - Pointer to a definition, to get the speed :
+     * - `angry`: true if the monster escape from a bubble ;
+     * - `in_bubble`: true if captured in a bubble.
+     * */
     LevelObject* map_object;
     MonsterDef* definition;
     Animation* animation[MA_NUMBER];
@@ -90,6 +104,13 @@ void blit_monster(Monster *monster, bool frozen);
 #define ITEM_INVULNERABILITY 30
 
 typedef struct Item_ {
+    /* Define an item (NULL terminated chained list):
+     *
+     * - Level object ;
+     * - Pointer to a definition to get the sprite, the points given and the extra power ;
+     * - `go_right`: when an object pop out a bubble, it jumps in a given direction ;
+     * - `counter_invulnerability`: amount of time during which the item cannot be consumed (allowing it to escape).
+     * */
     LevelObject* map_object;
     ItemDef* definition;
     bool go_right;
@@ -109,6 +130,14 @@ void items_adjust(Item* list, Level* level);
 void blit_item(Item* item);
 
 typedef struct Bubble_ {
+    /* Define a bubble (NULL terminated chained list):
+     *
+     * - Map object and animation (there is only one animation for bubble, the captured monster have there own animation, `MA_CAPTURED`) ;
+     * - A pointer to the captured monster, if any.
+     * - `counter_momentum`: counter during which the bubble goes in the direction in which it has been blown.
+     * - `counter_time_left`: time during which the bubble does not burst.
+     * - `force`: related to the way the game handle the fact that bubble should stay appart from each other.
+     * */
     LevelObject* map_object;
     Animation* animation;
 

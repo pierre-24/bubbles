@@ -6,7 +6,9 @@
 #include "game_main.h"
 #include "game_objects.h"
 
-Dragon* dragon_new(LevelObject *map_object, bool is_bub, Animation **animation) {
+Dragon *dragon_new(LevelObject *map_object, Animation **animation) {
+    /* Create a dragon.
+     * */
     Dragon* dragon = malloc(sizeof(Dragon));
 
     if (dragon == NULL) {
@@ -30,9 +32,6 @@ Dragon* dragon_new(LevelObject *map_object, bool is_bub, Animation **animation) 
     dragon->score = 0;
     dragon->life = DRAGON_LIFE;
     dragon->max_life = DRAGON_LIFE;
-    dragon->is_bub = is_bub;
-
-
     dragon->invincible = false;
     dragon->hit = false;
 
@@ -54,6 +53,8 @@ Dragon* dragon_new(LevelObject *map_object, bool is_bub, Animation **animation) 
 }
 
 void dragon_delete(Dragon* dragon) {
+    /* Delete a dragon.
+     * */
     if (dragon != NULL) {
 
         for (int i = 0; i < DA_NUMBER; ++i) {
@@ -77,6 +78,10 @@ void dragon_delete(Dragon* dragon) {
 }
 
 Dragon* create_bub(Image* texture, int y) {
+    /* Create bub.
+     *
+     * Expect the animation to be on the same line (assume the sprite to be `DRAGON_WIDTH`x`DRAGON_HEIGHT`, and `DA_NUMBER` animations).
+     * */
     // create animations
     Animation* animations[DA_NUMBER];
 
@@ -108,7 +113,7 @@ Dragon* create_bub(Image* texture, int y) {
     if (obj == NULL)
         return NULL;
 
-    Dragon* dragon = dragon_new(obj, true, animations);
+    Dragon* dragon = dragon_new(obj, animations);
 
     for (int j = 0; j < DA_NUMBER; ++j)
         animation_delete(animations[j]);
@@ -123,17 +128,12 @@ Dragon* create_bub(Image* texture, int y) {
     return dragon;
 }
 
-/*Dragon* create_bob(Image* texture, int y) {
-    Dragon* dragon = create_bub(texture, y);
-    if (dragon != NULL) {
-        dragon->is_bub = false;
-        dragon->map_object->move_forward = false;
-    }
-
-    return dragon;
-}*/
-
 void dragon_adjust(Dragon *dragon, Level *level) {
+    /* "adjust" the dragon.
+     *
+     * Tick the hit, blow and invicible dragon.
+     * Also kill the dragon if hit for enough time (and decrease its life counter) and set invincible to false if needed.
+     * */
     level_object_adjust(dragon->map_object, level);
 
     counter_tick(dragon->counter_blow);
@@ -160,6 +160,8 @@ void dragon_adjust(Dragon *dragon, Level *level) {
 }
 
 Monster* monster_new(LevelObject* map_object, MonsterDef* definition) {
+    /* Create (and return) a monster (and copy animations from definition).
+     * */
     Monster* monster = malloc(sizeof(Monster));
 
     if (monster == NULL) {
@@ -197,6 +199,8 @@ Monster* monster_new(LevelObject* map_object, MonsterDef* definition) {
 }
 
 void monster_delete(Monster* monster) {
+    /* Delete all monsters of the list.
+     * */
     Monster* next = monster, *t = NULL;
     while (next != NULL) {
         t = next->next;
@@ -217,6 +221,10 @@ void monster_delete(Monster* monster) {
 }
 
 Monster* monsters_new_from_level(Level* level) {
+    /* Create (and return) a list of monsters for a given level.
+     *
+     * Set them to fall from above.
+     * */
     Monster* m = NULL, *t = NULL, *beg = NULL;
     for (int i = 0; i < level->num_monsters; ++i) {
         LevelObject* obj = level_object_new(level->monster_positions[i], MONSTER_WIDTH / TILE_WIDTH,
@@ -248,6 +256,10 @@ Monster* monsters_new_from_level(Level* level) {
 }
 
 Monster* monster_kill(Monster* list, Monster* monster) {
+    /* "Kill" (delete) a monster in the list.
+     *
+     * Return the remaining monsters, or `NULL` if there is no more monsters in the list.
+     * */
     Monster* m = list, *prev = NULL, *first = list;
 
     while (m != NULL)  {
@@ -275,6 +287,10 @@ Monster* monster_kill(Monster* list, Monster* monster) {
 }
 
 void monsters_adjust(Monster* list, Level* level, LevelObject* target) {
+    /* "Adjust" all the monsters.
+     *
+     * Set all of them to chase the target (but they can only move if they don't collide with another monster, to avoid monster on top of each other).
+     * */
     Monster* m = list;
     LevelObject* current_position;
 
@@ -300,6 +316,9 @@ void monsters_adjust(Monster* list, Level* level, LevelObject* target) {
 }
 
 bool test_collide_other_monsters(Monster* moving, Monster* list, LevelObject* npos) {
+    /* Test if, by being on `npos`, the monster `moving` would collide another monster.
+     * If so, return true (false otherwise).
+     * */
     if (moving != NULL && list != NULL && npos != NULL && !moving->in_bubble) {
 
         Monster* p = list;
@@ -318,6 +337,8 @@ bool test_collide_other_monsters(Monster* moving, Monster* list, LevelObject* np
 }
 
 Item* item_new(LevelObject* map_object, ItemDef* definition) {
+    /* Create a new item.
+     * */
     if(map_object == NULL || definition == NULL)
         return NULL;
 
@@ -347,6 +368,8 @@ Item* item_new(LevelObject* map_object, ItemDef* definition) {
 }
 
 void item_delete(Item* item) {
+    /* Delete an item.
+     * */
     Item* i = item, *t = NULL;
     while (i != NULL) {
         level_object_delete(i->map_object);
@@ -364,7 +387,13 @@ void item_delete(Item* item) {
 
 Item *item_create(LevelObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level,
                   int value_counter_level) {
-
+    /* Create an item at a given position, and add it to the list of item (if NULL, create the list).
+     *
+     * The item is choosen randomly, from the time left until `MAX_LEVEL_TIME` and a random number (to avoid the fact that popping more than one bubble at the same time give the same object).
+     * The items are picked so that the first item in the list have more probabilityy than the last to be picked.
+     *
+     * Set it to jump from the position, so that the item is less easy to catch.
+     * */
     if (position == NULL || num_item_definitions == 0)
         return list;
 
@@ -416,6 +445,10 @@ Item *item_create(LevelObject *position, Item *list, ItemDef **definitions, int 
 }
 
 Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item) {
+    /* "Consume" (delete) an item in the list.
+     *
+     * Return the remaining items, or `NULL` if there is no more items in the list.
+     * */
     dragon->score += item->definition->points_given;
 
     Item* it = list, *prev = NULL, *first = list;
@@ -457,6 +490,8 @@ Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item) {
 }
 
 void items_adjust(Item* list, Level* level) {
+    /* "Adjust" all the items: maintain the direction while jumping.
+     * */
     Item* it = list;
 
     while (it != NULL) {
@@ -474,6 +509,8 @@ void items_adjust(Item* list, Level* level) {
 }
 
 Bubble *bubble_new(LevelObject *map_object, Image *texture, bool go_right) {
+    /* Create a new bubble (and create textures)
+     * */
     if (map_object == NULL || texture == NULL)
         return NULL;
 
@@ -519,6 +556,8 @@ Bubble *bubble_new(LevelObject *map_object, Image *texture, bool go_right) {
 }
 
 void bubble_delete(Bubble* bubble) {
+    /* Delete a bubble (but NOT the monster it contains).
+     * */
     Bubble* next = bubble, *t = NULL;
     while (next != NULL) {
         t = next->next;
@@ -539,6 +578,13 @@ void bubble_delete(Bubble* bubble) {
 }
 
 Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
+    /* "Burst" (delete) a bubble in the list.
+     *
+     * If `free_monster` is set to true, it release the monster it was containing (and set its position to the position of the bubble).
+     * If not (because the dragon hit the bubble), nothing is done with the monster (it may be already dead).
+     *
+     * Return the remaining bubbles, or `NULL` if there is no more bubbles in the list.
+     * */
     Bubble* b = bubble_list, *prev = NULL, *first = bubble_list;
 
     while (b != NULL)  {
@@ -574,6 +620,9 @@ Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster) {
 }
 
 EffectivePosition force_expr(EffectivePosition pa, EffectivePosition pb, float k, float eq, float min) {
+    /* Get the force applied by b (located in `pb`) on a (located on `pa`), with a given force constant (`k`), an equilibrium distance (`eq`) and a minimal distance (`min`).
+     * Actually assume a spring (with a force constant `k`) between the bubble and the other one.
+     * */
     float ds = (float) (pow(pb.x - pa.x, 2) + pow(pb.y - pa.y, 2)), d = (float) sqrt(ds), dx = d - eq;
 
     if (ds > pow(min, 2) || d == .0)
@@ -584,44 +633,68 @@ EffectivePosition force_expr(EffectivePosition pa, EffectivePosition pb, float k
 }
 
 void bubble_update_force(Bubble *a, Bubble *list, Position target) {
-    Bubble* t = list;
-    EffectivePosition pa = level_object_to_effective_position(a->map_object);
-    EffectivePosition f = force_expr(pa, (EffectivePosition) {(float) target.x, (float) target.y}, BUBBLE_K_POS, BUBBLE_REQ_POS, 50.f);
-    EffectivePosition nf;
+    /* Update the force of `a` using the list of bubble.
+     * `target` is the bubble position of the level.
+     * */
 
-    while (t != NULL) {
-        if (t != a) {
-            nf = force_expr(pa, level_object_to_effective_position(t->map_object), BUBBLE_K_INTER, BUBBLE_REQ_INTER, 5.f);
-            f.x += nf.x;
-            f.y += nf.y;
+    if (a != NULL && list != NULL) {
+        Bubble* t = list;
+        EffectivePosition pa = level_object_to_effective_position(a->map_object);
+        EffectivePosition f = force_expr(pa, (EffectivePosition) {(float) target.x, (float) target.y}, BUBBLE_K_POS, BUBBLE_REQ_POS, 50.f);
+        EffectivePosition nf;
+
+        while (t != NULL) {
+            if (t != a) {
+                nf = force_expr(pa, level_object_to_effective_position(t->map_object), BUBBLE_K_INTER, BUBBLE_REQ_INTER, 5.f);
+                f.x += nf.x;
+                f.y += nf.y;
+            }
+
+            t = t->next;
         }
 
-        t = t->next;
-    }
+        if (pow(f.x, 2) + pow(f.y, 2) >= BUBBLE_MIN_FORCES) {
+            a->force.x = f.x;
+            a->force.y = f.y;
+        }
+        else {
+            a->force.x = .0;
+            a->force.y = .0;
+        }
 
-    if (pow(f.x, 2) + pow(f.y, 2) >= BUBBLE_MIN_FORCES) {
-        a->force.x = f.x;
-        a->force.y = f.y;
-    }
-    else {
-        a->force.x = .0;
-        a->force.y = .0;
     }
 }
 
 void bubbles_update_force(Bubble* list, Position target) {
-    Bubble* t = list;
-    while(t != NULL) {
-        bubble_update_force(t, list, target);
-        t = t->next;
+    /* Update all the forces for all the bubbles in the list
+     * */
+    if (list != NULL) {
+        Bubble* t = list;
+        while(t != NULL) {
+            bubble_update_force(t, list, target);
+            t = t->next;
+        }
     }
 }
 
 bool number_between(unsigned int a, unsigned int min, unsigned int max) {
+    /* Return true if the number `a` is in the interval ]min;max[.
+     * */
     return a > min && a < max;
 }
 
 Bubble* bubbles_adjust(Bubble *bubble_list, Level *level, Position final_position) {
+    /* "adjust" the bubbles.
+     *
+     * Tick the time left and momentum counters.
+     * Update the forces.
+     *
+     * If the bubble can move, the forces gives the direction in which the bubble should go to either get to the target position or avoid another bubble.
+     * */
+
+    if (bubble_list == NULL || level == NULL)
+        return bubble_list;
+
     Bubble* bubble = bubble_list, *t = NULL, *first = bubble_list;
 
     while (bubble != NULL) {
@@ -683,6 +756,9 @@ Bubble* bubbles_adjust(Bubble *bubble_list, Level *level, Position final_positio
 }
 
 Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture) {
+    /* Blow (create) a bubble and add it to the list (if the list is NULL, create a list).
+     * Set its direction according to the one of the dragon.
+     * */
     if (dragon == NULL || texture == NULL)
         return bubble_list;
 
@@ -713,6 +789,10 @@ Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture) {
 }
 
 void blit_monster(Monster *monster, bool frozen) {
+    /* Blit the monster (use counter to set animation)
+     *
+     * If `frozen` is set to true, the animation does not update.
+     * */
     if (monster != NULL && !monster->in_bubble) {
         Animation** animation = &(monster->animation[MA_NORMAL]);
 
@@ -736,6 +816,10 @@ void blit_monster(Monster *monster, bool frozen) {
 }
 
 void blit_bubble(Bubble *bubble, bool frozen) {
+    /* Blit the bubble (use counter to set animation)
+     *
+     * If `frozen` is set to true, the animation does not update.
+     * */
     if (bubble != NULL) {
         Animation** animation = &(bubble->animation);
 
@@ -758,6 +842,8 @@ void blit_bubble(Bubble *bubble, bool frozen) {
 }
 
 void blit_item(Item* item) {
+    /* Blit the item
+     * */
     if (item != NULL) {
         blit_sprite(
                 item->definition->sprite,
@@ -768,6 +854,11 @@ void blit_item(Item* item) {
 }
 
 void blit_dragon(Dragon *dragon, bool frozen, int shift_y) {
+    /* Blit the dragon (use counter to set animation)
+     *
+     * If `frozen` is set to true, the animation does not update.
+     * `shift_y` is used for transitions.
+     * */
     if (dragon != NULL) {
         Animation** animation = &(dragon->animations[DA_NORMAL]);
 
