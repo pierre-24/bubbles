@@ -177,6 +177,9 @@ void game_init() {
     else
         write_log("# No scores yet");
 
+    // keys
+    keys_init(game);
+
     // openGL
     glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -293,6 +296,9 @@ void game_quit() {
 
             score_delete(game->scores_list);
         }
+
+        // keys
+        keys_delete(game);
 
         // and finally:
         free(game);

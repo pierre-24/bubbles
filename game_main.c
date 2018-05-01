@@ -65,7 +65,7 @@ void game_main_input_management(Game *game) {
     if (game != NULL) {
         if (key_fired(game, E_FREEZE)) {
             game->freeze = !game->freeze;
-            game->key_pressed_interval[E_FREEZE] = FREEZE_EVERY;
+            game->key_counters[E_FREEZE]->max = FREEZE_EVERY; // change interval
         }
 
         if (counter_stopped(game->counter_next_level) && game->current_level != NULL && !game->bub->hit && !game->bub->map_object->falling_from_above && !game->freeze) {
@@ -80,7 +80,7 @@ void game_main_input_management(Game *game) {
 
             if (key_fired(game, E_ACTION_2)) {
                 game->bubble_list = dragon_blow(game->bub, game->bubble_list, game->texture_levels);
-                game->key_pressed_interval[E_ACTION_2] = BLOW_EVERY;
+                game->key_counters[E_ACTION_2]->max = BLOW_EVERY; // change interval
             }
 
             if (key_fired(game, E_SHOW_CONTROLS))
@@ -107,9 +107,8 @@ void game_main_update_states(Game *game) {
             game_set_screen(game, SCREEN_GAME_OVER);
         }
 
-        else if(game->monster_list == NULL && (counter_stopped(game->counter_end_this_level) || game->item_list == NULL)) { // next level?
+        else if(game->monster_list == NULL && (counter_stopped(game->counter_end_this_level) || game->item_list == NULL)) // next level?
             game_next_level(game);
-        }
 
         else if (!game->freeze && game->current_level != NULL) { // ok, game is running
             counter_tick(game->counter_end_this_level);

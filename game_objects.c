@@ -857,7 +857,7 @@ void blit_dragon(Dragon *dragon, bool frozen, int shift_y) {
     /* Blit the dragon (use counter to set animation)
      *
      * If `frozen` is set to true, the animation does not update.
-     * `shift_y` is used for transitions.
+     * `shift_y` is used for transition between the levels.
      * */
     if (dragon != NULL) {
         Animation** animation = &(dragon->animations[DA_NORMAL]);

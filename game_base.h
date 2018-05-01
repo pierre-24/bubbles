@@ -8,13 +8,15 @@
 #include "game_objects.h"
 #include "score.h"
 
-#define FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS 10 // [frames]
+#define FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS 8 // [frames]
 #define FRAMES_BETWEEN_KEY_REPEAT_IN_GAME 4 // [frames]
 
-#define WINDOW_WIDTH 512
-#define WINDOW_HEIGHT 432
+#define WINDOW_WIDTH 512 // [pixels]
+#define WINDOW_HEIGHT 432 // [pixels]
 
 enum {
+    /* Define keys
+     * */
     E_NONE,
     E_LEFT,
     E_RIGHT,
@@ -30,6 +32,8 @@ enum {
 };
 
 enum {
+    /* Define screens
+     * */
     SCREEN_WELCOME,
     SCREEN_INSTRUCTIONS,
     SCREEN_GAME_OVER,
@@ -38,8 +42,8 @@ enum {
     SCREEN_NUMBER
 };
 
-#define GAME_ELEMENT_WIDTH 32
-#define GAME_ELEMENT_HEIGHT 32
+#define GAME_ELEMENT_WIDTH 32 // [pixels]
+#define GAME_ELEMENT_HEIGHT 32 // [pixels]
 
 #define NEXT_LEVEL_TRANSITION 120 // [frames]
 #define UNTIL_NEXT_LEVEL 600 // [frames]
@@ -49,11 +53,26 @@ enum {
 #define MAX_LEVEL_TIME (30 * 60) // [frames]
 
 enum {
+    /* Define game elements (some sprites)
+     * */
     GE_ARROW,
     GE_NUMBER
 };
 
 typedef struct Game_ {
+    /* Define the main game structure (normally the only global variable).
+     *
+     * - All the textures (images), some sprites (for the screens) and font ;
+     * - The list of score ;
+     * - Definitions of item and monster arrays (and corresponding numbers of elements) ;
+     * - Lists of items, monsters and bubbles ;
+     * - Key management: `key_pressed` to know wether a given key is pressed, and `key_pressed_interval` to deal with key repetition ;
+     * - Level management: the list of levels, the starting, previous current and next level.
+     * - Some boolean:
+     *   * `paused`: set to true if a screen is active ;
+     *   * `main_started`: true if the "main" game is started ;
+     *   * `freeze`: true is the game is paused.
+     * */
     bool paused;
     bool main_started;
     bool freeze;
@@ -102,14 +121,17 @@ typedef struct Game_ {
 
     // keys
     bool key_pressed[E_SIZE];
-    int key_pressed_interval[E_SIZE];
+    Counter* key_counters[E_SIZE];
     int key_interval;
 } Game;
 
-void key_down(Game *game, int key);
-void key_up(Game *game, int key);
+void keys_init(Game* game);
+void keys_delete(Game* game);
 void keys_update_interval(Game *game);
 void keys_reset(Game *game);
+
+void key_down(Game *game, int key);
+void key_up(Game *game, int key);
 
 bool key_fired(Game* game, int key);
 
