@@ -216,6 +216,7 @@ The following parts will follow these conventions:
 \item The module (divided into 4 layers) are organized as presented in Figure \ref{fig:modules}. The bottom layer contains all the methods and structure for basic manipulation (of images, files and score). Then, the game object layer contains methods and structures that make sense in the game (the map, the monsters, the bubbles, the items and the dragon). The following layer (game logic) gathers all the objects together and deals with how they interact together, as well as their responses to inputs (only for the dragon or the screens). Finally the last layer (game) contains the interactions with GLUT (with all the callbacks that it needs). The following pages will present the different modules from the bottom to the top.
 \item The \cc{*_new()}  (and \cc{*_new_from_file()}) type functions will perform the necessary \cc{malloc()} and initialize the structure(s), while the \cc{*_delete()} type functions will perform the required \cc{free()}'s. 
 \item The \cc{*_copy()} type functions copy a structure to another, and take care to copy the element of the structure correctly (by using the corresponding copy functions if needed). This is needed since you need to be sure that the element is destroyed only when the structure is.
+\item  The \cc{blit_*()} type functions simply ``blit" (draw\footnote{This term comes from another C graphic library, the SDL.}) the object on the screen, using a sprite or an animation (see below). 
 \item The program will log a certain number of informations in order to be able to detect and fix a crash.
 \item A chained list corresponds to the following representation:\begin{center}
 \begin{tikzpicture}
@@ -360,7 +361,7 @@ void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y);
 
 The strategy is to have a few textures that contains all the sprites needed: for example, a texture for the items, one for the monsters, one for the level tiles, etc. Then, only the sprites are manipulated by the program.
 
-The creation of a texture from a file (using \cc{image_new_from_file()}) is a complex problem, due to the diversity of image formats. To avoid the use of an external library, the PPM format \cite{ppmformat} was chosen, since it contains only the size of the image, and the pixels, making it one of the most simple format. This format does not contains the possibility to have an alpha channel, so a if a pixel have a given color (\cc{TRANSPARENT} in the code) it is replaced by a transparent pixel. The \cc{blit_sprite()} function simply ``blit" (draw\footnote{This term comes from another C graphic library, the SDL.}) the sprite on the screen. This function deals transparently with the fact that OpenGL defines the origin to be on the bottom left corner of the screen, while images have their origin on the top left corner. 
+The creation of a texture from a file (using \cc{image_new_from_file()}) is a complex problem, due to the diversity of image formats. To avoid the use of an external library, the PPM format \cite{ppmformat} was chosen, since it contains only the size of the image, and the pixels, making it one of the most simple format. This format does not contains the possibility to have an alpha channel, so a if a pixel have a given color (\cc{TRANSPARENT} in the code) it is replaced by a transparent pixel. Note that the \cc{blit_sprite()} function deals transparently with the fact that OpenGL defines the origin to be on the bottom left corner of the screen, while images have their origin on the top left corner. 
 
 Note that, since I'm not a good graphic artist (and this is not the goal of the work, anyway), sprites from Spriters-Ressource \cite{spriters} were used.
 
@@ -393,11 +394,6 @@ The game needs to store and load scores.
 #define BUFF_SCORE 255
 
 typedef struct Score_ {
-    /* Define a score.
-     *
-     * A score is a name (of `SCORE_NAME_SIZE` characters) and a (positive) integer score.
-     * This is a NULL terminated chained list.
-     * */
     unsigned int score;
     char name[SCORE_NAME_SIZE + 1];
     struct Score_* next;
@@ -701,6 +697,13 @@ The \cc{level_object_adjust()} function ``adjust" the object: it ticks the count
 
 This structure is therefore used to do collisions tests with the map, with the different \cc{level_object_test_*()} functions, and movements with the different \cc{level_object_move_*()} and \cc{level_object_jump()} functions (which test if the movement is possible before setting the position and the counters, basically). The \cc{level_object_can_*()} functions checks if a movement is possible (only if the corresponding counter is stopped).
 
+The chasing algorithm (exploited by the monsters, see below) is fairly simple:\begin{enumerate}
+\item If the object is above the target, it will try to find a hole in the floor (the closest one), and jump in it to get closer ;
+\item If the object is below the target, it will try to jump ;
+\item If jumping is not possible, the object will go left or right, depending on the $x$ value of the target.
+\end{enumerate}
+This algorithm actually works quite well on many of the map of the original game (and all of the current implementation), but it wouldn't work if both objects have the same $y$ but are separated by a wall. If so, the object should know where to jump to get closer to the target.
+
 Finally, it is interesting to check whether two objects are in collision. To do so, an \textit{effective position}, computed as \cc{real_x} and \cc{real_y} given above, is needed:
 \begin{minted}{c}
 #define CONTACT_DISTANCE 4
@@ -741,9 +744,7 @@ void monster_delete(Monster* monster);
 Monster* monsters_new_from_level(Level* level);
 Monster* monster_kill(Monster* list, Monster* monster);
 void monsters_adjust(Monster* list, Level* level, LevelObject* target);
-
 bool test_collide_other_monsters(Monster* moving, Monster* list, LevelObject* npos);
-
 void blit_monster(Monster *monster, bool frozen);
 
 #define ITEM_JUMP 8
@@ -761,10 +762,7 @@ Item* item_new(LevelObject* map_object, ItemDef* definition);
 void item_delete(Item* item);
 
 Item *item_create(LevelObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level, int value_counter_level);
-Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item);
-
 void items_adjust(Item* list, Level* level);
-
 void blit_item(Item* item);
 \end{minted}
 
@@ -805,55 +803,83 @@ Bubble *bubble_new(LevelObject *map_object, Image *texture, bool go_right);
 void bubble_delete(Bubble* bubble);
 
 Bubble* bubbles_adjust(Bubble *bubble_list, Level *level, Position final_position);
-
-Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture);
 Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster);
 \end{minted}
 
-The movement of a bubble is very specific: it starts by going in the direction it has been blown, until it loses its \textit{momentum}. When it does, all the bubbles end up in about the same position in the level. Bubbles burst on their own after a time, freeing the monster that they contain if it was the case. The \cc{Bubble} structure has a \cc{counter_momentum} parameter, that if 0, the bubble stops to go in the initial direction (indicated by \cc{go_right} in \cc{LevelObject}) and starts to go in the direction of \cc{bubble_endpoint} (in \cc{Level}, see above). \cc{counter_time_left} is another counter. If its value become 0, the bubble burst and release the monster (stored in \cc{captured}) that it eventually contains (which becomes angry). All of that is done by the \cc{bubbles_adjust()} functions, which also take care that the bubble does not end up in the same position.
+The movement of a bubble is very specific: it starts by going in the direction it has been blown, until it loses its \textit{momentum}. When it does, all the bubbles end up in about the same position in the level. Bubbles burst on their own after a time, freeing the monster that they contain if it was the case. The \cc{Bubble} structure has a \cc{counter_momentum} parameter, that if 0, the bubble stops to go in the initial direction (indicated by \cc{go_right} in \cc{LevelObject}) and starts to go in the direction of \cc{bubble_endpoint} (in \cc{Level}, see above). \cc{counter_time_left} is another counter. If its value become 0, the bubble burst and release the monster (stored in \cc{captured}) that it eventually contains (which becomes angry). All of that is done by the \cc{bubbles_adjust()} functions, which also take care that the bubble does not end up in the same position by exploiting \cc{force} (see below).
 
-To do so, the code adds virtual springs\footnote{This kind of approaches comes from my phycics lectures.} between the bubble and the final position, and between the bubbles, so that bubbles are attracted by the final position and other bubbles if they are at long distances (the spring is elongated) and repulsed at short distances (the spring is compressed). The force, acting on one end on the spring due to the other is given by\begin{equation}
-\vec{F}_{ba}  = -2\,k\,(||\vec{p}_a-\vec{p}_b||-r_{ab})\,\frac{\vec{p}_b-\vec{p}_a}{||\vec{p_b}-\vec{p}_A||}
+To do so, the code adds virtual springs\footnote{This kind of approach comes from my physic lectures.} between the bubble and the final position, and between the bubbles, so that bubbles are attracted by the final position and other bubbles if they are at long distances (the spring is elongated) and repulsed at short distances (the spring is compressed). According to the Hooke's law \cite{hooke}, the potential energy of a spring for which ends are $a$ and $b$ is given by\begin{equation}
+U_{ab} = k\,(||\vec{p}_a-\vec{p}_b||-r_{ab})^2,
 \end{equation}
+where $\vec{p}_X$ is the position of $X$, $k$ is the force constant (the difficulty to elongate the spring) and $r_{ab}$ is the resting distance (the ideal position). The force, on one end on the spring ($b$) due to the other side ($a$) is given by the gradient (the derivative) of the potential, so\begin{equation}
+\vec{F}_{ab}  = - \vec{\nabla} U_{ab} =  -2\,k\,(||\vec{p}_a-\vec{p}_b||-r_{ab})\,\frac{\vec{p}_b-\vec{p}_a}{||\vec{p_b}-\vec{p}_A||},
+\end{equation}
+where the force is therefore a tensor. The force on a given bubble is the force of all springs acting on it, $\vec{F}_a = \sum_{b\neq a} \vec{F}_{ab}$, and this forces tends to zero when an equilibrium situation is reached (corresponding to a minimum in the energy of the system). Also, solving Newtown equation of motion gives the following relation\begin{equation}
+\vec{p}_A(t+\Delta{t}) = \vec{p}_A(t) + \Delta{t}^2\,\frac{\vec{F}_A}{m},\label{eq:1}
+\end{equation}
+so the new position of the bubble after a time $\Delta{t}$, $\vec{p}_A(t+\Delta{t})$ proportional to the old position, $\vec{p}_A(t)$ plus $\vec{F}_A$ (setting the mass of the body, $m$, to 1 and $\Delta{t}$ to 1). This last formula is coded into \cc{bubble_adjust()}\footnote{To be precise, in \cc{force_expr()} in \texttt{game\_objects.c}, used by \cc{bubble_update_force()}, which computes $\vec{F}_{a}$ for each bubble and store it into \cc{force}.}, which uses the total force to decide the direction of the next movement (up, down, left or right). The different forces constants and equilibrium distances are given by \cc{BUBBLE_K_*} and \cc{BUBBLE_REQ_*} (adjusted by trial and error). Below a minimal force (\cc{BUBBLE_MIN_FORCES}, also adjusted by trial and errors), the bubble is not moved (and is said to be in an equilibrium position). This approach, although a bit overkill, works quite well, as pictured in Figure \ref{fig:def:bubs}.
 
-%
-%
-%
-%A structure to represent the dragons is also needed:
-%
-%\begin{minted}{c}
-%
-%// An enum for the dragons animation (DA), 2 frames for each
-%enum {
-%	DA_NORMAL_1,
-%	DA_NORMAL_2,
-%	DA_BLOW_BUBBLE_1,
-%	DA_BLOW_BUBBLE_2,
-%	DA_HIT_1,
-%	DA_HIT_2,
-%	BA_DEAD_1,
-%	BA_DEAD_2,
-%	DA_INVICIBLE_1,
-%	DA_INVICIBLE_2
-%	DA_NUMBER
-%};
-%
-%typedef struct Dragon_ {
-%	Square* current_position;
-%	unsigned int score;
-%	unsigned int life; // 3 at the begining
-%	unsigned int max_life; // 3 at the begining
-%	bool invicible; // when just killed
-%	unsigned int invincibility_counter;
-%	bool is_bub; // if not, this is Bob
-%	Sprite* animation[DA_NUMBER]; // animations
-%} Dragon;
-%
-%Dragon* dragon_new(Square* position, bool is_bub, Sprite* animation[]);
-%void dragon_delete(Dragon* dragon);
-%\end{minted}
-%
-%Indeed, when two players are present, each dragon (player) have its own score and number of life. Also, when a dragon die, if it still have some lives left, it comes back as invincible for a few second (the \cc{invicibility_counter} is decremented at each frame, until it gets to 0).
+\begin{figure}[!h]
+\centering
+\includegraphics[width=.6\linewidth]{i/screen6}
+\caption{Illustration of the implementation of Eq.~\ref{eq:1} to control the bubbles.}
+\label{fig:def:bubs}
+\end{figure}
+
+Finally, a structure to represent the dragons is also needed:
+
+\begin{minted}{c}
+enum {
+    DA_NORMAL,
+    DA_MOVE,
+    DA_BLOW,
+    DA_HIT,
+    DA_INVICIBLE,
+    DA_NUMBER
+};
+
+#define DRAGON_WIDTH 32 // [pixels]
+#define DRAGON_HEIGHT 32 // [pixels]
+#define DRAGON_FRAMERATE 10 // [frames]
+
+#define DRAGON_LIFE 3
+#define DRAGON_JUMP 6 // [cases] of jump
+#define DRAGON_INVINCIBILITY 120 // [frames]
+#define DRAGON_HIT 60 // [frames]
+#define DRAGON_BLOW 4 // [frames]
+
+typedef struct Dragon_ {
+    LevelObject* map_object;
+    Position respawn_position; // to respawn
+    Animation* animations[DA_NUMBER]; // animations
+    unsigned int score;
+    int life; // 3 at the beginning
+    int max_life; // 3 at the beginning
+
+    bool hit; // hit!
+    bool invincible; // when just killed
+    Counter* counter_hit;
+    Counter* counter_blow;
+    Counter* counter_invincible;
+} Dragon;
+
+Dragon *dragon_new(LevelObject *map_object, Animation **animation);
+void dragon_delete(Dragon* dragon);
+void blit_dragon(Dragon *dragon, bool frozen, int shift_y);
+
+void dragon_adjust(Dragon *dragon, Level *level);
+Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture);
+Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item);
+
+#define POSITION_BUB (Position) {3, 1}
+#define BUB_Y 0
+
+Dragon* create_bub(Image* texture, int y); // explicitly create Bub!
+\end{minted}
+
+It is the dragon object which contains the score (since in a two player version, each player would control its dragon, with a personal score). The dragon have a given \cc{life}, and a \cc{max_life}, so that the item cannot heal the dragon more than the maximum. There is 3 counters: \cc{counter_hit}, which display the \cc{DA_HIT} animation when hit by a monster (\cc{hit} is set to true), during a few frame before actually get killed, respawn at \cc{respawn_position} and get invincible (\cc{invincible} is set to true), during the time controlled by \cc{counter_invincible}. The \cc{counter_blow} display the \cc{DA_BLOW} animation during a few frame when blowing a bubble. Those counters are managed by \cc{dragon_adjust()} (which move the dragon to its respawn position when dead and set it invincible).
+
+The \cc{dragon_blow()} and \cc{dragon_consume_item()} functions respectively create a bubble and add it to the list of bubbles, and remove an item from the list (and get the point and apply its eventual extra power, see above). Since those are NULL terminated lists, the first function may receive NULL as an argument (if the list of bubbles is empty) and the later may return NULL (if there is no more item left after consuming the last one).
 %
 %\subsubsection{The game (\texttt{game.h})}
 %
