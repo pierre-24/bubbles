@@ -49,6 +49,8 @@ bool key_fired(Game* game, int key) {
 
         return game->key_pressed[key] && counter_stopped(game->key_counters[key]);
     }
+
+    return false;
 }
 
 void keys_reset(Game *game) {
