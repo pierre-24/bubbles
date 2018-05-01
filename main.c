@@ -3,6 +3,10 @@
 #include "game.h"
 
 void changeSize(int w, int h) {
+	/* Change the size (GLUT callback).
+	 *
+	 * The internal size remain the same, so the image is just deformed and resized accordingly.
+	 * */
     glViewport (0,  0,  w,  h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
