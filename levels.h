@@ -7,7 +7,7 @@
 
 #include "utils.h"
 #include "images.h"
-#include "game_object_definitions.h"
+#include "object_definitions.h"
 
 #define TILE_WIDTH 16 // [pixels]
 #define TILE_HEIGHT 16 // [pixels]

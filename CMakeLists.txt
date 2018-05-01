@@ -13,15 +13,15 @@ add_executable(bubbles
         score.h
         game.c
         game.h
-        game_object_definitions.h
+        object_definitions.h
         main.c
         Makefile
         images.c
         images.h
         utils.c
         utils.h
-        game_object_definitions.h
-        game_object_definitions.c
+        object_definitions.h
+        object_definitions.c
         datafile.c
         datafile.h animations.c animations.h levels.c levels.h game_objects.c game_objects.h game_main.c game_main.h game_base.c game_base.h game_screens.c game_screens.h)
 

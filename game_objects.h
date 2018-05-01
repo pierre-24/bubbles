@@ -6,7 +6,7 @@
 #define BUBBLES_GAME_OBJECTS_H
 
 #include "utils.h"
-#include "game_object_definitions.h"
+#include "object_definitions.h"
 #include "levels.h"
 
 enum {

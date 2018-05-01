@@ -2,7 +2,7 @@
 // Created by pbeaujea on 3/15/18.
 //
 
-#include "game_object_definitions.h"
+#include "object_definitions.h"
 
 ItemDef *item_def_new(unsigned int points_given, extra_power_t extra_power, Sprite *sprite) {
     /* Create an item definition (and copy the sprite).
