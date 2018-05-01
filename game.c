@@ -3,12 +3,16 @@
 Game* game = NULL;
 
 void game_fail_exit() {
+    /* Exit the game in emergency, but clean up.
+     * */
     printf("something went wrong (check log), exiting ...\n");
     game_quit();
     exit(-1);
 }
 
 Image* load_texture(const char* image_path) {
+    /* Load a given texture. Return NULL if the texture was not loaded.
+     * */
     FILE* f;
 
     f = fopen(image_path, "r");
@@ -27,6 +31,8 @@ Image* load_texture(const char* image_path) {
 }
 
 void game_init() {
+    /* Init the game structure, and everything in it.
+     * */
     srand((unsigned int) time(NULL));
 	init_log();
 
@@ -192,6 +198,12 @@ void game_init() {
 }
 
 void game_loop() {
+    /* Event loop for the program (GLUT callback).
+     *
+     * 1. Update key states ;
+     * 2. Update states (do keys management) ;
+     * 3. Draw.
+     * */
     // KEY MANAGEMENT:
     keys_update_interval(game);
 
@@ -233,7 +245,9 @@ void game_loop() {
 }
 
 void game_quit() {
-    // screen
+    /* Free everything in the game structure, then itself (GLUT callback).
+     * */
+
     if (game != NULL) {
         // textures
         image_delete(game->texture_items);
@@ -244,6 +258,7 @@ void game_quit() {
         image_delete(game->texture_game);
         image_delete(game->texture_font);
 
+        // screens
         for (int j = 0; j < SCREEN_NUMBER; ++j)
             sprite_delete(game->screens[j]);
 
@@ -319,6 +334,8 @@ char skey_to_internal[] = {
 };
 
 void game_special_key_down(int key, int x, int y) {
+    /* Translate GLUT keys down into internal keys down (GLUT callback).
+     * */
     int keyp = E_NONE;
 
     for (int i = 0; i < sizeof(skey_to_internal) / 2; ++i) {
@@ -331,6 +348,8 @@ void game_special_key_down(int key, int x, int y) {
 }
 
 void game_special_key_up(int key, int x, int y) {
+    /* Translate GLUT keys up into internal keys up (GLUT callback).
+     * */
     int keyp = E_NONE;
 
     for (int i = 0; i < sizeof(skey_to_internal) / 2; ++i) {
@@ -352,6 +371,8 @@ char key_to_internal[] = {
 };
 
 void game_key_down(unsigned char key, int x, int y) {
+    /* Translate GLUT keys down into internal keys down (GLUT callback).
+     * */
     int keyp = E_NONE;
 
     for (int i = 0; i < sizeof(key_to_internal) / 2; ++i) {
@@ -364,6 +385,8 @@ void game_key_down(unsigned char key, int x, int y) {
 }
 
 void game_key_up(unsigned char key, int x, int y) {
+    /* Translate GLUT keys up into internal keys up (GLUT callback).
+     * */
     int keyp = E_NONE;
 
     for (int i = 0; i < sizeof(key_to_internal) / 2; ++i) {
