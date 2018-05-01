@@ -64,6 +64,7 @@ void dragon_adjust(Dragon *dragon, Level *level);
 void blit_dragon(Dragon *dragon, bool frozen, int shift_y);
 
 #define POSITION_BUB (Position) {3, 1}
+#define BUB_Y 0
 
 Dragon* create_bub(Image* texture, int y);
 
@@ -71,7 +72,6 @@ Dragon* create_bub(Image* texture, int y);
 #define MONSTER_HEIGHT 32
 #define MONSTER_FRAMERATE 10
 #define MONSTER_JUMP 6 // height of jump
-#define BUB_Y 0
 
 typedef struct Monster_ {
     /* Define a monster (NULL terminated chained list):

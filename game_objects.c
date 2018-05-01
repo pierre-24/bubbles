@@ -233,7 +233,7 @@ Monster* monsters_new_from_level(Level* level) {
         if (obj == NULL)
             continue;
 
-        map_object_set_falling_from_above(obj, level->monster_positions[i]);
+        level_object_set_falling_from_above(obj, level->monster_positions[i]);
 
         t = monster_new(obj, level->monsters[i]);
 

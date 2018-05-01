@@ -40,6 +40,8 @@
 \setlength{\tabcolsep}{0.20cm}
 \onehalfspacing
 
+\newcommand{\cc}[1]{\mintinline{c}{#1}}
+
 \begin{document}
 \maketitle
 
@@ -212,7 +214,8 @@ The following parts will follow these conventions:
 
 \begin{itemize}
 \item The module (divided into 4 layers) are organized as presented in Figure \ref{fig:modules}. The bottom layer contains all the methods and structure for basic manipulation (of images, files and score). Then, the game object layer contains methods and structures that make sense in the game (the map, the monsters, the bubbles, the items and the dragon). The following layer (game logic) gathers all the objects together and deals with how they interact together, as well as their responses to inputs (only for the dragon or the screens). Finally the last layer (game) contains the interactions with GLUT (with all the callbacks that it needs). The following pages will present the different modules from the bottom to the top.
-\item The \mintinline{c}{*_new()}  (and \mintinline{c}{*_new_from_file()}) type functions will perform the necessary \mintinline{c}{malloc()} and initialize the structure(s), while the \mintinline{c}{*_delete()} type functions will perform the required \mintinline{c}{free()}'s.
+\item The \cc{*_new()}  (and \cc{*_new_from_file()}) type functions will perform the necessary \cc{malloc()} and initialize the structure(s), while the \cc{*_delete()} type functions will perform the required \cc{free()}'s. 
+\item The \cc{*_copy()} type functions copy a structure to another, and take care to copy the element of the structure correctly (by using the corresponding copy functions if needed). This is needed since you need to be sure that the element is destroyed only when the structure is.
 \item The program will log a certain number of informations in order to be able to detect and fix a crash.
 \item A chained list corresponds to the following representation:\begin{center}
 \begin{tikzpicture}
@@ -226,7 +229,7 @@ The following parts will follow these conventions:
 }
 \end{tikzpicture}
 \end{center}
-where \mintinline{c}{data} is a block of data and \text{next} a pointer to the next element of the list. It is a \mintinline{c}{NULL} terminated chained list if the last element is set to \mintinline{c}{NULL}, while it is circular if the last element point to the first element of the chain. Notice that in the case of circular lists, a sentinel is needed: \begin{center}
+where \cc{data} is a block of data and \text{next} a pointer to the next element of the list. It is a \cc{NULL} terminated chained list if the last element is set to \cc{NULL}, while it is circular if the last element point to the first element of the chain. Notice that in the case of circular lists, a sentinel is needed: \begin{center}
 \begin{tikzpicture}
 \draw[fill=cyan!15]  (-3.25,0) node[anchor=south west]{\texttt{NULL}} rectangle +(1.5,1.5em);
 \draw[fill=black!25] (-2,0) rectangle +(.5,1.5em);
@@ -243,7 +246,7 @@ where \mintinline{c}{data} is a block of data and \text{next} a pointer to the n
 \draw[-latex] (8.75,.75em) -- node[above]{\footnotesize\texttt{next}} ++(1.75,0) -- ++(0,-1) -- ++(-13, 0) -- ++(0,1.7em);
 \end{tikzpicture}
 \end{center}
-The sentinel (blue in the scheme above) is always the first element of the list, and the data is set to \mintinline{c}{NULL}.
+The sentinel (blue in the scheme above) is always the first element of the list, and the data is set to \cc{NULL}.
 \item All files used here (except image files) will be text files. Each of these files will contain multiple lines with values in it. Each value is space-separated. To define a file format, the following representation will be used:\begin{center}
 \begin{tikzpicture}
 \small
@@ -268,89 +271,148 @@ The sentinel (blue in the scheme above) is always the first element of the list,
 \end{tikzpicture}
 \end{center}
 Each block represents information. Vertically aligned blocks are on the same line. If a block contains more than one value (which correspond generally to a structure), the block is colored, and its definition is given below (here for \texttt{Line}, in green, and \texttt{Type}, in blue). Ultimately, that represent values, separated to the next by a space (for example, each line of the file is actually represented by 4 values in this example). Above the end of each block, there is a counter of the number of values so far in the line.
-Here, the first blocks represent the file, with \texttt{n} lines (indicated by the arrow on the right). Note that \texttt{uint} will be used as the shorthand for \mintinline{c}{unsigned int}.
+Here, the first blocks represent the file, with \texttt{n} lines (indicated by the arrow on the right). Note that \texttt{uint} will be used as the shorthand for \cc{unsigned int}.
 \item I will assume  a fixed framerate of 60 frames per second (since it is the vertical synchronization value of most of the modern screens). Every time length will therefore be expressed in a number of frames. 
 \item The code does not contains any unit test. This is clearly bad, but as much as I like unit testing\footnote{I usually program in Python, where this kind of thing is easier to implement and manage}, it is clearly difficult to do in C\footnote{Of course there is dedicated framework to do so (Google test, for example), but it goes beyond the scope of this project, I think.}, especially with graphical interfaces.
 \end{itemize}
 
 \subsubsection{Misc (\texttt{utils.h})}
 
+This first module have three goals: first of all, the program need a reliable way to log things. Therefore, there will be a unique function to do so: \cc{write_log()}, which uses a \cc{printf()} like syntax (thanks to \cc{vfprintf()}).
+
+\begin{minted}[breaklines]{c}
+#define LOG_FILE "bubbles.log"
+
+// open and close the log:
+void init_log();
+void close_log();
+// write in log:
+void write_log(char* format, ...);
+\end{minted}
+
+Then, some function to ease string (and file manipulation):
+
+\begin{minted}[breaklines]{c}
+char* file_get_content(FILE* f); // get all file content in a single string
+char *strnextspace(char *str); // get next space
+char *strnextline(char *str); // get next line
+char *strnextnspace(char *str); // get next non-space
+\end{minted}
+
+And finally, counters, because the code needs counters everywhere, especially to have a delay between different actions (otherwise thing would be too fast for the human eyes to detect): 
+
+\begin{minted}[breaklines]{c}
+typedef struct Counter_ {
+    int value;
+    int max;
+    bool infinite;
+    bool decrement;
+} Counter;
+
+Counter* counter_new(int max, bool infinite, bool decrement);
+void counter_delete(Counter* counter);
+
+Counter* counter_copy(Counter* counter);
+
+void counter_restart(Counter* counter, int nmax);
+void counter_stop(Counter* counter);
+bool counter_stopped(Counter* counter);
+int counter_tick(Counter* counter);
+int counter_value(Counter* counter);
+\end{minted}
+
+A counter goes from a ``minimum" to a ``maximum" value (the actual values depends whether the counter is set to increment or decrement value). The counter stops at its ``maximum" value (or starts back if it is infinite). The \cc{counter_start()} and \cc{counter_stop()} set the counter value to its ``minimum" and ``maximum". The \cc{conter_tick()} value increase (or decrease) the value by one.
+
 \subsubsection{Images (\texttt{textures.h})}
 
 Since the game will need to manipulate images, it may be interesting to define three kinds of structures that represent \begin{inparaenum}[i)]
-\item a pixel (with a red, green and blue value and a transparency to know whether the pixel should be drawn or not), 
-\item a texture (a array of pixels), and
+\item a texture (an image, so an array of pixels, each pixels being a set of 4 values for red, green, blue and alpha), and,
 \item a sprite (a part of a texture, for example the image of an object).
 \end{inparaenum}
 
 \begin{minted}[breaklines]{c}
-typedef struct Pixel_ {
-	// each color value is between 0 (black) and 255 (full color)
-	unsigned char red;
-	unsigned char green;
-	unsigned char blue;
-	bool transparent; // "true" if the pixel is transparent 
-} Pixel;
+#define TRANSPARENT {255, 0, 175}; // transparent color, a kind of pink
 
-typedef struct Texture_ {
+typedef struct Image_ {
 	unsigned int width;
 	unsigned int height;
-	Pixel* pixels; // dynamically allocated
-} Texture;
+	GLubyte * pixels; // dynamically allocated
+} Image;
 
-Texture* texture_new_from_file(FILE* f);
-void texture_delete(Texture* texture);
-
-Texture* texture_new_from_text(char* text, Texture* sprite_font);
+Image* image_new_from_file(FILE *f);
+void image_delete(Image *image);
 
 typedef struct Sprite_ {
-	Texture* texture; // pointer to the texture
-	unsigned int x;
-	unsigned int y;
-	unsigned int width;
-	unsigned int height;
+	Image* image; // pointer to the image
+	int x;
+	int y;
+	int width;
+	int height;
+	GLuint texture_id;
 } Sprite;
 
-Sprite* sprite_new(Texture* texture, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+Sprite* sprite_new(Image *image, int x, int y, int w, int h);
 void sprite_delete(Sprite* sprite);
+Sprite* sprite_copy(Sprite* origin);
+
+void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y);
 \end{minted}
 
 The strategy is to have a few textures that contains all the sprites needed: for example, a texture for the items, one for the monsters, one for the level tiles, etc. Then, only the sprites are manipulated by the program.
 
-The creation of a texture from a file (using \mintinline{c}{texture_new_from_file()}) is a complex problem, due to the diversity of image formats. To avoid the use of an external library, I will use either PCX \cite{pcx_spec} or BMP \cite{bmp_spec} format, which are two relatively simple image formats to implement (the choice will actually depend on whether it is difficult to export them with GIMP and which is the specification it is actually following).
+The creation of a texture from a file (using \cc{image_new_from_file()}) is a complex problem, due to the diversity of image formats. To avoid the use of an external library, the PPM format \cite{ppmformat} was chosen, since it contains only the size of the image, and the pixels, making it one of the most simple format. This format does not contains the possibility to have an alpha channel, so a if a pixel have a given color (\cc{TRANSPARENT} in the code) it is replaced by a transparent pixel. The \cc{blit_sprite()} function simply ``blit" (draw\footnote{This term comes from another C graphic library, the SDL.}) the sprite on the screen. This function deals transparently with the fact that OpenGL defines the origin to be on the bottom left corner of the screen, while images have their origin on the top left corner. 
 
-The \mintinline{c}{texture_new_from_text()} function create a new image containing a text defined as parameters, using a \textit{sprite font}, i.e. an image where the letters are located in a known position (see, for example, Figure \ref{fig:def:spritefont}). The image will be created by copying the pixels corresponding to each letter. \footnote{Even though GLUT seems to possess a function to draw a character \cite{glutrefchar}, so I will see whether I use this method or the one that I propose.}
+Note that, since I'm not a good graphic artist (and this is not the goal of the work, anyway), sprites from Spriters-Ressource \cite{spriters} were used.
 
-\begin{figure}[!h]
-\centering
-\includegraphics[width=.5\linewidth]{font-map-sprite}
-\caption{Examples of sprite font, with the grid used to locate the different letters \cite{dafont}.}
-\label{fig:def:spritefont}
-\end{figure}
+A way to write a string on the screen is also needed. GLUT already possess a function to write a character \cite{glutrefchar}, but it does not uses textures (it uses \cc{glDrawPixels()}), and does not scale. Therefore, it was chosen to use a custom function that blit a set of sprite to get the string:
 
-Note that, since I'm not a good graphic artist (and this is not the goal of the work, anyway), I will use sprites available on the internet, for example from Spriters-Ressource \cite{spriters}.
+\begin{minted}{c}
+#define FONT_MAX_CHAR 256
+
+typedef struct Font_ {
+	Image* font;
+	Sprite* characters[FONT_MAX_CHAR];
+    int char_width;
+    int char_height;
+} Font;
+
+Font* font_new(Image* font_image, int char_width, int char_height);
+void font_delete(Font* font);
+
+void blit_text(Font* font, char* text, int x, int y);
+\end{minted}
+
+The \cc{blit_text()} function blit the sprites corresponding to the screen, one after another, using a \textit{sprite font}, i.e. an image where the letters are located in a known position. Here, the 256 letters of the latin-1 subset will be present one after the other in the image, and, given the size of a letter, the \cc{font_new()} function will know where each character is by knowing the size of the image.
 
 \subsubsection{Scores (\texttt{scores.h})}
 
 The game needs to store and load scores.
 
 \begin{minted}{c}
+#define SCORE_NAME_SIZE 4
+#define BUFF_SCORE 255
+
 typedef struct Score_ {
-	char name[4];
-	unsigned int score;
-	Score* next;
+    /* Define a score.
+     *
+     * A score is a name (of `SCORE_NAME_SIZE` characters) and a (positive) integer score.
+     * This is a NULL terminated chained list.
+     * */
+    unsigned int score;
+    char name[SCORE_NAME_SIZE + 1];
+    struct Score_* next;
 } Score;
 
-Score* score_new(char name[4], unsigned int score);
+Score* score_new(unsigned int score, char name[SCORE_NAME_SIZE  + 1]);
 void score_delete(Score* score);
 
-Score* scores_from_file(FILE* f);
-void scores_insert(char name[4], unsigned int score);
-Score* scores_store_in_file(FILE* f, Score* list);
-void scores_delete(Score* list);
+Score* scores_new_from_file(FILE* f);
+void scores_save_in_file(FILE *f, Score *list);
+
+Score* score_insert(Score *list, unsigned int score, char name[SCORE_NAME_SIZE + 1]);
 \end{minted}
 
-Following the traditional arcade games, the name will be written with four (uppercase) letters. This is a chained list, loaded from a file (with the \mintinline{c}{scores_from_file()} function) for which the definition is given in Figure \ref{fig:def:scores}. Note that this function order the scores by decreasing value, and insertion (\mintinline{c}{scores_insert()}) will be done in the correct position in this ordered list. The \mintinline{c}{scores_store_in_file()} function is used to store the scores list in the file.
+Following the traditional arcade games, the name will be written with four (uppercase) letters. This is a (NULL terminated) chained list, loaded from a file (with the \cc{scores_new_rom_file()} function) for which the definition is given in Figure \ref{fig:def:scores}. Note that this function order the scores by decreasing value, and insertion (\cc{scores_insert()}) will be done in the correct position in this ordered list. The \cc{scores_save_in_file()} function is used to store the scores list in the file.
 
 \begin{figure}[!p]
 	\centering
@@ -374,7 +436,15 @@ Following the traditional arcade games, the name will be written with four (uppe
 \label{fig:def:scores}
 \end{figure} 
 
-\subsubsection{Definitions of game object types (\texttt{game\_object\_definitions.h})}
+\subsubsection{Data file (\texttt{datafile.h})}
+
+The only function in this module is:\begin{minted}{c}
+int datafile_line_field_positions(char* text, unsigned int num_data, char** positions, char** nextstart);
+\end{minted}
+
+It splits a given line (starting at \cc{text}) into \textit{fieds} (space separated) and fill \cc{positions} with the starting position of each field. It expects \cc{num_data} fields, otherwise it returns something different from 0. But everything after the \texttt{\#} character is ignored (comment character), so the function may return 1 if this is a line with just a comment (who needs to be skipped). \cc{nextstart} is set to the next line, or \cc{NULL} if \cc{'\0'} is reached.
+
+\subsubsection{Definitions of objects (\texttt{object\_definitions.h})}
 
 Used to define and list the properties of a given type of item or monster. The game engine will use a pointer to refer to those definitions when creating and using an actual item or monster.
 
@@ -384,7 +454,7 @@ typedef enum extra_power_t_ {
 	EP_NONE,
 	EP_ADD_LIFE,
 	EP_ADD_EXTRA_LIFE,
-	// some other powers
+	EP_FULL_HEAL,
 	EP_NUMBER
 } extra_power_t;
 
@@ -394,26 +464,39 @@ typedef struct ItemDef_ {
 	extra_power_t extra_power;
 } ItemDef;
 
-
-ItemDef* item_def_new(unsigned int points_given, Sprite* sprite, extra_power_t extra_power);
+ItemDef *item_def_new(unsigned int points_given, extra_power_t extra_power, Sprite *sprite);
 void item_def_delete(ItemDef* item);
 
-ItemDef** item_defs_from_file(FILE* f, Texture* items_texture, unsigned int* size);
+#define ITEM_WIDTH 32 // [pixels]
+#define ITEM_HEIGHT 32 // [pixels]
+
+ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size);
 
 // monsters
+enum {
+    MA_NORMAL,
+    MA_ANGRY,
+    MA_CAPTURED,
+    MA_NUMBER
+};
+
 typedef struct MonsterDef_ {
-	Sprite* sprite_animation[2];  // two sprites for the animation
+	Animation* animation[MA_NUMBER];
 	unsigned int speed; // number of frames between two movements
 } MonsterDef;
 
-MonsterDef* monster_def_new(Sprite* sprite_animation[2], unsigned int speed);
-void imonster_def_delete(MonsterDef* item);
+MonsterDef* monster_def_new(Animation **sprite_animation, unsigned int speed);
+void monster_def_delete(MonsterDef* item);
 
-MonsterDef** monster_defs_from_file(FILE* f, Texture* items_texture, unsigned int* size);
+#define MONSTER_WIDTH 32 // [pixels]
+#define MONSTER_HEIGHT 32 // [pixels]
+#define MONSTER_FRAMERATE 10 // [frames]
+
+MonsterDef** monster_defs_from_file(FILE* f, Image* items_texture, unsigned int* size);
 \end{minted}
 
 
-The last functions for each structure (\mintinline{c}{*_defs_from_file()}) loads and return an array of item (monster) definitions (of \mintinline{c}{size} elements) defined in a text file. There is one item (one monster) per line, defined by the information given in Figure \ref{fig:def:items} (Figure \ref{fig:def:monsters}). The data structure is therefore the one given in Figure \ref{fig:def:tab}, an array of pointers.
+The last functions for each structure (\cc{*_defs_from_file()}) loads and return an array of item (monster) definitions (of \cc{size} elements) defined in a text file. There is one item (one monster) per line, defined by the information given in Figure \ref{fig:def:items} (Figure \ref{fig:def:monsters}). The data structure is therefore the one given in Figure \ref{fig:def:tab}, an array of pointers. Note that the code assume the size of the item and monsters to be always the same, a 32x32 pixels square.
 
 \begin{figure}[!p]
 	\centering
@@ -421,7 +504,7 @@ The last functions for each structure (\mintinline{c}{*_defs_from_file()}) loads
 \small
 \def\sz{4.5}
 
-\draw[fill=green!10] (0,4) node[anchor=south west]{\texttt{item\_1 (ItemDef)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 6};
+\draw[fill=green!10] (0,4) node[anchor=south west]{\texttt{item\_1 (ItemDef)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 4};
 \draw[fill=green!10] (0,4cm-1.5em) node[anchor=south west]{\texttt{item\_2 (ItemDef)}} rectangle +(\sz,1.5em);
 \draw[fill=green!10] (0,4cm-3em) node[anchor=south west]{\texttt{...}} rectangle +(\sz,1.5em);
 \draw[fill=green!10] (0,4cm-4.5em) node[anchor=south west]{\texttt{item\_n (ItemDef)}} rectangle +(\sz,1.5em);
@@ -431,14 +514,12 @@ The last functions for each structure (\mintinline{c}{*_defs_from_file()}) loads
 
 \draw (0,0) node[anchor=south west]{\texttt{points\_given (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 1};
 \draw (1*\sz,0) node[anchor=south west]{\texttt{extra\_power (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 2};
-\draw[fill=blue!10]  (2*\sz,0) node[anchor=south west]{\texttt{sprite (Sprite)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 6};
+\draw[fill=blue!10]  (2*\sz,0) node[anchor=south west]{\texttt{sprite (Sprite)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 4};
 \draw[fill=green!10] (0,-1.5em) node[anchor=south west]{\texttt{ItemDef}} rectangle +(3*\sz,1.5em);
 
 \draw (0,-2) node[anchor=south west]{\texttt{x (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 1};
 \draw (\sz,-2) node[anchor=south west]{\texttt{y (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 2};
-\draw (2*\sz,-2) node[anchor=south west]{\texttt{width (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 3};
-\draw (3*\sz,-2) node[anchor=south west]{\texttt{height (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 4};
-\draw[fill=blue!10] (0,-2cm-1.5em) node[anchor=south west]{\texttt{Sprite}} rectangle +(4*\sz,1.5em);
+\draw[fill=blue!10] (0,-2cm-1.5em) node[anchor=south west]{\texttt{Sprite}} rectangle +(2*\sz,1.5em);
 \end{tikzpicture}
 \caption{Definition of the file to store item definitions. The \texttt{extra\_power} value will be converted to \texttt{extra\_power\_t}.}
 \label{fig:def:items}
@@ -450,7 +531,7 @@ The last functions for each structure (\mintinline{c}{*_defs_from_file()}) loads
 \small
 \def\sz{4.5}
 
-\draw[fill=green!10] (0,4) node[anchor=south west]{\texttt{monster\_1 (MonsterDef)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 9};
+\draw[fill=green!10] (0,4) node[anchor=south west]{\texttt{monster\_1 (MonsterDef)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 2};
 \draw[fill=green!10] (0,4cm-1.5em) node[anchor=south west]{\texttt{monster\_2 (MonsterDef)}} rectangle +(\sz,1.5em);
 \draw[fill=green!10] (0,4cm-3em) node[anchor=south west]{\texttt{...}} rectangle +(\sz,1.5em);
 \draw[fill=green!10] (0,4cm-4.5em) node[anchor=south west]{\texttt{monster\_n (MonsterDef)}} rectangle +(\sz,1.5em);
@@ -458,12 +539,11 @@ The last functions for each structure (\mintinline{c}{*_defs_from_file()}) loads
 \draw[latex-latex] (\sz cm+.25cm,4cm+1.5em) -- node[right]{\texttt{n}} +(0,-6em);
 
 
-\draw[fill=blue!10] (0,0) node[anchor=south west]{\texttt{sprite\_1 (Sprite)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 4};
-\draw[fill=blue!10]  (1*\sz,0) node[anchor=south west]{\texttt{sprite\_2 (Sprite)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 8};
-\draw  (2*\sz,0) node[anchor=south west]{\texttt{speed (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 9};
-\draw[fill=green!10] (0,-1.5em) node[anchor=south west]{\texttt{MonsterDef}} rectangle +(3*\sz,1.5em);
+\draw[] (0,0) node[anchor=south west]{\texttt{speed (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 1};
+\draw[]  (1*\sz,0) node[anchor=south west]{\texttt{sprite\_y (unit)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 2};
+\draw[fill=green!10] (0,-1.5em) node[anchor=south west]{\texttt{MonsterDef}} rectangle +(2*\sz,1.5em);
 \end{tikzpicture}
-\caption{Definition of the file to store monster definitions. The \texttt{Sprite} structure (blue) is the same as in Figure \ref{fig:def:items}.}
+\caption{Definition of the file to store monster definitions. Since it is assumed that all the sprites of a monster are on the same line, only \texttt{srpite\_y} (the $y$ position of the sprite) is required.}
 \label{fig:def:monsters}
 \end{figure}
 
@@ -480,7 +560,7 @@ The last functions for each structure (\mintinline{c}{*_defs_from_file()}) loads
 
 \draw[latex-latex] (.0,1.25) -- node[midway,above]{\texttt{size}} +(6,0);
 \end{tikzpicture}
-\caption{Data structure of an array of size \mintinline{c}{size} (here, 5) of pointers to a structure \mintinline{c}{X}.}
+\caption{Data structure of an array of size \cc{size} (here, 5) of pointers to a structure \cc{X}.}
 \label{fig:def:tab}
 \end{figure}
 
@@ -488,77 +568,43 @@ Note that the choice to use arrays here is not innocent, since those definitions
 
 \subsubsection{Levels (\texttt{levels.h})}
 
-A level contains the map, which could be stored as an array, but it may be more interesting to use a chained list in this case, as pictured in Figure \ref{fig:def:chainx}.
+A level (NULL terminated chained list) contains the map, which is stored as a 1-D array.
 
 \begin{minted}[breaklines]{c}
-enum {
-	N_LEFT,
-	N_RIGHT,
-	N_TOP,
-	N_BOTTOM,
-	N_NUMBER
-};
+#define TILE_WIDTH 16 // [pixels]
+#define TILE_HEIGHT 16 // [pixels]
+#define MAP_WIDTH 32 // [cases]
+#define MAP_HEIGHT 24 // [cases]
 
-typedef struct Square_ {
-	bool is_filled;
-	unsigned short position[2]; // in number of square, i.e. (2,2)
-	struct Square_* neighbor[N_NUMBER]; 
-} Square;
+typedef struct Position_ {
+    unsigned int x;
+    unsigned int y;
+}  Position;
 
-Square* square_new(bool is_filled, unsigned short position[2], Square* left, Square* right, Square* top, Square* bottom);
-void square_delete(Square* square);
-\end{minted}
+int position_index(Position pos);
 
-\begin{figure}[!h]
-\centering
-\begin{tikzpicture}[scale=.9]
-\foreach\i in {0,1}{
-\foreach \j in {0,1,2} {
-\begin{scope}[xshift=\i*7.6cm+\j*.15cm,yshift=\j*2.75cm+\i*-.15cm]
-\draw (0,0) node[anchor=south west]{\texttt{data}} rectangle +(3,1.5em);
-\draw[fill=black!25] (0,1.5em) rectangle +(3,1em);
-\fill (1.5,2em) circle (.1cm) ;
-\draw[-latex] (1.5,2em) -- node[left]{\footnotesize\texttt{neighbor[N\_TOP]}} +(0,1.5);
-\draw[fill=black!25] (0,-1em) rectangle +(3,1em);
-\fill (1.5,-.5em) circle (.1cm) ;
-\draw[-latex] (1.5,-.5em) -- node[right]{\footnotesize\texttt{neighbor[N\_BOTTOM]}} +(0,-1.5);
-\draw[fill=black!25] (3,0) rectangle +(1em,1.5em);
-\fill (3.2,.75em) circle (.1cm) ;
-\draw[-latex] (3.2,.75em) -- node[above=.1cm]{\footnotesize\texttt{neighbor[N\_RIGHT]}} +(4,0);
-\draw[fill=black!25] (0,0) rectangle +(-1em,1.5em);
-\fill (-.2,.75em) circle (.1cm) ;
-\draw[-latex] (-.2,.75em) -- node[below=.1cm]{\footnotesize\texttt{neighbor[N\_LEFT]}} +(-4,0);
-\end{scope}
-}
-}
-\end{tikzpicture}
-\caption{Representation of the chained list used for the map: \mintinline{c}{data} is the different data that the structure contains, while the \mintinline{c}{neighbor[]} array contains pointers to the left, right, top and bottom squares.}
-\label{fig:def:chainx}
-\end{figure}
-
-This quadruple chained list is only circular in its \mintinline{c}{neighbor[N_BOTTOM]} pointer, since the dragons and monsters can end up on the top while going down, but the other chained lists are \mintinline{c}{NULL} terminated. Note that since a \mintinline{c}{Square} represents a case in the map (for which the \mintinline{c}{position} parameter gives the actual position), it can actually be used as a position indicator for the different objects. 
-
-The level also contains the tile used for the filled square, a list of the monster with their initial position, and the final position of the bubble. The \mintinline{c}{Level} structure is, itself, a simple (\mintinline{c}{NULL} terminated) chained list, since it makes sense to go to the next level, but not to the previous one.
-
-\begin{minted}[breaklines]{c}
 typedef struct Level_ {
-	Square* map; // pointer to the bottom left (0,0) square
-	Square* bubble_endpoint;
-	Sprite* fill_tile;
-	unsigned int num_monsters; 
-	MonsterDef* monsters[]; // dynamically allocated
-	Square* monster_positions[]; // dynamically allocated
-	struct Level_* next; // NULL terminated
+    bool map[MAP_HEIGHT * MAP_WIDTH];
+    Position bubble_endpoint;
+    Sprite* fill_tile;
+    unsigned int num_monsters;
+    MonsterDef** monsters; // dynamically allocated
+    Position* monster_positions; // dynamically allocated
+    struct Level_* next; // NULL terminated
 } Level;
 
-Level* level_new_from_file(FILE* f);
+Level* level_new(bool *map, Position bubble_endpoint, Sprite *fill_tile, unsigned int num_monsters, MonsterDef **monsters, Position *monster_positions);
 void level_delete(Level* level);
 
-Level* levels_new_from_file(FILE* f);
-void levels_delete(Level* list);
-\end{minted}
+Level *level_new_from_string(char *buffer, int *position, Image *image_level, MonsterDef **base_monster_defs,int num_monster_defs);
+Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monster_defs, int num_monster_defs,nsigned int *num_levels);
 
-The \mintinline{c}{level_new_from_file()} function create the level from a \textbf{portion} of a text file, for which the definition is pictured in Figure \ref{fig:def:level}. At the end of this function, the file cursor is set to the next level: since the number of lines is known when the header is read (\text{1 + \mintinline{c}{num_monster} + 24}), it is actually possible to store all levels in a file. The function \mintinline{c}{levels_new_from_file()} read the whole file (by calling \mintinline{c}{level_new_from_file()} repetitively until \mintinline{c}{EOF}) and create the chained list. The \mintinline{c}{levels_delete()} take care of freeing all the elements of the chained list (by calling \mintinline{c}{level_delete()}, which free only a given \mintinline{c}{Level}, and take care of the complex\footnote{By starting at the left bottom corner, all \mintinline{c}{Square} may be deleted by following the \mintinline{c}{neighbor[N_RIGHT]} and then \mintinline{c}{neighbor[N_TOP]} pointers.} task to free all \mintinline{c}{Square} in it).
+void blit_level(Level *level, int y_shift);
+\end{minted} 
+
+The level also contains the tile used for the filled element in the map, a list of the monster with their initial position, and the final position of the bubble.
+
+The \cc{level_new_from_file()} function create the level from a \textbf{portion} of a text file, for which the definition is pictured in Figure \ref{fig:def:level}. At the end of this function, the file cursor is set to the next level: since the number of lines is known when the header is read (\text{1 + \cc{num_monster} + 24}), it is actually possible to store all levels in a file. The function \cc{levels_new_from_file()} read the whole file (by calling \cc{level_new_from_string()} repetitively until \cc{EOF}) and create the chained list. 
 
 \begin{sidewaysfigure}
 \centering
@@ -566,7 +612,7 @@ The \mintinline{c}{level_new_from_file()} function create the level from a \text
 \small
 \def\sz{4.5}
 
-\draw[fill=green!10] (0,4) node[anchor=south west]{\texttt{header (LevelHeader)}} rectangle +(2*\sz,1.5em) node[above]{\footnotesize 7};
+\draw[fill=green!10] (0,4) node[anchor=south west]{\texttt{header (LevelHeader)}} rectangle +(2*\sz,1.5em) node[above]{\footnotesize 5};
 \draw[fill=red!10] (0,4cm-1.5em) node[anchor=south west]{\texttt{monster\_1 (MonsterAndPos)}} rectangle +(1.5*\sz,1.5em)node[above]{\footnotesize 3};
 \draw[fill=red!10] (0,4cm-3em) node[anchor=south west]{\texttt{...}} rectangle +(1.5*\sz,1.5em);
 \draw[fill=red!10] (0,4cm-4.5em) node[anchor=south west]{\texttt{monster\_n (MonsterAndPos)}} rectangle +(1.5*\sz,1.5em);
@@ -581,7 +627,7 @@ The \mintinline{c}{level_new_from_file()} function create the level from a \text
 
 \draw (0,-1) node[anchor=south west]{\texttt{num\_monster (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 1};
 \draw[fill=magenta!25] (1*\sz,-1) node[anchor=south west]{\texttt{bubble\_pos (Position)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 3};
-\draw[fill=blue!10]  (2*\sz,-1) node[anchor=south west]{\texttt{fill\_tile (Sprite)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 7};
+\draw[fill=blue!10]  (2*\sz,-1) node[anchor=south west]{\texttt{fill\_tile (Sprite)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 5};
 \draw[fill=green!10] (0,-1cm-1.5em) node[anchor=south west]{\texttt{LevelHeader}} rectangle +(3*\sz,1.5em);
 
 \draw (0,-3) node[anchor=south west]{\texttt{x (uint)}} rectangle +(\sz,1.5em) node[above]{\footnotesize 1};
@@ -599,221 +645,336 @@ The \mintinline{c}{level_new_from_file()} function create the level from a \text
 \end{tikzpicture}
 \caption{Definition of the file to store a level. The \texttt{num\_monster} value (in the \texttt{LevelHeader} structure) is used to determine how many monster lines (\texttt{MonsterAndPos} structures) there will be. The \texttt{monster\_id} value (in \texttt{MonsterAndPos}) refers to the line in the monster definition file. The \texttt{MapLine} structure is repeated 24 times and contains 32 boolean to indicate whether the square is filled or not (since a map is 32$\times$24 squares). The \texttt{Sprite} structure (blue) is the same as in Figure \ref{fig:def:items}.}
 \label{fig:def:level}
-\end{sidewaysfigure}
+\end{sidewaysfigure} 
+
+The \cc{Position} structure represent a position in term of the number of case. But to get better (and smoother) movements, it is interesting to have a more general structure to deal with position in the level: the \cc{LevelObject} structure.
+
+\begin{minted}[breaklines]{c}
+typedef struct LevelObject_ {
+    Position position;
+    int width;
+    int height;
+
+    bool move_forward;
+    Counter* counter_x;
+    Counter* counter_y;
+    Counter* counter_jump;
+    Counter* counter_chase;    
+    bool is_falling;
+    bool falling_from_above;
+    Position target_position;
+} LevelObject;
+
+LevelObject *level_object_new(Position position, int width, int height);
+void level_object_delete(LevelObject *map_object);
+
+LevelObject* level_object_copy(LevelObject *src);
+
+bool level_object_test_left(LevelObject *representation, Level *level);
+bool level_object_test_right(LevelObject *representation, Level *level);
+bool level_object_test_up(LevelObject *representation, Level *level);
+bool level_object_test_down(LevelObject *representation, Level *level);
+
+bool level_object_can_move(LevelObject *obj);
+bool level_object_can_jump(LevelObject *obj);
+
+bool level_object_move_left(LevelObject *representation, Level *level);
+bool level_object_move_right(LevelObject *representation, Level *level);
+bool level_object_jump(LevelObject *representation, Level *level, int jump);
+void level_object_adjust(LevelObject *representation, Level *level);
+
+void level_object_chase(LevelObject *moving, LevelObject *target, Level *level, int speed);
+
+#define FALLING_FROM (MAP_HEIGHT + 2) // cases
+
+void level_object_set_falling_from_above(LevelObject *obj, Position target);
+\end{minted}
+
+This object is the representation of any object that can appear on the map. It contains the position, but the ``real" position on the level is modulated by \cc{counter_x} and \cc{counter_y}. In pseudo-code,\begin{minted}{c}
+float real_x = x + (float) (move_forward ? -1 : 1) * counter_x / MOVE_EVERY;
+float real_y = y + (float) (is_falling ? 1 : -1) * counter_y / MOVE_EVERY;
+\end{minted}
+
+If the object is moved, \cc{x} and \cc{y} are modified accordingly. But with the helps of the counter, which delays the movement, the object will appear to move to the new position in a few frame, not instantaneously. Other counters also helps in the case of jumping (to know how much it must jump, with \cc{counter_jump}) or in the case of chasing (an object can move in the direction of another, but change direction every few frame, with \cc{counter_chase}).
+
+The \cc{level_object_adjust()} function ``adjust" the object: it ticks the counters, and check if the object should start (empty tile below) or stop (solid tile below) to fall. Note that an object can start by \textit{falling from above}, which simulate the fact that some object fall from the top of the screen to a given target position (using the \cc{level_object_set_falling_from_above()} function sets the corresponding variables).
+
+This structure is therefore used to do collisions tests with the map, with the different \cc{level_object_test_*()} functions, and movements with the different \cc{level_object_move_*()} and \cc{level_object_jump()} functions (which test if the movement is possible before setting the position and the counters, basically). The \cc{level_object_can_*()} functions checks if a movement is possible (only if the corresponding counter is stopped).
+
+Finally, it is interesting to check whether two objects are in collision. To do so, an \textit{effective position}, computed as \cc{real_x} and \cc{real_y} given above, is needed:
+\begin{minted}{c}
+#define CONTACT_DISTANCE 4
+
+typedef struct EffectivePosition_ {
+	float x;
+	float y;
+} EffectivePosition;
+
+EffectivePosition level_object_to_effective_position(LevelObject *mobj);
+bool level_object_in_collision(LevelObject *a, LevelObject *b);
+\end{minted}
+
+The \cc{level_object_in_collision()} uses the distance between the two object, computed as $\sqrt{(x_B-x_A)^+(y_B-y_A)^2}$. For the objects to be in collision, this distance should be lower than the square root of \cc{CONTACT_DISTANCE} (to avoid the useless computation of a square root, all is squared).
 
 \subsubsection{Game objects (\texttt{game\_objects.h})}
 
-Now that the level is defined, the different objects may be as well. Those objects will appear on the screen, on top of the map. The principal attribute that all those objects share is the position. Items and monsters also have a pointer to their definition (to know the sprites, etc.). Finally, they are \mintinline{c}{NULL} terminated chained lists.
+Now that the level is defined, the different objects may be as well. Items and monsters also have a pointer to their definition (to know the sprites, etc.). Finally, they are all \cc{NULL} terminated chained lists (except the dragon). Lets start with monster and item:
 
 \begin{minted}{c}
-typedef struct Item_ {
-	Square* current_position;
-	ItemDef* definition;
-	struct Item_* next;
-} Item;
-
-Item* item_new(Square* position, ItemDef* definition);
-void item_delete(Item* item);
-
-Item* item_new_at_end(Item* list, Square* position, ItemDef* definition);
-bool item_delete_in_list(Item* list, Item* element);
-void items_delete(Item* list);
+#define MONSTER_WIDTH 32
+#define MONSTER_HEIGHT 32
+#define MONSTER_FRAMERATE 10
+#define MONSTER_JUMP 6 // height of jump
 
 typedef struct Monster_ {
-	Square* current_position;
-	MonsterDef* definition;
-	bool invicible; // true at the begining of the game
-	bool angry;
-	bool in_bubble;
-	struct Monster_* next;
+    LevelObject* map_object;
+    MonsterDef* definition;
+    Animation* animation[MA_NUMBER];
+    bool angry;
+    bool in_bubble;
+    struct Monster_* next;
 } Monster;
 
-Monster* monster_new(Square* position, MonsterDef* definition);
+Monster* monster_new(LevelObject* map_object, MonsterDef* definition);
 void monster_delete(Monster* monster);
 
-Monster* monster_new_at_end(Monster* list, Square* position, MonsterDef* definition);
-bool monster_delete_in_list(Monster* list, Monster* element);
-void monsters_delete(Monster* list);
+Monster* monsters_new_from_level(Level* level);
+Monster* monster_kill(Monster* list, Monster* monster);
+void monsters_adjust(Monster* list, Level* level, LevelObject* target);
 
+bool test_collide_other_monsters(Monster* moving, Monster* list, LevelObject* npos);
+
+void blit_monster(Monster *monster, bool frozen);
+
+#define ITEM_JUMP 8
+#define ITEM_INVULNERABILITY 30
+
+typedef struct Item_ {
+    LevelObject* map_object;
+    ItemDef* definition;
+    bool go_right;
+    Counter* counter_invulnerability;
+    struct Item_* next;
+} Item;
+
+Item* item_new(LevelObject* map_object, ItemDef* definition);
+void item_delete(Item* item);
+
+Item *item_create(LevelObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level, int value_counter_level);
+Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item);
+
+void items_adjust(Item* list, Level* level);
+
+void blit_item(Item* item);
+\end{minted}
+
+Concerning the different structure, the \cc{Item} contains a \cc{go_right} parameter. Indeed, when a bubble is busted, the item \textit{jumps out} the bubble. This parameter determine the direction of the jump (which is used by \cc{items_adjust()}). There is also a \cc{vulnerability_counter}, which is an amount of time when the item cannot be consumed.
+
+Concerning \cc{Monster}, the \cc{angry} parameter is a parameter used to determine if the monster is angry: a monster is angry when he was in a bubble and escape because the bubble burst on its own (see below). If this parameter is set to \cc{true}, the monster move faster. Finally, the \cc{in_bubble} parameter is used to determine if the monster is into a bubble (if so, it is not draw on the screen). The \cc{monster_adjust()} function set the monster to chase the dragon, and avoid collision between monsters (otherwise monsters ends up all in the same position and walk together so that it is difficult to distinguish them).
+
+\begin{minted}{c}
 typedef struct Bubble_ {
-	Square* current_position;
-	unsigned int momentum; // counter until it moves on its own
-	unsigned int direction; // N_LEFT or N_RIGHT
-	unsigned int time_left; // counter until it auto-burst
-	Monster* captured; // NULL in the begining
-	struct Bubble_* next; // NULL terminated
+    LevelObject* map_object;
+    Animation* animation;
+
+    Monster* captured; // NULL in the beginning
+
+    Counter* counter_momentum; // counter until it moves on its own
+    Counter* counter_time_left; // counter until it auto-burst
+    EffectivePosition force;
+    struct Bubble_* next; // NULL terminated
 } Bubble;
 
-Bubble* bubble_new(Square* position, unsigned int momentum);
+#define BUBBLE_WIDTH 32
+#define BUBBLE_HEIGHT 32
+#define BUBBLE_FRAMERATE 10
+
+#define BUBBLE_MOMENTUM 10
+#define BUBBLE_TIME 600
+
+#define BUBBLE_X 0
+#define BUBBLE_Y 32
+
+#define BUBBLE_K_POS .5f
+#define BUBBLE_K_INTER 1.f
+#define BUBBLE_REQ_POS .5f
+#define BUBBLE_REQ_INTER 3.f
+#define BUBBLE_MIN_FORCES 5.f // avoid shakiness of the bubbles
+
+Bubble *bubble_new(LevelObject *map_object, Image *texture, bool go_right);
 void bubble_delete(Bubble* bubble);
 
-Bubble* bubble_new_at_end(Bubble* list, Square* position, unsigned int momentum);
-bool bubble_delete_in_list(Bubble* list, Bubble* element);
-void bubbles_delete(Bubble* list);
+Bubble* bubbles_adjust(Bubble *bubble_list, Level *level, Position final_position);
+
+Bubble* dragon_blow(Dragon* dragon, Bubble* bubble_list, Image* texture);
+Bubble *bubble_burst(Bubble *bubble_list, Bubble *bubble, bool free_monster);
 \end{minted}
 
-For those three structures, the  \mintinline{c}{*_new_at_end()} functions add the element at the end of the chained list, while the \mintinline{c}{*_delete_in_list()} functions delete an element in the list (calling \mintinline{c}{*_delete()}) if found (the function returns \mintinline{c}{true} or \mintinline{c}{false} depending if the element is found and deleted or not). Finally, the \mintinline{c}{*s_delete()} functions will delete the whole list.
+The movement of a bubble is very specific: it starts by going in the direction it has been blown, until it loses its \textit{momentum}. When it does, all the bubbles end up in about the same position in the level. Bubbles burst on their own after a time, freeing the monster that they contain if it was the case. The \cc{Bubble} structure has a \cc{counter_momentum} parameter, that if 0, the bubble stops to go in the initial direction (indicated by \cc{go_right} in \cc{LevelObject}) and starts to go in the direction of \cc{bubble_endpoint} (in \cc{Level}, see above). \cc{counter_time_left} is another counter. If its value become 0, the bubble burst and release the monster (stored in \cc{captured}) that it eventually contains (which becomes angry). All of that is done by the \cc{bubbles_adjust()} functions, which also take care that the bubble does not end up in the same position.
 
-Concerning the different structure, the \mintinline{c}{Item} one is straightforward. Concerning \mintinline{c}{Monster}, the \mintinline{c}{invincible} parameter is set to \mintinline{c}{true} in the beginning because the monster ``fly" from the top to its initial position. The \mintinline{c}{angry} parameter is a parameter used to determine if the monster is angry: a monster is angry when he was in a bubble and escape because the bubble burst on its own (see below). If this parameter is set to \mintinline{c}{true}, the monster move faster. Finally, the \mintinline{c}{in_bubble} parameter is used to determine if the monster is into a bubble (if so, it is not draw on the screen).
+To do so, the code adds virtual springs\footnote{This kind of approaches comes from my phycics lectures.} between the bubble and the final position, and between the bubbles, so that bubbles are attracted by the final position and other bubbles if they are at long distances (the spring is elongated) and repulsed at short distances (the spring is compressed). The force, acting on one end on the spring due to the other is given by\begin{equation}
+\vec{F}_{ba}  = -2\,k\,(||\vec{p}_a-\vec{p}_b||-r_{ab})\,\frac{\vec{p}_b-\vec{p}_a}{||\vec{p_b}-\vec{p}_A||}
+\end{equation}
 
-Concerning \mintinline{c}{Bubble}, this structure has a \mintinline{c}{momentum} parameter, which is a counter, decremented at each frame. When this counter is 0, the bubble stops to go in the initial direction (indicated by \mintinline{c}{direction}) and starts to go in the direction of \mintinline{c}{bubble_endpoint} (in \mintinline{c}{Level}, see above). \mintinline{c}{time_left} is another counter, which is decremented at each frame. If this counter is 0, the bubble burst and release the monster (stored in \mintinline{c}{captured}) that it eventually contains (which becomes angry).
-
-A structure to represent the dragons is also needed:
-
-\begin{minted}{c}
-
-// An enum for the dragons animation (DA), 2 frames for each
-enum {
-	DA_NORMAL_1,
-	DA_NORMAL_2,
-	DA_BLOW_BUBBLE_1,
-	DA_BLOW_BUBBLE_2,
-	DA_HIT_1,
-	DA_HIT_2,
-	BA_DEAD_1,
-	BA_DEAD_2,
-	DA_INVICIBLE_1,
-	DA_INVICIBLE_2
-	DA_NUMBER
-};
-
-typedef struct Dragon_ {
-	Square* current_position;
-	unsigned int score;
-	unsigned int life; // 3 at the begining
-	unsigned int max_life; // 3 at the begining
-	bool invicible; // when just killed
-	unsigned int invincibility_counter;
-	bool is_bub; // if not, this is Bob
-	Sprite* animation[DA_NUMBER]; // animations
-} Dragon;
-
-Dragon* dragon_new(Square* position, bool is_bub, Sprite* animation[]);
-void dragon_delete(Dragon* dragon);
-\end{minted}
-
-Indeed, when two players are present, each dragon (player) have its own score and number of life. Also, when a dragon die, if it still have some lives left, it comes back as invincible for a few second (the \mintinline{c}{invicibility_counter} is decremented at each frame, until it gets to 0).
-
-\subsubsection{The game (\texttt{game.h})}
-
-Due to the way that GLUT works \cite{freeglut},  it is required to know whether a keyboard key is pressed or not in the main game loop (see below). To do so, some defines are required :\begin{minted}{c}
-#define FRAMES_BETWEEN_KEY_REPEAT 10 // frames
-
-enum {
-	E_LEFT,
-	E_RIGHT,
-	E_TOP,
-	E_BOTTOM,
-	E_ACTION_1, // i.e. "jump"
-	E_ACTION_2, // i.e. "blow"
-	E_PAUSE,
-	E_SHOW_SCORE,
-	E_SHOW_CONTROLS,
-	E_QUIT,
-	E_SIZE
-};
-\end{minted}
-
-In the \mintinline{c}{Game} structure (see below), there will be two arrays:\begin{enumerate}
-\item A \mintinline{c}{bool key_pressed[E_SIZE]} array. Values are set to \mintinline{c}{true} when a keyboard key is pressed, and \mintinline{c}{false} when released (using \mintinline{c}{glutKeyBoardFunc()} to register the pressed keys and \mintinline{c}{glutKeyboardUpFunc()} to register if they are released \cite{keyb}).
-\item A \mintinline{c}{unsigned int key_pressed_interval[E_SIZE]}, which will be set to 0 when a key is pressed, and for which the value will increase at each frame if the key is not up. The goal is to keep track of the amount of time since a key has been pressed, and eventually repeat the event (for example, if the player maintain the direction key pressed) if \mintinline{c}{key_pressed_interval[key] % FRAMES_BETWEEN_KEY_REPEAT == 0}.
-\end{enumerate}
-
-The \mintinline{c}{Game} structure will contain everything needed to run the game, and will be instanced once, as one of the (few) global variables.
-
-\begin{minted}{c}
-// some defines
-#define TIME_INVICIBLE_WHEN_DEAD 50 // 2 secs
-#define NUMBER_OF_LIFE 3
-#define BUBBLE_TIME 1500 // 25 secs
-// (...) I probably forget many of them!
-
-// an enum for the bubbles animations (BA)
-enum {
-	BA_NORMAL_1,
-	BA_NORMAL_2,
-	BA_BURST_1,
-	BA_BURST_2,
-	BA_NUMBER
-}
-
-typedef struct Game_ {
-	// general stuffs
-	bool game_running; // used to pause the game, if any
-	bool second_player; // used to know if second player
-	bool display_score;
-	bool display_controls;
-	bool display_welcome;
-	// Textures and sprites
-	Texture* texture_items;
-	Texture* texture_monsters;
-	Texture* texture_game;
-	Texture* dragon_and_bubbles;
-	Texture* texture_sprite_font;
-	Sprite* welcome_screen; // for the welcome screen
-	Sprite* bubble_animation[BA_NUMBER]; // animations
-	// dragons
-	Dragon* player_1;
-	Dragon* player_2; // may be NULL if no player 2
-	// definitions:
-	unsigned int num_monster;
-	MonsterDef* monster_definitions[];
-	unsigned int num_item;
-	ItemDef* item_definitions[];
-	// levels:
-	Level* level_list; // point on the first level
-	Level* current_level;
-	unsigned int counter_for_next_level;
-	// Monsters, items & bubbles
-	Monster* current_monsters;
-	Item* current_items;
-	Bubble* current_bubbles;
-	// events
-	bool key_pressed[E_SIZE];
-	unsigned int key_pressed_interval[E_SIZE];
-} Game;
-
-Game* game = NULL;
-\end{minted}
-
-There is a large part of the structure to store the different textures and sprites (those sprites are stored in the main structure, since they are the same for all bubbles). There is also a space for the definitions (see above) and the actual levels (with a counter to go to the next level), items, monster and bubbles (see above).  Finally, there is pointer to the dragons.
-
-The following section will elaborate on how the game will exploit this structure.
-
-\subsection{Logic and implementation (\texttt{game.h} and \texttt{game.c})}
-
-The first thing that the program needs to do is initialize the game structure, by calling a \mintinline{c}{game_init()} function. This function will read the necessary files (scores, items and monster definition, levels) and load the textures.
-
-Then, a \mintinline{c}{game_loop()} function will be used as \mintinline{c}{glutDisplayFunc()}. This function will:\begin{enumerate}
-\item Deal with the events, either to move the dragon or change the screens. Some input event may be ignored if it is not possible (for example, using the blowing bubble key on the score screen). This also the place where the \mintinline{c}{key_pressed_interval[]} array is updated.
-\item If the game is not paused, \begin{enumerate}
-\item This may be the time to go to the next level (decrement and check the  value of the \mintinline{c}{counter_for_next_level} variable if there is no more monster alive).
-\item Move monster (with the help of AI?) and bubbles.
-\item Check collision, which may result in bursting a bubble (items appears), grabbing item, killing a dragon, or capturing a monster. 
-\item Modify life and score accordingly. Eventually quit the game (go to game over screen) if both dragons are dead.
-\end{enumerate}
-\item Draw the screen from the information located in the \mintinline{c}{Game} structure.
-\end{enumerate}
-The idea is that the game is always running, but sometimes paused, and the eventual other screens (welcome, score, controls) are drawn \textit{on top} of the game, if requested. Note that the control of the framerate should be done also in this location of the code, but there is a different way to implement this control, as described in an article of Koen Witters \cite{fps}. The easiest way is to use \mintinline{c}{sleep()} at the end of this procedure to control the next call and to simulate constant framerate, but this may not be adapted to GLUT \cite{fps2}. I will therefore explore the other possibilities given in the article.
-
-The last thing done in the \mintinline{c}{main()} function should be to clean up everything, by calling a \mintinline{c}{game_quit()} function. Since GLUT does not allow to do that (except in its FreeGLUT variant \cite{freeglut}), \mintinline{c}{atexit()} will be used \cite{cppref}.
-
-\section{Conclusion and outlooks}
-
-Even if I have thought a lot about it, it is still a \textit{pen and paper} specification. I probably miss some of the function, and definitely miss some of the variables (especially in the \mintinline{c}{Game} structure). There is also some part that I didn't explore yet, for example the file structure (images, definitions, etc.).
-
-If everything goes as planned, there will be some time left for some improvement of the implementation I have just described. Depending on the amount of time left, I will try to implement some (or all) of the following:\begin{itemize}
-\item AI (artificial intelligence) for the monsters: I do not have much idea of which AI is the best in this case, but there are definitely some interesting developments to do in this area.
-\item Passwords: it is common in console videogames (including Bubble Bobble) to access the different levels using passwords.
-\item Between level animation: the dragon seems to fly between a level to the next into a bubble. I consider that as an improvement.
-\item Parameters screen: the possibility to adjust key, screen resolution or framerate could be interesting. 
-\item Projectiles: in the original game, some monsters throw projectiles. Some monsters can also fly.
-\item Many pop at once: when popping a bubble, if another is close, they burst together, thus giving a larger value item.
-\item ``Ridding bubble": in the original game, it is possible to jump on top of a bubble (and therefore \textit{fly} on it) to access some area that is normally unaccessible. 
-\item Music: that would definitely require an external library, but can give a little plus to the game.
-\item Level editor: definitely not the easiest or most important, but also interesting.
-\end{itemize}
-
+%
+%
+%
+%A structure to represent the dragons is also needed:
+%
+%\begin{minted}{c}
+%
+%// An enum for the dragons animation (DA), 2 frames for each
+%enum {
+%	DA_NORMAL_1,
+%	DA_NORMAL_2,
+%	DA_BLOW_BUBBLE_1,
+%	DA_BLOW_BUBBLE_2,
+%	DA_HIT_1,
+%	DA_HIT_2,
+%	BA_DEAD_1,
+%	BA_DEAD_2,
+%	DA_INVICIBLE_1,
+%	DA_INVICIBLE_2
+%	DA_NUMBER
+%};
+%
+%typedef struct Dragon_ {
+%	Square* current_position;
+%	unsigned int score;
+%	unsigned int life; // 3 at the begining
+%	unsigned int max_life; // 3 at the begining
+%	bool invicible; // when just killed
+%	unsigned int invincibility_counter;
+%	bool is_bub; // if not, this is Bob
+%	Sprite* animation[DA_NUMBER]; // animations
+%} Dragon;
+%
+%Dragon* dragon_new(Square* position, bool is_bub, Sprite* animation[]);
+%void dragon_delete(Dragon* dragon);
+%\end{minted}
+%
+%Indeed, when two players are present, each dragon (player) have its own score and number of life. Also, when a dragon die, if it still have some lives left, it comes back as invincible for a few second (the \cc{invicibility_counter} is decremented at each frame, until it gets to 0).
+%
+%\subsubsection{The game (\texttt{game.h})}
+%
+%Due to the way that GLUT works \cite{freeglut},  it is required to know whether a keyboard key is pressed or not in the main game loop (see below). To do so, some defines are required :\begin{minted}{c}
+%#define FRAMES_BETWEEN_KEY_REPEAT 10 // frames
+%
+%enum {
+%	E_LEFT,
+%	E_RIGHT,
+%	E_TOP,
+%	E_BOTTOM,
+%	E_ACTION_1, // i.e. "jump"
+%	E_ACTION_2, // i.e. "blow"
+%	E_PAUSE,
+%	E_SHOW_SCORE,
+%	E_SHOW_CONTROLS,
+%	E_QUIT,
+%	E_SIZE
+%};
+%\end{minted}
+%
+%In the \cc{Game} structure (see below), there will be two arrays:\begin{enumerate}
+%\item A \cc{bool key_pressed[E_SIZE]} array. Values are set to \cc{true} when a keyboard key is pressed, and \cc{false} when released (using \cc{glutKeyBoardFunc()} to register the pressed keys and \cc{glutKeyboardUpFunc()} to register if they are released \cite{keyb}).
+%\item A \cc{unsigned int key_pressed_interval[E_SIZE]}, which will be set to 0 when a key is pressed, and for which the value will increase at each frame if the key is not up. The goal is to keep track of the amount of time since a key has been pressed, and eventually repeat the event (for example, if the player maintain the direction key pressed) if \cc{key_pressed_interval[key] % FRAMES_BETWEEN_KEY_REPEAT == 0}.
+%\end{enumerate}
+%
+%The \cc{Game} structure will contain everything needed to run the game, and will be instanced once, as one of the (few) global variables.
+%
+%\begin{minted}{c}
+%// some defines
+%#define TIME_INVICIBLE_WHEN_DEAD 50 // 2 secs
+%#define NUMBER_OF_LIFE 3
+%#define BUBBLE_TIME 1500 // 25 secs
+%// (...) I probably forget many of them!
+%
+%// an enum for the bubbles animations (BA)
+%enum {
+%	BA_NORMAL_1,
+%	BA_NORMAL_2,
+%	BA_BURST_1,
+%	BA_BURST_2,
+%	BA_NUMBER
+%}
+%
+%typedef struct Game_ {
+%	// general stuffs
+%	bool game_running; // used to pause the game, if any
+%	bool second_player; // used to know if second player
+%	bool display_score;
+%	bool display_controls;
+%	bool display_welcome;
+%	// Textures and sprites
+%	Texture* texture_items;
+%	Texture* texture_monsters;
+%	Texture* texture_game;
+%	Texture* dragon_and_bubbles;
+%	Texture* texture_sprite_font;
+%	Sprite* welcome_screen; // for the welcome screen
+%	Sprite* bubble_animation[BA_NUMBER]; // animations
+%	// dragons
+%	Dragon* player_1;
+%	Dragon* player_2; // may be NULL if no player 2
+%	// definitions:
+%	unsigned int num_monster;
+%	MonsterDef* monster_definitions[];
+%	unsigned int num_item;
+%	ItemDef* item_definitions[];
+%	// levels:
+%	Level* level_list; // point on the first level
+%	Level* current_level;
+%	unsigned int counter_for_next_level;
+%	// Monsters, items & bubbles
+%	Monster* current_monsters;
+%	Item* current_items;
+%	Bubble* current_bubbles;
+%	// events
+%	bool key_pressed[E_SIZE];
+%	unsigned int key_pressed_interval[E_SIZE];
+%} Game;
+%
+%Game* game = NULL;
+%\end{minted}
+%
+%There is a large part of the structure to store the different textures and sprites (those sprites are stored in the main structure, since they are the same for all bubbles). There is also a space for the definitions (see above) and the actual levels (with a counter to go to the next level), items, monster and bubbles (see above).  Finally, there is pointer to the dragons.
+%
+%The following section will elaborate on how the game will exploit this structure.
+%
+%\subsection{Logic and implementation (\texttt{game.h} and \texttt{game.c})}
+%
+%The first thing that the program needs to do is initialize the game structure, by calling a \cc{game_init()} function. This function will read the necessary files (scores, items and monster definition, levels) and load the textures.
+%
+%Then, a \cc{game_loop()} function will be used as \cc{glutDisplayFunc()}. This function will:\begin{enumerate}
+%\item Deal with the events, either to move the dragon or change the screens. Some input event may be ignored if it is not possible (for example, using the blowing bubble key on the score screen). This also the place where the \cc{key_pressed_interval[]} array is updated.
+%\item If the game is not paused, \begin{enumerate}
+%\item This may be the time to go to the next level (decrement and check the  value of the \cc{counter_for_next_level} variable if there is no more monster alive).
+%\item Move monster (with the help of AI?) and bubbles.
+%\item Check collision, which may result in bursting a bubble (items appears), grabbing item, killing a dragon, or capturing a monster. 
+%\item Modify life and score accordingly. Eventually quit the game (go to game over screen) if both dragons are dead.
+%\end{enumerate}
+%\item Draw the screen from the information located in the \cc{Game} structure.
+%\end{enumerate}
+%The idea is that the game is always running, but sometimes paused, and the eventual other screens (welcome, score, controls) are drawn \textit{on top} of the game, if requested. Note that the control of the framerate should be done also in this location of the code, but there is a different way to implement this control, as described in an article of Koen Witters \cite{fps}. The easiest way is to use \cc{sleep()} at the end of this procedure to control the next call and to simulate constant framerate, but this may not be adapted to GLUT \cite{fps2}. I will therefore explore the other possibilities given in the article.
+%
+%The last thing done in the \cc{main()} function should be to clean up everything, by calling a \cc{game_quit()} function. Since GLUT does not allow to do that (except in its FreeGLUT variant \cite{freeglut}), \cc{atexit()} will be used \cite{cppref}.
+%
+%\section{Conclusion and outlooks}
+%
+%Even if I have thought a lot about it, it is still a \textit{pen and paper} specification. I probably miss some of the function, and definitely miss some of the variables (especially in the \cc{Game} structure). There is also some part that I didn't explore yet, for example the file structure (images, definitions, etc.).
+%
+%If everything goes as planned, there will be some time left for some improvement of the implementation I have just described. Depending on the amount of time left, I will try to implement some (or all) of the following:\begin{itemize}
+%\item AI (artificial intelligence) for the monsters: I do not have much idea of which AI is the best in this case, but there are definitely some interesting developments to do in this area.
+%\item Passwords: it is common in console videogames (including Bubble Bobble) to access the different levels using passwords.
+%\item Between level animation: the dragon seems to fly between a level to the next into a bubble. I consider that as an improvement.
+%\item Parameters screen: the possibility to adjust key, screen resolution or framerate could be interesting. 
+%\item Projectiles: in the original game, some monsters throw projectiles. Some monsters can also fly.
+%\item Many pop at once: when popping a bubble, if another is close, they burst together, thus giving a larger value item.
+%\item ``Ridding bubble": in the original game, it is possible to jump on top of a bubble (and therefore \textit{fly} on it) to access some area that is normally unaccessible. 
+%\item Music: that would definitely require an external library, but can give a little plus to the game.
+%\item Level editor: definitely not the easiest or most important, but also interesting.
+%\end{itemize}
+%
 \bibliographystyle{unsrt}
 \bibliography{refs}
 

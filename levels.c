@@ -684,7 +684,7 @@ void level_object_chase(LevelObject *moving, LevelObject *target, Level *level, 
     }
 }
 
-void map_object_set_falling_from_above(LevelObject *obj, Position target) {
+void level_object_set_falling_from_above(LevelObject *obj, Position target) {
     /* Set the object in order to "fall from above" the level, to a given `target` position.
      * */
     obj->falling_from_above = true;
@@ -722,6 +722,10 @@ bool level_object_in_collision(LevelObject *a, LevelObject *b) {
      *
      * */
 	EffectivePosition pa = level_object_to_effective_position(a), pb = level_object_to_effective_position(b);
+    pa.x += (float) a->width / 2;
+    pa.y += (float) a->height / 2;
+    pb.x += (float) b->width / 2;
+    pb.y += (float) b->height / 2;
 
     double square_dist = pow(pa.x - pb.x, 2) + pow(pa.y - pb.y, 2);
 

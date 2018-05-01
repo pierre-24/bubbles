@@ -62,7 +62,7 @@ void game_setup_current_level(Game *game) {
 
             counter_restart(game->counter_start_level, -1);
 
-            map_object_set_falling_from_above(game->bub->map_object, game->bub->respawn_position);
+            level_object_set_falling_from_above(game->bub->map_object, game->bub->respawn_position);
         }
     }
 }
@@ -145,7 +145,7 @@ void game_main_update_states(Game *game) {
                     last = last->next;
 
                 last->next = monster_new(game->bub->map_object, game->definition_monsters[game->num_monsters_defined - 1]);
-                map_object_set_falling_from_above(last->next->map_object, game->bub->map_object->position);
+                level_object_set_falling_from_above(last->next->map_object, game->bub->map_object->position);
 
                 counter_restart(game->counter_start_level, -1);
             }

@@ -9,6 +9,6 @@
 40000 0 96 32 # ice (2)
 3000 2 96 64 # purple candy, +1 life and +1 max life
 80000 0 64 32 # double ice
-100000 0 32 64 # pinapple. I like pinapple.
+100000 0 32 64 # pinapple. I like pineapple.
 3000 3 0 32  # beer, full heal
 # END

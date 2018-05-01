@@ -108,7 +108,7 @@ void level_object_chase(LevelObject *moving, LevelObject *target, Level *level, 
 
 #define FALLING_FROM (MAP_HEIGHT + 2)
 
-void map_object_set_falling_from_above(LevelObject *obj, Position target);
+void level_object_set_falling_from_above(LevelObject *obj, Position target);
 
 typedef struct EffectivePosition_ {
     /* Represent the actual position of an object, as a fractional number of cases.
