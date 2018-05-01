@@ -5,8 +5,9 @@
 #include "game.h"
 
 void game_main_start(Game *game) {
+    /* Starts a new "main" game by setting the level (and the keys).
+     * */
     if (game != NULL) {
-
         dragon_delete(game->bub);
         game->bub = create_bub(game->texture_dragons, BUB_Y);
 
@@ -23,6 +24,8 @@ void game_main_start(Game *game) {
 }
 
 void game_next_level(Game *game) {
+    /* Go to next level by setting the counter for the transition.
+     * */
     if (game != NULL) {
         if (game->current_level == NULL) {
             game->current_level = game->starting_level;
@@ -37,6 +40,9 @@ void game_next_level(Game *game) {
 }
 
 void game_setup_current_level(Game *game) {
+    /* Actually set up the level: create monsters (delete previous), delete previous item and bubbles.
+     * Also set bub to fall from above.
+     * */
     if (game != NULL) {
         if (game->current_level == NULL) {
             game_set_screen(game, SCREEN_WIN);
@@ -62,6 +68,10 @@ void game_setup_current_level(Game *game) {
 }
 
 void game_main_input_management(Game *game) {
+    /* Input management for the main game.
+     *
+     * Note that the keys only works if bub is not hit or falling from above, and if the level is not changing.
+     * */
     if (game != NULL) {
         if (key_fired(game, E_FREEZE)) {
             game->freeze = !game->freeze;
@@ -94,6 +104,15 @@ void game_main_input_management(Game *game) {
 }
 
 void game_main_update_states(Game *game) {
+    /* Update the main game:
+     *
+     * 1. Test if the level is not changing, if it is not the time to change it and if the player is not loosing ;
+     * 2. Adjust everything ;
+     * 3. Send a monster after the player if to slow ;
+     * 4. Test collision with item ;
+     * 5. Test collision wit bubbles (eventually burst bubbles) ;
+     * 6. Test collision between monster and bub, and monster and bubble (eventually capture).
+     * */
     if (game != NULL) {
         if (!counter_stopped(game->counter_next_level)) {
             counter_tick(game->counter_next_level);
@@ -114,7 +133,13 @@ void game_main_update_states(Game *game) {
             counter_tick(game->counter_end_this_level);
             counter_tick(game->counter_start_level);
 
-            if (counter_stopped(game->counter_start_level) && game->monster_list != NULL) { // to slow, send a monster after him
+            // adjust everything
+            monsters_adjust(game->monster_list, game->current_level, game->bub->map_object);
+            dragon_adjust(game->bub, game->current_level);
+            items_adjust(game->item_list, game->current_level);
+            game->bubble_list = bubbles_adjust(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
+
+            if (counter_stopped(game->counter_start_level) && game->monster_list != NULL) { // to slow, send a monster after the player
                 Monster* last = game->monster_list;
                 while (last->next != NULL)
                     last = last->next;
@@ -136,9 +161,6 @@ void game_main_update_states(Game *game) {
                 else
                     it = it->next;
             }
-
-            // adjust bubble (before collision with bubble and monster)
-            game->bubble_list = bubbles_adjust(game->bubble_list, game->current_level, game->current_level->bubble_endpoint);
 
             // test collision between dragon and bubbles (burst bubbles & generate item)
             Bubble* b = game->bubble_list, * t;
@@ -190,11 +212,6 @@ void game_main_update_states(Game *game) {
                     m = m->next;
                 }
             }
-
-            // adjust everything
-            monsters_adjust(game->monster_list, game->current_level, game->bub->map_object);
-            dragon_adjust(game->bub, game->current_level);
-            items_adjust(game->item_list, game->current_level);
         }
     }
 
@@ -202,6 +219,13 @@ void game_main_update_states(Game *game) {
 }
 
 void game_main_draw(Game *game) {
+    /* Draw the main game:
+     *
+     * If not transitioning between levels, draw level, monsters, dragon, bubbles, items, score and life
+     * (in that order, even if the only things that matter is that the level is drawn first).
+     *
+     * If transitioning, draw both levels (or black if there is no previous [starting the game] or current [ending the game] level).
+     * */
     if (game != NULL) {
         // monsters
         if (counter_stopped(game->counter_next_level)) {

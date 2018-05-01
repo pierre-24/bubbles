@@ -8,7 +8,7 @@
 #include "game_objects.h"
 #include "game_base.h"
 
-#define BLOW_EVERY 60
+#define BLOW_EVERY 60 // [frames]
 
 void game_main_start(Game *game);
 void game_next_level(Game *game);
