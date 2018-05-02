@@ -1034,7 +1034,7 @@ void game_score_screen_draw(Game *game);
 
 The first function, \cc{game_set_screen()} set the \cc{current_screen} and \cc{paused} variables in the \cc{Game} structure. Then, there is two function for each screen, first the function of the type \cc{game_*_screen_input_management()} one, which takes a look at which key is active with \cc{key_fired()} and acts accordingly, and \cc{game_*_screen_draw()} type which draws the screen (usually an image [welcome and instruction screen] but also text with \cc{blit_font()} [win and loose screen]).
 
-\subsection{\textit{Main} game (\texttt{game\_main.h})}
+\subsubsection{\textit{Main} game (\texttt{game\_main.h})}
 
 The most important part, where everything comes into play:\begin{minted}{c}
 #define BLOW_EVERY 60 // [frames]
@@ -1058,6 +1058,35 @@ The structure is similar to the screens, since there is one function to deal wit
 \item Check collision between monsters and the dragon (set \cc{hit} to \cc{true} and starts \cc{counter_hit} if any) and collision between monsters and bubbles (set \cc{in_bubble} and \cc{captured} if any).
 \end{enumerate}
 Note that \cc{game_next_level()} simply set up the \cc{current_level}, \cc{previous_level} and \cc{next_level} pointer, and starts the \cc{counter_next_level} in order for \cc{game_main_draw()} to draw the transition between the two levels. When this is done, \cc{game_setup_current_level()} is called, which populate the list of monster, clear the list of bubble and items and restarts \cc{counter_start_level}.
+
+\subsubsection{Top level functions: the game (\texttt{game.h})}
+
+This contain all the callbacks required to interface the code to GLUT:\begin{minted}{c}
+#define TEXTURE_ITEMS "assets/items.ppm"
+#define TEXTURE_MONSTERS "assets/monsters.ppm"
+#define TEXTURE_LEVELS "assets/levels.ppm"
+#define TEXTURE_DRAGONS "assets/dragons.ppm"
+#define TEXTURE_SCREENS "assets/screens.ppm"
+#define TEXTURE_GAME "assets/game.ppm"
+#define TEXTURE_FONT "assets/font.ppm"
+
+#define DEFINITION_ITEMS "data/items.txt"
+#define DEFINITION_MONSTERS "data/monsters.txt"
+
+#define FILE_LEVELS "data/levels.txt"
+#define FILE_SCORES "data/scores.txt"
+
+void game_special_key_down(int key, int x, int y);
+void game_special_key_up(int key, int x, int y);
+void game_key_down(unsigned char key, int x, int y);
+void game_key_up(unsigned char key, int x, int y);
+
+void game_init();
+void game_loop();
+void game_quit();
+\end{minted}
+
+It starts by a long list of constants for the different external resources. These resources are used by \cc{game_init()} to create and setup the \cc{Game} structure.
 
 %
 %The first thing that the program needs to do is initialize the game structure, by calling a \cc{game_init()} function. This function will read the necessary files (scores, items and monster definition, levels) and load the textures.
