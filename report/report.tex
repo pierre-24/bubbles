@@ -904,78 +904,136 @@ enum {
 
 void keys_init(Game* game);
 void keys_delete(Game* game);
+
 void keys_update_interval(Game *game);
 void keys_reset(Game *game);
-
 void key_down(Game *game, int key);
-void key_up(Game *game, int key);
-
+void key_up(Game *game, int key)
 bool key_fired(Game* game, int key);
 \end{minted}
 
 In the \cc{Game} structure (see below), there will be two arrays:\begin{enumerate}
 \item A boolean \cc{key_pressed[E_SIZE]} array. Values of this array are set to \cc{true} when a keyboard key is pressed, and \cc{false} when released (using \cc {key_down()} and \cc{key_up()} to register the pressed keys). \cc{keys_reset()} simply set the whole array to \cc{false}.
-\item A counter \cc{key_counters[E_SIZE]} array, which will be started when a key is pressed, and for which the value will increase at each frame while the key is pressed (with \cc{keys_update_interval()}). The goal is to keep track of the amount of time since a key has been pressed, and eventually repeat the event, every time the counter reaches its maximum (\cc{FRAMES_BETWEEN_KEY_REPEAT_IN_*}, depending on which state the program is, see below). The \cc{key_fired()} function is used to determine wheter both conditions are satisfied.
+\item A counter \cc{key_counters[E_SIZE]} array, which will be started when a key is pressed, and for which the value will increase at each frame while the key is pressed (with \cc{keys_update_interval()}). The goal is to keep track of the time since a key has been pressed, and eventually repeat the event, every time the counter reaches its maximum (\cc{FRAMES_BETWEEN_KEY_REPEAT_IN_*}, depending on which state the program is, see below). The \cc{key_fired()} function is used to determine whether both conditions are satisfied.
 \end{enumerate}
-%
-%The \cc{Game} structure will contain everything needed to run the game, and will be instanced once, as one of the (few) global variables.
-%
-%\begin{minted}{c}
-%// some defines
-%#define TIME_INVICIBLE_WHEN_DEAD 50 // 2 secs
-%#define NUMBER_OF_LIFE 3
-%#define BUBBLE_TIME 1500 // 25 secs
-%// (...) I probably forget many of them!
-%
-%// an enum for the bubbles animations (BA)
-%enum {
-%	BA_NORMAL_1,
-%	BA_NORMAL_2,
-%	BA_BURST_1,
-%	BA_BURST_2,
-%	BA_NUMBER
-%}
-%
-%typedef struct Game_ {
-%	// general stuffs
-%	bool game_running; // used to pause the game, if any
-%	bool second_player; // used to know if second player
-%	bool display_score;
-%	bool display_controls;
-%	bool display_welcome;
-%	// Textures and sprites
-%	Texture* texture_items;
-%	Texture* texture_monsters;
-%	Texture* texture_game;
-%	Texture* dragon_and_bubbles;
-%	Texture* texture_sprite_font;
-%	Sprite* welcome_screen; // for the welcome screen
-%	Sprite* bubble_animation[BA_NUMBER]; // animations
-%	// dragons
-%	Dragon* player_1;
-%	Dragon* player_2; // may be NULL if no player 2
-%	// definitions:
-%	unsigned int num_monster;
-%	MonsterDef* monster_definitions[];
-%	unsigned int num_item;
-%	ItemDef* item_definitions[];
-%	// levels:
-%	Level* level_list; // point on the first level
-%	Level* current_level;
-%	unsigned int counter_for_next_level;
-%	// Monsters, items & bubbles
-%	Monster* current_monsters;
-%	Item* current_items;
-%	Bubble* current_bubbles;
-%	// events
-%	bool key_pressed[E_SIZE];
-%	unsigned int key_pressed_interval[E_SIZE];
-%} Game;
-%
-%Game* game = NULL;
-%\end{minted}
-%
-%There is a large part of the structure to store the different textures and sprites (those sprites are stored in the main structure, since they are the same for all bubbles). There is also a space for the definitions (see above) and the actual levels (with a counter to go to the next level), items, monster and bubbles (see above).  Finally, there is pointer to the dragons.
+
+The \cc{Game} structure will contain everything needed to run the game, and will be instanced once, as one of the (few) global variables.
+
+\begin{minted}{c}
+enum {
+    SCREEN_WELCOME,
+    SCREEN_INSTRUCTIONS,
+    SCREEN_GAME_OVER,
+    SCREEN_WIN,
+    SCREEN_SCORE,
+    SCREEN_NUMBER
+};
+
+#define GAME_ELEMENT_WIDTH 32 // [pixels]
+#define GAME_ELEMENT_HEIGHT 32 // [pixels]
+
+#define NEXT_LEVEL_TRANSITION 120 // [frames]
+#define UNTIL_NEXT_LEVEL 600 // [frames]
+#define FREEZE_EVERY 30 // [frames]
+#define MAX_LEVEL_TIME (30 * 60) // [frames]
+
+enum {
+    GE_ARROW,
+    GE_NUMBER
+};
+
+typedef struct Game_ {
+    bool paused;
+    bool main_started;
+    bool freeze;
+
+    // Image
+    Image* texture_game;
+    Image* texture_items;
+    Image* texture_monsters;
+    Image* texture_levels;
+    Image* texture_dragons;
+    Image* texture_screens;
+    Image* texture_font;
+
+    int current_screen;
+    Sprite* screens[SCREEN_NUMBER];
+
+    Sprite* game_elements[GE_NUMBER];
+
+    Font* font;
+    
+    // scores
+    Score* scores_list;
+
+    // definitions
+    ItemDef** definition_items;
+    unsigned int num_items_defined;
+    MonsterDef** definition_monsters;
+    unsigned int num_monsters_defined;
+
+    // levels
+    Level* levels;
+    Level* current_level;
+    Level* previous_level;
+    Level* starting_level;
+    unsigned int num_levels;
+
+    Counter* counter_next_level;
+    Counter* counter_end_this_level;
+    Counter* counter_start_level;
+
+    // dragons & monsters & bubbles & items
+    Dragon* bub;
+    Monster* monster_list;
+    Bubble* bubble_list;
+    Item* item_list;
+
+    // keys
+    bool key_pressed[E_SIZE];
+    Counter* key_counters[E_SIZE];
+    int key_interval;
+} Game;
+\end{minted}
+
+There is a large part of the structure to store the different textures and sprites, and key management as mentionned above. There is also a space for the definitions (see above) and the actual levels (with pointer to the previous and next level), dragon, items, monster and bubbles (see above). There is also some counters: \cc{counter_next_level}, which is useful for the transition between the levels (the previous level and the next level slides up), \cc{counter_end_this_level}, which is activated when the last monster is killed (and delay the time when the game will automatically go to the next level) and \cc{counter_start_level}, which keeps track of the time since the beginning of the level: if the time is too long, the game sends a monster after the player.
+
+I will make a difference between the \textit{main} game (Bub moving, blowing bubbles, etc) and the screens. To ease that, the structures ends by 3 booleans:\begin{itemize}
+\item \cc{paused}: true when a screen is active: the \textit{main} game is paused and the screen is draw instead.
+\item \cc{main_started}: true when the \textit{main} game is launched (it is not the case when the program starts). It is useful to know whether to go back to the game or the welcome screen from other screens.
+\item \cc{freeze}: used for the actual pause, when nothing moves.
+\end{itemize}
+
+\subsubsection{Screens (\texttt{game\_screens.h})}
+
+\begin{minted}{c}
+void game_set_screen(Game* game, int screen);
+
+void game_simple_screen_input_management(Game *game, bool return_to_game);
+void game_simple_screen_draw(Game *game);
+
+
+#define WS_BASE 182 // [pixels]
+#define WS_SHIFT 38 // [pixels]
+
+void game_welcome_screen_input_management(Game *game);
+void game_welcome_screen_draw(Game *game);
+
+
+#define WL_BASE_X (WINDOW_WIDTH / 2)
+#define WL_BASE_Y (WINDOW_HEIGHT / 2)
+#define WL_FRAMERATE 30 // [frames]
+
+void game_win_loose_screen_input_management(Game *game);
+void game_win_loose_screen_draw(Game *game);
+
+#define SCORE_SHIFT 2 // [frames]
+
+void game_score_screen_draw(Game *game);
+\end{minted}
+
+The first function, \cc{game_set_screen()} set the \cc{current_screen} and \cc{paused} variables in the \cc{Game} structure. Then, there is two function for each screen, first the function of the type \cc{game_*_screen_input_management()} one, which takes a look at which key is active with \cc{key_fired()} and acts accordingly, and \cc{game_*_screen_draw()} type which draws the screen (usually an image [welcome and instruction screen] but also text with \cc{blit_font()} [win and loose screen]).
+
 %
 %The following section will elaborate on how the game will exploit this structure.
 %
