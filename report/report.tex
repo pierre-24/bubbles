@@ -1034,10 +1034,31 @@ void game_score_screen_draw(Game *game);
 
 The first function, \cc{game_set_screen()} set the \cc{current_screen} and \cc{paused} variables in the \cc{Game} structure. Then, there is two function for each screen, first the function of the type \cc{game_*_screen_input_management()} one, which takes a look at which key is active with \cc{key_fired()} and acts accordingly, and \cc{game_*_screen_draw()} type which draws the screen (usually an image [welcome and instruction screen] but also text with \cc{blit_font()} [win and loose screen]).
 
-%
-%The following section will elaborate on how the game will exploit this structure.
-%
-%\subsection{Logic and implementation (\texttt{game.h} and \texttt{game.c})}
+\subsection{\textit{Main} game (\texttt{game\_main.h})}
+
+The most important part, where everything comes into play:\begin{minted}{c}
+#define BLOW_EVERY 60 // [frames]
+
+void game_main_start(Game *game);
+void game_next_level(Game *game);
+void game_setup_current_level(Game *game);
+
+void game_main_input_management(Game *game);
+void game_main_update_states(Game *game);
+void game_main_draw(Game *game);
+\end{minted}
+
+The structure is similar to the screens, since there is one function to deal with inputs (\cc{game_main_input_management()}) and one to draw the result (\cc{game_main_draw()}). The next function, \cc{game_main_update_state()} is more interesting, since that is where all the magic happen:\begin{enumerate}
+\item Test if the level should not change, either because there is no more item to collect or because \cc{counter_next_level} reaches its maximum. If it is the case, \cc{game_next_level()} is called.
+\item Check if the player is still alive (\cc{life >= 0}). If not, \cc{game_set_screen()} is called to set \cc{SCREEN_GAME_OVER}.
+\item Call the \cc{*_adjust()} type functions to tick all internal counters. This is where a monster could escape a bubble (because \cc{counter_time_left} reaches its maximum, and by calling \cc{bubble_burst()} with the \cc{free} function parameter set to \cc{true}). It is also where the dragon eventually get killed (if \cc{counter_hit} reaches its maximum) and the monster chose their direction (with \cc{map_object_chase()}).
+\item If \cc{counter_start_level} reaches its maximum, an extra monster is send after the player and the counter is reseted.
+\item Test collision between items and bubble and use \cc{dragon_consume()} if any (update the items list).
+\item Test collision between bubbles and dragon, and use \cc{bubble_burst()} if any (with the \cc{free} function parameter set to \cc{false}, update the bubbles list).
+\item Check collision between monsters and the dragon (set \cc{hit} to \cc{true} and starts \cc{counter_hit} if any) and collision between monsters and bubbles (set \cc{in_bubble} and \cc{captured} if any).
+\end{enumerate}
+Note that \cc{game_next_level()} simply set up the \cc{current_level}, \cc{previous_level} and \cc{next_level} pointer, and starts the \cc{counter_next_level} in order for \cc{game_main_draw()} to draw the transition between the two levels. When this is done, \cc{game_setup_current_level()} is called, which populate the list of monster, clear the list of bubble and items and restarts \cc{counter_start_level}.
+
 %
 %The first thing that the program needs to do is initialize the game structure, by calling a \cc{game_init()} function. This function will read the necessary files (scores, items and monster definition, levels) and load the textures.
 %
