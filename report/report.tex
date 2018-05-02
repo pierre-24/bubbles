@@ -1,4 +1,4 @@
-	\documentclass[12pt,a4paper]{article}
+\documentclass[12pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -724,10 +724,10 @@ The \cc{level_object_in_collision()} uses the distance between the two object, c
 Now that the level is defined, the different objects may be as well. Items and monsters also have a pointer to their definition (to know the sprites, etc.). Finally, they are all \cc{NULL} terminated chained lists (except the dragon). Lets start with monster and item:
 
 \begin{minted}{c}
-#define MONSTER_WIDTH 32
-#define MONSTER_HEIGHT 32
-#define MONSTER_FRAMERATE 10
-#define MONSTER_JUMP 6 // height of jump
+#define MONSTER_WIDTH 32 // [pixels]
+#define MONSTER_HEIGHT 32 // [pixels]
+#define MONSTER_FRAMERATE 10 // [frames]
+#define MONSTER_JUMP 6 // [case] (height of jump)
 
 typedef struct Monster_ {
     LevelObject* map_object;
@@ -747,8 +747,8 @@ void monsters_adjust(Monster* list, Level* level, LevelObject* target);
 bool test_collide_other_monsters(Monster* moving, Monster* list, LevelObject* npos);
 void blit_monster(Monster *monster, bool frozen);
 
-#define ITEM_JUMP 8
-#define ITEM_INVULNERABILITY 30
+#define ITEM_JUMP 8 // [cases]
+#define ITEM_INVULNERABILITY 30 // [frames]
 
 typedef struct Item_ {
     LevelObject* map_object;
@@ -783,15 +783,15 @@ typedef struct Bubble_ {
     struct Bubble_* next; // NULL terminated
 } Bubble;
 
-#define BUBBLE_WIDTH 32
-#define BUBBLE_HEIGHT 32
-#define BUBBLE_FRAMERATE 10
+#define BUBBLE_WIDTH 32 // [pixels]
+#define BUBBLE_HEIGHT 32 // [pixels]
+#define BUBBLE_FRAMERATE 10 // [frames]
 
-#define BUBBLE_MOMENTUM 10
-#define BUBBLE_TIME 600
+#define BUBBLE_MOMENTUM 10 // [frames]
+#define BUBBLE_TIME 600 // [frames]
 
-#define BUBBLE_X 0
-#define BUBBLE_Y 32
+#define BUBBLE_X 0 // [pixels]
+#define BUBBLE_Y 32 // [pixels]
 
 #define BUBBLE_K_POS .5f
 #define BUBBLE_K_INTER 1.f
@@ -814,7 +814,7 @@ U_{ab} = k\,(||\vec{p}_a-\vec{p}_b||-r_{ab})^2,
 where $\vec{p}_X$ is the position of $X$, $k$ is the force constant (the difficulty to elongate the spring) and $r_{ab}$ is the resting distance (the ideal position). The force, on one end on the spring ($b$) due to the other side ($a$) is given by the gradient (the derivative) of the potential, so\begin{equation}
 \vec{F}_{ab}  = - \vec{\nabla} U_{ab} =  -2\,k\,(||\vec{p}_a-\vec{p}_b||-r_{ab})\,\frac{\vec{p}_b-\vec{p}_a}{||\vec{p_b}-\vec{p}_A||},
 \end{equation}
-where the force is therefore a tensor. The force on a given bubble is the force of all springs acting on it, $\vec{F}_a = \sum_{b\neq a} \vec{F}_{ab}$, and this forces tends to zero when an equilibrium situation is reached (corresponding to a minimum in the energy of the system). Also, solving Newtown equation of motion gives the following relation\begin{equation}
+where the force is therefore a vector. The force on a given bubble is the force of all springs acting on it, $\vec{F}_a = \sum_{b\neq a} \vec{F}_{ab}$, and this forces tends to zero when an equilibrium situation is reached (corresponding to a minimum in the energy of the system). Also, solving Newtown equations of motion gives the following relation\begin{equation}
 \vec{p}_A(t+\Delta{t}) = \vec{p}_A(t) + \Delta{t}^2\,\frac{\vec{F}_A}{m},\label{eq:1}
 \end{equation}
 so the new position of the bubble after a time $\Delta{t}$, $\vec{p}_A(t+\Delta{t})$ proportional to the old position, $\vec{p}_A(t)$ plus $\vec{F}_A$ (setting the mass of the body, $m$, to 1 and $\Delta{t}$ to 1). This last formula is coded into \cc{bubble_adjust()}\footnote{To be precise, in \cc{force_expr()} in \texttt{game\_objects.c}, used by \cc{bubble_update_force()}, which computes $\vec{F}_{a}$ for each bubble and store it into \cc{force}.}, which uses the total force to decide the direction of the next movement (up, down, left or right). The different forces constants and equilibrium distances are given by \cc{BUBBLE_K_*} and \cc{BUBBLE_REQ_*} (adjusted by trial and error). Below a minimal force (\cc{BUBBLE_MIN_FORCES}, also adjusted by trial and errors), the bubble is not moved (and is said to be in an equilibrium position). This approach, although a bit overkill, works quite well, as pictured in Figure \ref{fig:def:bubs}.
@@ -880,31 +880,43 @@ Dragon* create_bub(Image* texture, int y); // explicitly create Bub!
 It is the dragon object which contains the score (since in a two player version, each player would control its dragon, with a personal score). The dragon have a given \cc{life}, and a \cc{max_life}, so that the item cannot heal the dragon more than the maximum. There is 3 counters: \cc{counter_hit}, which display the \cc{DA_HIT} animation when hit by a monster (\cc{hit} is set to true), during a few frame before actually get killed, respawn at \cc{respawn_position} and get invincible (\cc{invincible} is set to true), during the time controlled by \cc{counter_invincible}. The \cc{counter_blow} display the \cc{DA_BLOW} animation during a few frame when blowing a bubble. Those counters are managed by \cc{dragon_adjust()} (which move the dragon to its respawn position when dead and set it invincible).
 
 The \cc{dragon_blow()} and \cc{dragon_consume_item()} functions respectively create a bubble and add it to the list of bubbles, and remove an item from the list (and get the point and apply its eventual extra power, see above). Since those are NULL terminated lists, the first function may receive NULL as an argument (if the list of bubbles is empty) and the later may return NULL (if there is no more item left after consuming the last one).
-%
-%\subsubsection{The game (\texttt{game.h})}
-%
-%Due to the way that GLUT works \cite{freeglut},  it is required to know whether a keyboard key is pressed or not in the main game loop (see below). To do so, some defines are required :\begin{minted}{c}
-%#define FRAMES_BETWEEN_KEY_REPEAT 10 // frames
-%
-%enum {
-%	E_LEFT,
-%	E_RIGHT,
-%	E_TOP,
-%	E_BOTTOM,
-%	E_ACTION_1, // i.e. "jump"
-%	E_ACTION_2, // i.e. "blow"
-%	E_PAUSE,
-%	E_SHOW_SCORE,
-%	E_SHOW_CONTROLS,
-%	E_QUIT,
-%	E_SIZE
-%};
-%\end{minted}
-%
-%In the \cc{Game} structure (see below), there will be two arrays:\begin{enumerate}
-%\item A \cc{bool key_pressed[E_SIZE]} array. Values are set to \cc{true} when a keyboard key is pressed, and \cc{false} when released (using \cc{glutKeyBoardFunc()} to register the pressed keys and \cc{glutKeyboardUpFunc()} to register if they are released \cite{keyb}).
-%\item A \cc{unsigned int key_pressed_interval[E_SIZE]}, which will be set to 0 when a key is pressed, and for which the value will increase at each frame if the key is not up. The goal is to keep track of the amount of time since a key has been pressed, and eventually repeat the event (for example, if the player maintain the direction key pressed) if \cc{key_pressed_interval[key] % FRAMES_BETWEEN_KEY_REPEAT == 0}.
-%\end{enumerate}
+
+\subsubsection{The base game structure (\texttt{game\_base.h})}
+
+Due to the way that GLUT works \cite{freeglut},  it is required to know whether a keyboard key is pressed or not in the main game loop (see below). To do so, some defines are required :\begin{minted}{c}
+#define FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS 8 // [frames]
+#define FRAMES_BETWEEN_KEY_REPEAT_IN_GAME 4 // [frames]
+
+enum {
+    E_NONE,
+    E_LEFT,
+    E_RIGHT,
+    E_UP,
+    E_DOWN,
+    E_ACTION_1, // i.e. "jump"
+    E_ACTION_2, // i.e. "blow"
+    E_FREEZE,
+    E_SHOW_SCORE,
+    E_SHOW_CONTROLS,
+    E_QUIT,
+    E_SIZE
+};
+
+void keys_init(Game* game);
+void keys_delete(Game* game);
+void keys_update_interval(Game *game);
+void keys_reset(Game *game);
+
+void key_down(Game *game, int key);
+void key_up(Game *game, int key);
+
+bool key_fired(Game* game, int key);
+\end{minted}
+
+In the \cc{Game} structure (see below), there will be two arrays:\begin{enumerate}
+\item A boolean \cc{key_pressed[E_SIZE]} array. Values of this array are set to \cc{true} when a keyboard key is pressed, and \cc{false} when released (using \cc {key_down()} and \cc{key_up()} to register the pressed keys). \cc{keys_reset()} simply set the whole array to \cc{false}.
+\item A counter \cc{key_counters[E_SIZE]} array, which will be started when a key is pressed, and for which the value will increase at each frame while the key is pressed (with \cc{keys_update_interval()}). The goal is to keep track of the amount of time since a key has been pressed, and eventually repeat the event, every time the counter reaches its maximum (\cc{FRAMES_BETWEEN_KEY_REPEAT_IN_*}, depending on which state the program is, see below). The \cc{key_fired()} function is used to determine wheter both conditions are satisfied.
+\end{enumerate}
 %
 %The \cc{Game} structure will contain everything needed to run the game, and will be instanced once, as one of the (few) global variables.
 %
