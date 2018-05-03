@@ -274,6 +274,7 @@ The sentinel (blue in the scheme above) is always the first element of the list,
 Each block represents information. Vertically aligned blocks are on the same line. If a block contains more than one value (which correspond generally to a structure), the block is colored, and its definition is given below (here for \texttt{Line}, in green, and \texttt{Type}, in blue). Ultimately, that represent values, separated to the next by a space (for example, each line of the file is actually represented by 4 values in this example). Above the end of each block, there is a counter of the number of values so far in the line.
 Here, the first blocks represent the file, with \texttt{n} lines (indicated by the arrow on the right). Note that \texttt{uint} will be used as the shorthand for \cc{unsigned int}.
 \item I will assume  a fixed framerate of 60 frames per second (since it is the vertical synchronization value of most of the modern screens). Every time length will therefore be expressed in a number of frames. 
+\item I used the Valgrind Memtest tool \cite{valgrind} to check for memory leaks in different cases (even when the program is exited in the middle of the game).
 \item The code does not contains any unit test. This is clearly bad, but as much as I like unit testing\footnote{I usually program in Python, where this kind of thing is easier to implement and manage}, it is clearly difficult to do in C\footnote{Of course there is dedicated framework to do so (Google test, for example), but it goes beyond the scope of this project, I think.}, especially with graphical interfaces.
 \end{itemize}
 
@@ -883,7 +884,7 @@ The \cc{dragon_blow()} and \cc{dragon_consume_item()} functions respectively cre
 
 \subsubsection{The base game structure (\texttt{game\_base.h})}
 
-Due to the way that GLUT works \cite{freeglut},  it is required to know whether a keyboard key is pressed or not in the main game loop (see below). To do so, some defines are required :\begin{minted}{c}
+\label{p:ekey}Due to the way that GLUT works \cite{freeglut},  it is required to know whether a keyboard key is pressed or not in the main game loop (see below). To do so, some defines are required :\begin{minted}{c}
 #define FRAMES_BETWEEN_KEY_REPEAT_IN_SCREEENS 8 // [frames]
 #define FRAMES_BETWEEN_KEY_REPEAT_IN_GAME 4 // [frames]
 
@@ -1086,7 +1087,60 @@ void game_loop();
 void game_quit();
 \end{minted}
 
-It starts by a long list of constants for the different external resources. These resources are used by \cc{game_init()} to create and setup the \cc{Game} structure.
+In the \cc{game.c} file, a global \cc{Game* game} variable is defined, and will be used by all the function defined here. The resources defined in the begining (image and data files) are used by \cc{game_init()} to create and setup the \cc{game} structure. This structure is correctly dealoacted at the end of the program by \cc{game_quit()}, using the \cc{atexit()} standard function \cite{cppref}.
+
+The keyboard functions are linked to their GLUT counterparts, \begin{minted}{c}
+glutKeyboardFunc(game_key_down);
+glutKeyboardUpFunc(game_key_up);
+glutSpecialFunc(game_special_key_down);
+glutSpecialUpFunc(game_special_key_up);
+\end{minted}
+and translate the GLUT key code into a internal \cc{E_*} action code (defined in \texttt{game\_base.h} see page \pageref{p:ekey}). They call the \cc{key_down()} and \cc{key_up()} functions defined above to set the corresponding variables in the \cc{game} structure.
+
+The \cc{game_loop()} function is linked to the GLUT \cc{glutIdleFunc()}. Note that technically, this function should only perform drawing, but I chose to combine input handling, state management and drawing in this function, to ease the implementation. Indeed, the code of this function is:\begin{minted}{c}
+void game_loop() {
+    // KEY MANAGEMENT:
+    keys_update_interval(game);
+
+    if (game->key_pressed[E_QUIT])
+        exit(EXIT_SUCCESS);
+
+    // clear color
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+
+    if (!game->paused) {
+        game_main_update_states(game);
+        game_main_input_management(game);
+        game_main_draw(game);
+    }
+
+    else if(game->current_screen == SCREEN_WELCOME) {
+        game_welcome_screen_input_management(game);
+        game_welcome_screen_draw(game);
+    }
+
+    else if(game->current_screen == SCREEN_WIN || game->current_screen == SCREEN_GAME_OVER) {
+        game_win_loose_screen_input_management(game);
+        game_win_loose_screen_draw(game);
+    }
+
+    else if(game->current_screen == SCREEN_SCORE) {
+        game_simple_screen_input_management(game, game->main_started);
+        game_score_screen_draw(game);
+    }
+
+    else {
+        game_simple_screen_input_management(game, game->main_started);
+        game_simple_screen_draw(game);
+    }
+
+    glutSwapBuffers();
+}
+\end{minted}
+so that the function update the \cc{key_counters} array first (using \cc{keys_update_interval()}), and then call the input management and drawing function of the game or the screen, depending on \cc{paused} and \cc{current_screen} (if \cc{paused} is false).
+
+This function is therefore the main entry points of the program.
 
 %
 %The first thing that the program needs to do is initialize the game structure, by calling a \cc{game_init()} function. This function will read the necessary files (scores, items and monster definition, levels) and load the textures.
@@ -1105,7 +1159,8 @@ It starts by a long list of constants for the different external resources. Thes
 %
 %The last thing done in the \cc{main()} function should be to clean up everything, by calling a \cc{game_quit()} function. Since GLUT does not allow to do that (except in its FreeGLUT variant \cite{freeglut}), \cc{atexit()} will be used \cite{cppref}.
 %
-%\section{Conclusion and outlooks}
+
+\section{Conclusion and outlooks}
 %
 %Even if I have thought a lot about it, it is still a \textit{pen and paper} specification. I probably miss some of the function, and definitely miss some of the variables (especially in the \cc{Game} structure). There is also some part that I didn't explore yet, for example the file structure (images, definitions, etc.).
 %
