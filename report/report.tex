@@ -47,11 +47,11 @@
 
 \section{Introduction}
 
-Bubble Booble, released in 1986 by Taito in arcades, is an action platformer type video game where the player controls two dragons, named Bub (green) and Bob (blue). To save their girlfriends, kidnapped in the last stage of the game, the dragons must go through different levels by blowing bubbles to trap their enemies, then burst them. When they do, they create items that, if collected, give them a certain amount of point. If there is no more monsters to trap, the dragons go to the next one after a given amount of time (or if all the items have been collected). One level is limited to a single screen, constituted of platforms (and walls in the left and the right of the screen). The dragons can move along the platform, jump over higher ones and fall to lower ones. Note that if the dragon fall into a gap in the bottom of the screen, it reappears on the top. Monsters chase the dragons, which loses one life (out of 3, but some items give extra lives) if touched by the monster \cite{wikibub,wikibub2}.
+Bubble Booble, released in 1986 by Taito in arcades, is an action platformer type video game where the player controls two dragons, named Bub (green) and Bob (blue). To save their girlfriends, kidnapped in the last stage of the game, the dragons must go through different levels by blowing bubbles to trap their enemies, then burst them. When they do, they create items that, if collected, give them a certain amount of point (and may get heal and extra life, depending on the object). If there is no more monsters to trap, the dragons go to the next one after a given amount of time (or if all the items have been collected). One level is limited to a single screen, constituted of platforms (and walls in the left and the right of the screen). The dragons can move along the platform, jump over higher ones and fall to lower ones. Note that if the dragon fall into a gap in the bottom of the screen, it reappears on the top. Monsters chase the dragons, which loses one life (out of 3, but some items give extra lives) if touched by the monster. If the player takes too much time to complete a level, an extra monster (initially a invincible one) is added to the level \cite{wikibub,wikibub2}.
 
 Note that the original arcade game displays a bit more complexity than the playable version available on the Internet, for example in 8bbits \cite{playbub}, which correspond to the NES version. During this work, I will therefore reproduce this NES version that I was able to play in order to understand the different game mechanistic. A list of the modification with respect to the original version is available in StrategyWiki \cite{wikibub2_nes}.
 
-In this implementation, only one dragon (Bub) can be played.
+The goal of this report is to present an implementation of the game, realized during this first year of Bachelor in the frame of the \textit{Programmation II} lecture. This implementation contain all the basic game mechanism described above, with multiple playable levels and a score counter, but is a one player version (with Bub).
 
 \section{Game specifications}
 
@@ -703,7 +703,7 @@ The chasing algorithm (exploited by the monsters, see below) is fairly simple:\b
 \item If the object is below the target, it will try to jump ;
 \item If jumping is not possible, the object will go left or right, depending on the $x$ value of the target.
 \end{enumerate}
-This algorithm actually works quite well on many of the map of the original game (and all of the current implementation), but it wouldn't work if both objects have the same $y$ but are separated by a wall. If so, the object should know where to jump to get closer to the target.
+This algorithm actually works quite well on many of the map of the original game (and all of the current implementation), but it wouldn't work if both objects have the same $y$ but are separated by a wall. If so, the object should know where to jump to get closer to the target. Note that the \cc{speed} parameter controls the delay between to chasing events, and therefore controls at which speed an object gets closer to another. It is therefore expected that monster with more speed (see above in \cc{MonsterDefinition}) chase less than monster with lower speed (which are therefore more difficult to catch).
 
 Finally, it is interesting to check whether two objects are in collision. To do so, an \textit{effective position}, computed as \cc{real_x} and \cc{real_y} given above, is needed:
 \begin{minted}{c}
@@ -768,6 +768,8 @@ void blit_item(Item* item);
 \end{minted}
 
 Concerning the different structure, the \cc{Item} contains a \cc{go_right} parameter. Indeed, when a bubble is busted, the item \textit{jumps out} the bubble. This parameter determine the direction of the jump (which is used by \cc{items_adjust()}). There is also a \cc{vulnerability_counter}, which is an amount of time when the item cannot be consumed.
+
+The \cc{item_create()} function is different from the \cc{item_new()} function, since it adds the item to a list of existing items (the \cc{list} parameter) and returns the updated list (note that if \cc{list} is \cc{NULL}, a new list is created). This function also pick an item to create in the list of definition. Since this list is expected to be sorted in rarity of the item (most common and low point items first), the function picks the items depending on \cc{value_counter_level} (the largest the value, the lower the value of the item). But in order to avoid a minimum getting the same object when two bubble are bursted by the dragon at the same time, a small amound of random is added.
 
 Concerning \cc{Monster}, the \cc{angry} parameter is a parameter used to determine if the monster is angry: a monster is angry when he was in a bubble and escape because the bubble burst on its own (see below). If this parameter is set to \cc{true}, the monster move faster. Finally, the \cc{in_bubble} parameter is used to determine if the monster is into a bubble (if so, it is not draw on the screen). The \cc{monster_adjust()} function set the monster to chase the dragon, and avoid collision between monsters (otherwise monsters ends up all in the same position and walk together so that it is difficult to distinguish them).
 
@@ -1140,7 +1142,7 @@ void game_loop() {
 \end{minted}
 so that the function update the \cc{key_counters} array first (using \cc{keys_update_interval()}), and then call the input management and drawing function of the game or the screen, depending on \cc{paused} and \cc{current_screen} (if \cc{paused} is false).
 
-This function is therefore the main entry points of the program.
+This function is therefore the main function of the program.
 
 %
 %The first thing that the program needs to do is initialize the game structure, by calling a \cc{game_init()} function. This function will read the necessary files (scores, items and monster definition, levels) and load the textures.
@@ -1160,7 +1162,10 @@ This function is therefore the main entry points of the program.
 %The last thing done in the \cc{main()} function should be to clean up everything, by calling a \cc{game_quit()} function. Since GLUT does not allow to do that (except in its FreeGLUT variant \cite{freeglut}), \cc{atexit()} will be used \cite{cppref}.
 %
 
-\section{Conclusion and outlooks}
+\section{Conclusions}
+
+During this project, a basic Bubble Bobble game was implemented. This version is playable, with multiple levels and monsters of increasing difficulty. I normally fullfill all the requirements. 
+
 %
 %Even if I have thought a lot about it, it is still a \textit{pen and paper} specification. I probably miss some of the function, and definitely miss some of the variables (especially in the \cc{Game} structure). There is also some part that I didn't explore yet, for example the file structure (images, definitions, etc.).
 %
