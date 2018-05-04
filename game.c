@@ -197,7 +197,52 @@ void game_init() {
     write_log("# READY TO START !");
 }
 
+void game_loop() {
+    /* Event loop for the program (GLUT callback).
+     *
+     * 1. Update key states ;
+     * 2. Update states (do keys management) ;
+     * 3. Draw.
+     * */
 
+    // KEY MANAGEMENT:
+    keys_update_interval(game);
+
+    if (game->key_pressed[E_QUIT])
+        exit(EXIT_SUCCESS);
+
+    // clear color
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+
+    if (!game->paused) {
+        game_main_update_states(game);
+        game_main_input_management(game);
+        game_main_draw(game);
+    }
+
+    else if(game->current_screen == SCREEN_WELCOME) {
+        game_welcome_screen_input_management(game);
+        game_welcome_screen_draw(game);
+    }
+
+    else if(game->current_screen == SCREEN_WIN || game->current_screen == SCREEN_GAME_OVER) {
+        game_win_loose_screen_input_management(game);
+        game_win_loose_screen_draw(game);
+    }
+
+    else if(game->current_screen == SCREEN_SCORE) {
+        game_simple_screen_input_management(game, game->main_started);
+        game_score_screen_draw(game);
+    }
+
+    else {
+        game_simple_screen_input_management(game, game->main_started);
+        game_simple_screen_draw(game);
+    }
+
+    glutSwapBuffers();
+}
 
 
 void game_quit() {

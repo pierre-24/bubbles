@@ -122,7 +122,7 @@ Item* item_new(LevelObject* map_object, ItemDef* definition);
 void item_delete(Item* item);
 
 Item *item_create(LevelObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level,
-                  int value_counter_level);
+                  float ratio_time_left);
 Item* dragon_consume_item(Dragon* dragon, Item* list, Item* item);
 
 void items_adjust(Item* list, Level* level);

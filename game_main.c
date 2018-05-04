@@ -173,7 +173,7 @@ void game_main_update_states(Game *game) {
                         game->monster_list = monster_kill(game->monster_list, b->captured);
                         game->item_list = item_create(b->map_object, game->item_list, game->definition_items,
                                                       game->num_items_defined, game->current_level,
-                                                      counter_value(game->counter_start_level));
+                                                      (float) (MAX_LEVEL_TIME - counter_value(game->counter_start_level)) / MAX_LEVEL_TIME);
                     }
 
                     game->bubble_list = bubble_burst(game->bubble_list, b, false);

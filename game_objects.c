@@ -386,30 +386,23 @@ void item_delete(Item* item) {
 }
 
 Item *item_create(LevelObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level,
-                  int value_counter_level) {
+                  float ratio_time_left) {
     /* Create an item at a given position, and add it to the list of item (if NULL, create the list).
      *
      * The item is choosen randomly, from the time left until `MAX_LEVEL_TIME` and a random number (to avoid the fact that popping more than one bubble at the same time give the same object).
-     * The items are picked so that the first item in the list have more probabilityy than the last to be picked.
+     * The items are picked so that the first item in the list have more probability than the last to be picked.
      *
      * Set it to jump from the position, so that the item is less easy to catch.
      * */
     if (position == NULL || num_item_definitions == 0)
         return list;
 
-    int item_index = 0;
-    int prev = 0;
-    int max = num_item_definitions * (num_item_definitions + 1) / 2;
-    int item_p = (int) ((float) (MAX_LEVEL_TIME - value_counter_level) / MAX_LEVEL_TIME * max) + (rand() % max - max / 2) / 4;
+    int item_index = (int) (ratio_time_left * num_item_definitions) + (rand() % num_item_definitions - num_item_definitions / 2) / 4;
 
-    for (int i = 0; i < num_item_definitions; i++) {
-        if (item_p < prev + num_item_definitions - i) {
-            item_index = i;
-            break;
-        }
-        else
-            prev += num_item_definitions - i;
-    }
+    if (item_index < 0)
+        item_index = 0;
+    if (item_index >= num_item_definitions)
+        item_index = num_item_definitions - 1;
 
     LevelObject* m = level_object_copy(position);
 

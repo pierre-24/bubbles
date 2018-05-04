@@ -762,14 +762,14 @@ typedef struct Item_ {
 Item* item_new(LevelObject* map_object, ItemDef* definition);
 void item_delete(Item* item);
 
-Item *item_create(LevelObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level, int value_counter_level);
+Item *item_create(LevelObject *position, Item *list, ItemDef **definitions, int num_item_definitions, Level *level, float ratio_time_left);
 void items_adjust(Item* list, Level* level);
 void blit_item(Item* item);
 \end{minted}
 
 Concerning the different structure, the \cc{Item} contains a \cc{go_right} parameter. Indeed, when a bubble is busted, the item \textit{jumps out} the bubble. This parameter determine the direction of the jump (which is used by \cc{items_adjust()}). There is also a \cc{vulnerability_counter}, which is an amount of time when the item cannot be consumed.
 
-The \cc{item_create()} function is different from the \cc{item_new()} function, since it adds the item to a list of existing items (the \cc{list} parameter) and returns the updated list (note that if \cc{list} is \cc{NULL}, a new list is created). This function also pick an item to create in the list of definition. Since this list is expected to be sorted in rarity of the item (most common and low point items first), the function picks the items depending on \cc{value_counter_level} (the largest the value, the lower the value of the item). But in order to avoid a minimum getting the same object when two bubble are bursted by the dragon at the same time, a small amound of random is added.
+The \cc{item_create()} function is different from the \cc{item_new()} function, since it adds the item to a list of existing items (the \cc{list} parameter) and returns the updated list (note that if \cc{list} is \cc{NULL}, a new list is created). This function also pick an item to create in the list of definition. Since this list is expected to be sorted in rarity of the item (most common and low point items first), the function picks the items depending on \cc{ratio_time_left} (the largest the value, the lower the value of the item). But in order to avoid a minimum getting the same object when two bubble are bursted by the dragon at the same time, a small amound of random is added.
 
 Concerning \cc{Monster}, the \cc{angry} parameter is a parameter used to determine if the monster is angry: a monster is angry when he was in a bubble and escape because the bubble burst on its own (see below). If this parameter is set to \cc{true}, the monster move faster. Finally, the \cc{in_bubble} parameter is used to determine if the monster is into a bubble (if so, it is not draw on the screen). The \cc{monster_adjust()} function set the monster to chase the dragon, and avoid collision between monsters (otherwise monsters ends up all in the same position and walk together so that it is difficult to distinguish them).
 
