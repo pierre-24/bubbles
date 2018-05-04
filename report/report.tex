@@ -961,9 +961,7 @@ typedef struct Game_ {
 
     int current_screen;
     Sprite* screens[SCREEN_NUMBER];
-
     Sprite* game_elements[GE_NUMBER];
-
     Font* font;
     
     // scores
@@ -1164,7 +1162,7 @@ This function is therefore the main function of the program.
 
 \section{Conclusions}
 
-During this project, a basic Bubble Bobble game was implemented. This version is playable, with multiple levels and monsters of increasing difficulty. I normally fullfill all the requirements. 
+During this project, a basic Bubble Bobble game was implemented. This version is playable, with multiple levels and monsters of increasing difficulty. I normally fulfill all the requirements. I did not have time to implement a multiplayer game, although it would have been relatively easy, since it was part of my initial reflexion. The artificial intelligence for the monsters is also not as complex as I initially thought (a better solution would be to use a tree structure and something like Breadth-first search \cite{bfs} or the A* search algorithm \cite{astar}). Finally, it is probably not exempt of bugs. Nevertheless, this project was the occasion to improve my skills in C, as well as to perform the complete implementation of a game, something that I never had the opportunity and the time to do. 
 
 %
 %Even if I have thought a lot about it, it is still a \textit{pen and paper} specification. I probably miss some of the function, and definitely miss some of the variables (especially in the \cc{Game} structure). There is also some part that I didn't explore yet, for example the file structure (images, definitions, etc.).
