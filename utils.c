@@ -226,3 +226,18 @@ int counter_value(Counter* counter) {
     else
         return counter->max - counter->value - 1;
 }
+
+void custom_usleep(int msecs) {
+    /* Mimic the usleep() function, since it is not part of the C99 standard.
+     *
+     * Uses select, which looks whether a file descriptor becomes available or not.
+     * But fd=0 does not!
+     *
+     * Solution due to https://stackoverflow.com/a/264378.
+     * */
+
+    struct timeval tv;
+    tv.tv_sec = msecs / 1000;
+    tv.tv_usec = (msecs % 1000) * 1000;
+    select(0, NULL, NULL, NULL, &tv);
+}

@@ -264,7 +264,7 @@ void game_loop() {
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
     if (time_spent < 1.0f / FPS)
-        usleep((useconds_t) ((1.0f / FPS - time_spent) * 1000));
+        custom_usleep((int) ((1.0f / FPS - time_spent) * 1000.f));
 }
 
 

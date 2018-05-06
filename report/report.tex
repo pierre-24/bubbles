@@ -319,6 +319,11 @@ int counter_value(Counter* counter);
 
 A counter goes from a minimum to a maximum value (\cc{max}). The counter stops at its maximum value (or starts back if it is infinite). The \cc{counter_start()} and \cc{counter_stop()} set the counter value to its minimum and maximum value. The \cc{conter_tick()} function increase the value by one. The \cc{counter_value()} gives the value of the counter, but also take the \cc{decrement} member variable into account.
 
+One last function is defined:\begin{minted}{c}
+void custom_usleep(int msecs);
+\end{minted}
+this function is defined since \cc{usleep()} (sleep for a given amount of millisecond) is not part of the C99 standard, but I need it to maintain the framerate constant. The solution use the \cc{select()} system call, which waits for a file descriptor to becomes available until timeout (and effectivelly put the program in sleep during that time).
+
 \subsubsection{Images (\texttt{textures.h})}
 
 Since the game will need to manipulate images, it may be interesting to define two kinds of structures that represent \begin{inparaenum}[i)]
@@ -1130,7 +1135,7 @@ void game_loop() {
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
     if (time_spent < 1.0f / FPS)
-        usleep((useconds_t) ((1.0f / FPS - time_spent) * 1000));
+        custom_usleep((useconds_t) ((1.0f / FPS - time_spent) * 1000));
 }
 \end{minted}
 so that the function update the \cc{key_counters} array first (using \cc{keys_update_interval()}), and then call the input management and drawing function of the game or the screen, depending on \cc{paused} and \cc{current_screen} (if \cc{paused} is false). This function is therefore the main function of the program.

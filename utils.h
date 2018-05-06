@@ -16,6 +16,8 @@
 #include <math.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include <GL/glut.h>
 #include <GL/freeglut.h>
@@ -31,6 +33,8 @@ char* file_get_content(FILE* f);
 char *strnextspace(char *str);
 char *strnextline(char *str);
 char *strnextnspace(char *str);
+
+void custom_usleep(int msecs);
 
 typedef struct Counter_ {
     /* Define a counter.
