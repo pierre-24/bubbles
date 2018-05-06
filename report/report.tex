@@ -308,7 +308,6 @@ typedef struct Counter_ {
 
 Counter* counter_new(int max, bool infinite, bool decrement);
 void counter_delete(Counter* counter);
-
 Counter* counter_copy(Counter* counter);
 
 void counter_restart(Counter* counter, int nmax);
@@ -318,12 +317,12 @@ int counter_tick(Counter* counter);
 int counter_value(Counter* counter);
 \end{minted}
 
-A counter goes from a ``minimum" to a ``maximum" value (the actual value depends on whether the counter is set to increase or decrement value). The counter stops at its ``maximum" value (or starts back if it is infinite). The \cc{counter_start()} and \cc{counter_stop()} set the counter value to its ``minimum" and ``maximum". The \cc{conter_tick()} value increase (or decrease) the value by one.
+A counter goes from a minimum to a maximum value (\cc{max}). The counter stops at its maximum value (or starts back if it is infinite). The \cc{counter_start()} and \cc{counter_stop()} set the counter value to its minimum and maximum value. The \cc{conter_tick()} function increase the value by one. The \cc{counter_value()} gives the value of the counter, but also take the \cc{decrement} member variable into account.
 
 \subsubsection{Images (\texttt{textures.h})}
 
-Since the game will need to manipulate images, it may be interesting to define three kinds of structures that represent \begin{inparaenum}[i)]
-\item a texture (an image, so an array of pixels, each pixel being a set of 4 values for red, green, blue and alpha), and,
+Since the game will need to manipulate images, it may be interesting to define two kinds of structures that represent \begin{inparaenum}[i)]
+\item a texture (an image, so an array of pixels, each pixel being a set of 4 values for red, green, blue and alpha, and may contain many different pictures in it), and,
 \item a sprite (a part of a texture, for example the image of an object).
 \end{inparaenum}
 
@@ -351,18 +350,14 @@ typedef struct Sprite_ {
 Sprite* sprite_new(Image *image, int x, int y, int w, int h);
 void sprite_delete(Sprite* sprite);
 Sprite* sprite_copy(Sprite* origin);
-
 void blit_sprite(Sprite *sprite, int sx, int sy, bool flip_x, bool flip_y);
 \end{minted}
 
-The strategy is to have a few textures that contains all the sprites needed: for example, a texture for the items, one for the monsters, one for the level tiles, etc. Then, only the sprites are manipulated by the program.
+The strategy is to have a few images that contains all the sprites needed: for example, an image for the items, one for the monsters, one for the level tiles, etc. Then, only the sprites are manipulated by the functions.
 
-The creation of a texture from a file (using \cc{image_new_from_file()}) is a complex problem, due to the diversity of image formats. To avoid the use of an external library, the PPM format \cite{ppmformat} was chosen, since it contains only the size of the image, and the pixels, making it one of the most simple format. This format does not contain the possibility to have an alpha channel, so if a pixel has a given color (\cc{TRANSPARENT} in the code) it is replaced by a transparent pixel. Note that the \cc{blit_sprite()} function deals transparently with the fact that OpenGL defines the origin to be on the bottom left corner of the screen, while images have their origin on the top left corner. 
+The creation of a texture from a file (using \cc{image_new_from_file()}) is a complex problem, due to the diversity of image formats. To avoid the use of an external library, the PPM format \cite{ppmformat} was chosen, since it contains only the size of the image, and the pixels, making it one of the simplest format. This format does not contain the possibility to give an alpha channel, so if a pixel has a given color (\cc{TRANSPARENT} in the code) it is replaced by a transparent pixel. Note that the \cc{blit_sprite()} function deals transparently with the fact that OpenGL defines the origin to be on the bottom left corner of the screen, while images have their origin on the top left corner. Note that, since I'm not a good graphic artist (and this is not the goal of the work, anyway), sprites from Spriters-Ressource \cite{spriters} were used.
 
-Note that, since I'm not a good graphic artist (and this is not the goal of the work, anyway), sprites from Spriters-Ressource \cite{spriters} were used.
-
-A way to write a string on the screen is also needed. GLUT already possesses a function to write a character \cite{glutrefchar}, but it does not uses textures (it uses \cc{glDrawPixels()}), and does not scale. Therefore, it was chosen to use a custom function that blit a set of sprites to get the string:
-
+A way to write a string on the screen is also needed. GLUT already possesses a function to write a character \cite{glutrefchar}, but it does not uses textures (it uses \cc{glDrawPixels()}), and does not scale. Therefore, it was chosen to use a custom function that blit a set of sprites representing the letters to get the string:
 \begin{minted}{c}
 #define FONT_MAX_CHAR 256
 
@@ -375,10 +370,8 @@ typedef struct Font_ {
 
 Font* font_new(Image* font_image, int char_width, int char_height);
 void font_delete(Font* font);
-
 void blit_text(Font* font, char* text, int x, int y);
 \end{minted}
-
 The \cc{blit_text()} function blit the sprites corresponding to the screen, one after another, using a \textit{sprite font}, i.e. an image where the letters are located in a known position. Here, the 256 letters of the latin-1 subset will be present one after the other in the image, and, given the size of a letter, the \cc{font_new()} function will know where each character is by knowing the size of the image.
 
 \subsubsection{Scores (\texttt{scores.h})}
@@ -397,14 +390,12 @@ typedef struct Score_ {
 
 Score* score_new(unsigned int score, char name[SCORE_NAME_SIZE  + 1]);
 void score_delete(Score* score);
-
 Score* scores_new_from_file(FILE* f);
 void scores_save_in_file(FILE *f, Score *list);
-
 Score* score_insert(Score *list, unsigned int score, char name[SCORE_NAME_SIZE + 1]);
 \end{minted}
 
-Following the traditional arcade games, the name will be written with four (uppercase) letters. This is a (NULL terminated) chained list, loaded from a file (with the \cc{scores_new_rom_file()} function) for which the definition is given in Figure \ref{fig:def:scores}. Note that this function order the scores by decreasing value, and insertion (\cc{scores_insert()}) will be done in the correct position in this ordered list. The \cc{scores_save_in_file()} function is used to store the scores list in the file.
+Following the traditional arcade games, the name will be written with four (uppercase) letters. This is a (NULL terminated) chained list, loaded from a file (with \cc{scores_new_rom_file()}) for which the definition is given in Figure \ref{fig:def:scores}. Note that this function order the scores by decreasing value, and insertion (\cc{scores_insert()}) will be done in the correct position in this ordered list. The \cc{scores_save_in_file()} function is used to store the scores list in the file.
 
 \begin{figure}[!p]
 	\centering
@@ -434,7 +425,7 @@ The only function in this module is:\begin{minted}{c}
 int datafile_line_field_positions(char* text, unsigned int num_data, char** positions, char** nextstart);
 \end{minted}
 
-It splits a given line (starting at \cc{text}) into \textit{fieds} (space separated) and fill \cc{positions} with the starting position of each field. It expects \cc{num_data} fields, otherwise it returns something different from 0. But everything after the \texttt{\#} character is ignored (comment character), so the function may return 1 if this is a line with just a comment (who needs to be skipped). \cc{nextstart} is set to the next line, or \cc{NULL} if \cc{'\0'} is reached.
+It splits a given line (starting at \cc{text}) into \textit{fieds} (space separated) and fill \cc{positions} with the starting position of each field. It expects \cc{num_data} fields, otherwise it returns something different from 0. But everything after the \texttt{\#} character is ignored (comment character), so the function may return 1 if this is comment line (who needs to be skipped). \cc{nextstart} is set to the next line, or \cc{NULL} if \cc{'\0'} is reached.
 
 \subsubsection{Definitions of objects (\texttt{object\_definitions.h})}
 
@@ -442,11 +433,8 @@ Used to define and list the properties of a given type of item or monster. The g
 
 \begin{minted}[breaklines]{c}
 // items
-typedef enum extra_power_t_ {
-	EP_NONE,
-	EP_ADD_LIFE,
-	EP_ADD_EXTRA_LIFE,
-	EP_FULL_HEAL,
+typedef enum extra_power_t_ { // power of an object
+	EP_NONE, EP_ADD_LIFE, EP_ADD_EXTRA_LIFE, EP_FULL_HEAL,
 	EP_NUMBER
 } extra_power_t;
 
@@ -459,16 +447,15 @@ typedef struct ItemDef_ {
 ItemDef *item_def_new(unsigned int points_given, extra_power_t extra_power, Sprite *sprite);
 void item_def_delete(ItemDef* item);
 
+// size of the sprite
 #define ITEM_WIDTH 32 // [pixels]
 #define ITEM_HEIGHT 32 // [pixels]
 
 ItemDef** item_defs_from_file(FILE* f, Image* items_texture, unsigned int* size);
 
 // monsters
-enum {
-    MA_NORMAL,
-    MA_ANGRY,
-    MA_CAPTURED,
+enum { // monster animations
+    MA_NORMAL, MA_ANGRY, MA_CAPTURED,
     MA_NUMBER
 };
 
@@ -480,6 +467,7 @@ typedef struct MonsterDef_ {
 MonsterDef* monster_def_new(Animation **sprite_animation, unsigned int speed);
 void monster_def_delete(MonsterDef* item);
 
+// size of the sprite and animation framerate
 #define MONSTER_WIDTH 32 // [pixels]
 #define MONSTER_HEIGHT 32 // [pixels]
 #define MONSTER_FRAMERATE 10 // [frames]
@@ -556,15 +544,17 @@ The last functions for each structure (\cc{*_defs_from_file()}) loads and return
 \label{fig:def:tab}
 \end{figure}
 
-Note that the choice to use arrays here is not innocent, since those definitions will be called via their positions in the table (corresponding to their positions in the file) in the levels (see below).
+Note that the choice to use arrays here is not innocent, since those definitions will be defined via their positions in this array (corresponding to their positions in the file) in the levels (see below).
 
 \subsubsection{Levels (\texttt{levels.h})}
 
-A level (NULL terminated chained list) contains the map, which is stored as a 1-D array.
+Levels (NULL terminated chained list) contain the map, which is stored as a 1-D array (the \cc{position_index()} function perform the conversion between the 2-D position and the 1-D index).
 
 \begin{minted}[breaklines]{c}
+// sprite size
 #define TILE_WIDTH 16 // [pixels]
 #define TILE_HEIGHT 16 // [pixels]
+// number of cases in a map
 #define MAP_WIDTH 32 // [cases]
 #define MAP_HEIGHT 24 // [cases]
 
@@ -587,16 +577,14 @@ typedef struct Level_ {
 
 Level* level_new(bool *map, Position bubble_endpoint, Sprite *fill_tile, unsigned int num_monsters, MonsterDef **monsters, Position *monster_positions);
 void level_delete(Level* level);
-
 Level *level_new_from_string(char *buffer, int *position, Image *image_level, MonsterDef **base_monster_defs,int num_monster_defs);
-Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monster_defs, int num_monster_defs,nsigned int *num_levels);
-
+Level *levels_new_from_file(FILE *f, Image *image_level, MonsterDef **base_monster_defs, int num_monster_defs, unsigned int *num_levels);
 void blit_level(Level *level, int y_shift);
 \end{minted} 
 
-The level also contains the tile used for the filled element in the map, a list of the monster with their initial position, and the final position of the bubble.
+The level contains the tile used for the filled element in the map (\cc{fill_tile}), a list of the monster with their initial position (\cc{monsters} and \cc{monster_positions}), and the final position of the bubble (\cc{bubble_endpoint}).
 
-The \cc{level_new_from_file()} function create the level from a \textbf{portion} of a text file, for which the definition is pictured in Figure \ref{fig:def:level}. At the end of this function, the file cursor is set to the next level: since the number of lines is known when the header is read (\text{1 + \cc{num_monster} + 24}), it is actually possible to store all levels in a file. The function \cc{levels_new_from_file()} read the whole file (by calling \cc{level_new_from_string()} repetitively until \cc{EOF}) and create the chained list. 
+The \cc{level_new_from_string()} function create the level from a string, for which the definition is pictured in Figure \ref{fig:def:level}. At the end of this function, the text cursor is set to the next level: since the number of lines is known when the header is read (\text{1 + \cc{num_monster} + 24}), it is actually possible to store all levels continuously. The function \cc{levels_new_from_file()} read the whole file (by calling \cc{level_new_from_string()} repetitively until \cc{EOF}) and return the corresponding chained list of level. 
 
 \begin{sidewaysfigure}
 \centering
@@ -686,10 +674,10 @@ This object is the representation of any object that can appear on the map. It c
 float real_x = x + (float) (move_forward ? -1 : 1) * counter_x / MOVE_EVERY;
 float real_y = y + (float) (is_falling ? 1 : -1) * counter_y / MOVE_EVERY;
 \end{minted}
+The \cc{move_forward} boolean is set to \cc{true} when the last movement of the object was to go right. \cc{is_falling} is set to \cc{true} when the object is falling.
+If the object is moved, \cc{x} and \cc{y} are modified accordingly. But with the help of the counter, which delays the movement, the object will appear to move to the new position in a few frames, not instantaneously. Other counters also help, here in the case of jumping (to know how much it must jumps, with \cc{counter_jump}) or in the case of chasing (an object can move in the direction of another, but change direction every few frame, with \cc{counter_chase}).
 
-If the object is moved, \cc{x} and \cc{y} are modified accordingly. But with the helps of the counter, which delays the movement, the object will appear to move to the new position in a few frames, not instantaneously. Other counters also help in the case of jumping (to know how much it must jump, with \cc{counter_jump}) or in the case of chasing (an object can move in the direction of another, but change direction every few frame, with \cc{counter_chase}).
-
-The \cc{level_object_adjust()} function ``adjust" the object: it ticks the counters, and check if the object should start (empty tile below) or stop (solid tile below) to fall. Note that an object can start by \textit{falling from above}, which simulate the fact that some object fall from the top of the screen to a given target position (using the \cc{level_object_set_falling_from_above()} function sets the corresponding variables).
+The \cc{level_object_adjust()} function ``adjust" the object: it ticks the counters, and check if the object should start (empty tile below) or stop (solid tile below) to fall. Note that an object can enter the gaming area by \textit{falling from above}, which simulate the fact that some object fall from above the top of the screen to a given target position (by using the \cc{level_object_set_falling_from_above()} function, which sets the corresponding variables, namely \cc{target_position} and the \cc{falling_from_above} boolean).
 
 This structure is therefore used to do collisions tests with the map, with the different \cc{level_object_test_*()} functions, and movements with the different \cc{level_object_move_*()} and \cc{level_object_jump()} functions (which test if the movement is possible before setting the position and the counters, basically). The \cc{level_object_can_*()} function checks if a movement is possible (only if the corresponding counter is stopped).
 
