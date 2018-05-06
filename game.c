@@ -277,7 +277,6 @@ void game_loop() {
         custom_usleep((int) ((time_per_frame - time_spent) * 1000.f));
     else
         missed_time += time_spent - time_per_frame;
-    
 }
 
 

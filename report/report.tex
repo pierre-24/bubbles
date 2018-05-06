@@ -268,7 +268,7 @@ The sentinel (blue in the scheme above) is always the first element of the list,
 \end{center}
 Each block represents information. Vertically aligned blocks are on the same line. If a block contains more than one value (which correspond generally to a structure), the block is colored, and its definition is given below (here for \texttt{Line}, in green, and \texttt{Type}, in blue). Ultimately, that represent values, separated from the next by a space (for example, each line of the file is actually represented by 4 values in this example). Above the end of each block, there is a counter of the number of values so far in the line.
 Here, the first blocks represent the file, with \texttt{n} lines (indicated by the arrow on the right). Note that \texttt{uint} will be used as the shorthand for \cc{unsigned int}.
-\item I assumed  a fixed framerate of 60 frames per second (since it is the vertical synchronization value of most of the modern screens). Every time length will therefore be expressed in a number of frames. 
+\item I assumed and ensure (see \cc{game_loop()} in last part) a fixed framerate of 60 frames per second (since it is the vertical synchronization value of most of the modern screens). Every time length will therefore be expressed in a number of frames. 
 \item I used the Valgrind Memtest tool \cite{valgrind} to check for memory leaks in different cases (even when the program is exited in the middle of the game).
 \item The code does not contain any unit test. This is not a good practice, but as much as I like unit testing\footnote{I usually program in Python, where this kind of thing is easier to implement and manage}, it is more difficult to do in C\footnote{Of course there is a dedicated framework to do so (Google test, for example), but it goes beyond the scope of this project.}, especially with graphical interfaces.
 \end{itemize}
@@ -1078,20 +1078,29 @@ and translate the GLUT key code into a internal \cc{E_*} action code (defined in
 The \cc{game_loop()} function is linked to the GLUT \cc{glutIdleFunc()}. Note that technically, this function should only perform drawing, but I chose to combine input handling, state management and drawing in this function, to ease the implementation. Indeed, the code of this function is:\begin{minted}{c}
 void game_loop() {
     clock_t begin = clock();
-
-    // KEY MANAGEMENT:
-    keys_update_interval(game);
+    double time_per_frame = 1.0f / FPS;
 
     if (game->key_pressed[E_QUIT])
         exit(EXIT_SUCCESS);
 
     // INPUTS
     if (!game->paused) {
-        game_main_update_states(game);
-        game_main_input_management(game);
+        int loop = 0;
+        while(loop < 1 || missed_time > time_per_frame) {
+            keys_update_interval(game);
+            game_main_update_states(game);
+            game_main_input_management(game);
+    
+            if (loop > 0)
+                missed_time -= time_per_frame;
+            loop++;
+        }
     }
 
     else  {
+        missed_time = .0;
+        
+        keys_update_interval(game);
         switch (game->current_screen) {
             case SCREEN_WELCOME:
                 game_welcome_screen_input_management(game);
@@ -1132,13 +1141,17 @@ void game_loop() {
     glutSwapBuffers();
 
     clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
 
-    if (time_spent < 1.0f / FPS)
-        custom_usleep((useconds_t) ((1.0f / FPS - time_spent) * 1000));
+    if (time_spent < time_per_frame)
+        custom_usleep((int) ((time_per_frame - time_spent) * 1000.f));
+    else
+        missed_time += time_spent - time_per_frame;
 }
 \end{minted}
 so that the function update the \cc{key_counters} array first (using \cc{keys_update_interval()}), and then call the input management and drawing function of the game or the screen, depending on \cc{paused} and \cc{current_screen} (if \cc{paused} is false). This function is therefore the main function of the program.
+
+Note that this function also present the mechanism to ensure a fixed framerate. The whole time taken by the main loop is measured. Two possibilities: either the time taken is lower than the time needed by a frame (about 17 ms assuming 60 frame per second), and the program go to sleep to ensure the fixed framerate. On the other hand, time taken is longer than the needed by a frame: assuming that the drawing is the longer part of the function, the main game logic part is repeated to ensure that the game is not slower on slow computers\footnote{I tested this mechanism on both a ``gaming" computer (which therefore sleeps for about 16 ms) and a Raspberry Pi 3 (it works, even though 30 FPS would have been better).}.
 
 %
 %The first thing that the program needs to do is initialize the game structure, by calling a \cc{game_init()} function. This function will read the necessary files (scores, items and monster definition, levels) and load the textures.
