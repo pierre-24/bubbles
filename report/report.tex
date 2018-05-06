@@ -47,21 +47,22 @@
 
 \section{Introduction}
 
-Bubble Booble, released in 1986 by Taito in arcades, is an action platformer type video game where the player controls two dragons, named Bub (green) and Bob (blue). To save their girlfriends, kidnapped in the last stage of the game, the dragons must go through different levels by blowing bubbles to trap their enemies, then burst them. When they do, they create items that, if collected, give them a certain amount of point (and may get heal and extra life, depending on the object). If there are no more monsters to trap, the dragons go to the next one after a given amount of time (or if all the items have been collected). One level is limited to a single screen, constituted of platforms (and walls in the left and the right of the screen). The dragons can move along the platform, jump over higher ones and fall to lower ones. Note that if the dragon fall into a gap in the bottom of the screen, it reappears on the top. Monsters chase the dragons, which loses one life (out of 3, but some items give extra lives) if touched by the monster. If the player takes too much time to complete a level, an extra monster (initially an invincible one) is added to the level \cite{wikibub,wikibub2}.
+Bubble Booble, released in 1986 by Taito in arcades, is an action platformer type video game where the player controls two dragons, named Bub (green) and Bob (blue). To save their girlfriends, kidnapped in the last stage of the game, the dragons must go through different levels by blowing bubbles to trap their enemies, then burst them. When they do, it creates items that, if collected, give them a certain amount of point (and may heal them or give an extra life, depending on the object). If there are no more monsters to trap, the dragons go to the next one after a given amount of time (or when all the items have been collected). One level is limited to a single screen, constituted of platforms (and walls in the left and the right of the screen). The dragons can move on the platforms, jump over higher ones and fall to lower ones. Note that if the dragon fall into a gap in the bottom of the screen, it reappears on the top. Monsters chase the dragons, which lose one life (out of 3 at the beginning of the game) if touched by the monster. If the player takes too much time to complete a level, an extra monster is added \cite{wikibub,wikibub2}.
 
-Note that the original arcade game displays a bit more complexity than the playable version available on the Internet, for example in 8bbits \cite{playbub}, which correspond to the NES version. During this work, I will therefore reproduce this NES version that I was able to play in order to understand the different game mechanistic. A list of the modification with respect to the original version is available in StrategyWiki \cite{wikibub2_nes}.
+The goal of this report is to present an implementation of the game, realized during my first year of bachelor, in the frame of the \textit{Programmation II} lecture. This implementation contains all the basic game mechanism described above, with multiple playable levels and a score counter, but is a one-player version (with Bub).
+Note that the original arcade game displays a bit more complexity than the playable version available on the Internet, for example in 8bbits \cite{playbub}, which correspond to the NES version. During this work, I reproduced this NES version that I was able to play in order to understand the different game mechanistic. A list of the modification with respect to the original version is available in StrategyWiki \cite{wikibub2_nes}.
 
-The goal of this report is to present an implementation of the game, realized during this first year of Bachelor in the frame of the \textit{Programmation II} lecture. This implementation contain all the basic game mechanism described above, with multiple playable levels and a score counter, but is a one-player version (with Bub).
+
 
 \section{Game specifications}
 
-The following part will detail different aspects of the game implementations, starting by the screens, then the data structures and finally some explanation on which functions are needed to implement the game logic.
+The following part will detail different aspects of the game implementation, starting by the screens, then the data structures, together with some explanation on the different functions that were defined.
 
 \subsection{Screens}
 
 Following the original NES game, the program window is a square of 512$\times$432 px.\footnote{This is actually twice the size of the original screen, but on modern screen, that's a minimum if ones want to see something!}
 
-The welcome screen is given in Figure \ref{fig:1:welcome}. To simplify a bit with respect to the original game, it presents both the game title and options. The options are given in the form of a list and a cursor allow to select the options.
+The welcome screen is pictured in Figure \ref{fig:1:welcome}. To simplify a bit with respect to the original game, it presents both the game title and options. The options are given in the form of a list and a cursor allows to select the options . The control screen is presented in Figure \ref{fig:2:controls}: there is a title to indicate what the player sees, and some text. The score screen is given in Figure \ref{fig:3:score}. In this screen, the score are continuously sliding up, and the list is repeated. The game over/final screen is shown in Figure \ref{fig:3:gameover}. If it is not a game over, this screen gives the possibility to enter a name associated with the score.
 
 \begin{figure}[!h]
 	\centering
@@ -77,7 +78,7 @@ The welcome screen is given in Figure \ref{fig:1:welcome}. To simplify a bit wit
 	\label{fig:1:welcome}
 \end{figure}
 
-The control screen is given in Figure \ref{fig:2:controls}: there is a title to indicate what the player sees, and some text.
+
 
 \begin{figure}[!h]
 	\centering
@@ -92,7 +93,7 @@ The control screen is given in Figure \ref{fig:2:controls}: there is a title to 
 	\label{fig:2:controls}
 \end{figure}
 
-The score screen is given in Figure \ref{fig:3:score}. In this screen, the score are continuously going up, and the list is repeated. 
+
 
 \begin{figure}[!h]
 	\centering
@@ -107,7 +108,6 @@ The score screen is given in Figure \ref{fig:3:score}. In this screen, the score
 	\label{fig:3:score}
 \end{figure}
 
-The game over/final screen is given in Figure \ref{fig:3:gameover}. This screen gives the possibility to enter a name associated with the score. If it is game over, the possibility to save the score is not given.
 
 \begin{figure}[!h]
 	\centering
@@ -126,13 +126,9 @@ The game over/final screen is given in Figure \ref{fig:3:gameover}. This screen 
 	\label{fig:3:gameover}
 \end{figure}
 
-Finally, the game screen is given in Figure \ref{fig:4:game}. This screen is subdivided in 32$\times$27 squares of 16$\times$16 px (the two top rows being outside of the actual gaming area). Each square is either \textbf{empty} (black) or \textbf{filled} (with a tile image), to represent a physical wall/platform. An actual map is actually 32$\times$24, since the last line is exactly the same as the first one (so that if a dragon/monster fall in the bottom, it can reappear in the top). A map object (item, dragon, monster) is a $2\times2$ square.
+Finally, the main game screen is described in Figure \ref{fig:4:game}. This screen is subdivided in 32$\times$27 squares of 16$\times$16 px (the two top rows being outside of the gaming area). Each square is either \textbf{empty} (black) or \textbf{filled} (with a tile image), to represent a physical wall/platform. An map is actually 32$\times$24, since the last line is repeated to be exactly the same as the first one (so that if a dragon/monster fall in the bottom, it can reappear in the top). A map object (item, dragon, monster) is a $2\times2$ square.
 
-%A dragon or a monster move by one square at the time on the left and the right, if there is no filled square in the way. Its jump is of 6 squares up. When it jumps, the dragon/monster  goes up first (whether or not there is filled squares in the way), then go down and stops in an empty square, if there is a filled square below (otherwise, it continues to fall). The position of Bub is always the same at the beginning of the level and when they lose a life (see Figure \ref{fig:4:game}). The position of the monster depends on the level (at the beginning of the level, they fall from the top to a given position in the level, then starts to move).
-
-% The movement of a bubble is very specific: it starts by going in the direction it has been blown, until it loses its \textit{momentum}. When it does, all the bubbles end up in about the same position in the level, by going up/down first, then left/right. Bubbles burst on their own after a time, freeing the monster that they contain if it was the case.
-
-\begin{figure}[!h]
+\begin{figure}[!p]
 	\centering
 	\begin{tikzpicture}[scale=.9]
 	% wall
@@ -194,10 +190,9 @@ Finally, the game screen is given in Figure \ref{fig:4:game}. This screen is sub
 	\vspace{.5cm}
 	\includegraphics[width=.5\linewidth]{i/screen5}
 	
-	\caption{Game screen (sketch on top, actual implementation on bottom) subdivided in 32$\times$27 squares. Filled square represent walls/platform. The starting position of Bub is represented by the green square. The orange square represents an item, which Bub is able to grab by jumping on the first, then the second platform (since they are spaced by 5 squares), while Bob will not be able to reach the platform on top of him (since it is 6 squares up). On the other hand, the monster (red square) is able to jump down and try to touch Bob. The position of some extra information (score, life left) is given in lighter blue.}
+	\caption{Game screen (sketch on top, actual implementation on bottom) subdivided in 32$\times$27 squares. Filled square represent walls/platform. The starting position of Bub is represented by the green square. The orange square represents an item, which Bub is able to grab by jumping on the first, then the second platform. On the other hand, the monster (red square) is able to jump down and try to touch Bob. The position of some extra information (score, life left) is given in blue.}
 	\label{fig:4:game}
 \end{figure}
-
 
 \subsection{Modules: data structures and main functions}
 
@@ -213,9 +208,9 @@ Finally, the game screen is given in Figure \ref{fig:4:game}. This screen is sub
 The following parts will follow these conventions:
 
 \begin{itemize}
-\item The module (divided into 4 layers) are organized as presented in Figure \ref{fig:modules}. The bottom layer contains all the methods and structure for basic manipulation (of images, files and score). Then, the game object layer contains methods and structures that make sense in the game (the map, the monsters, the bubbles, the items and the dragon). The following layer (game logic) gathers all the objects together and deals with how they interact together, as well as their responses to inputs (only for the dragon or the screens). Finally, the last layer (game) contains the interactions with GLUT (with all the callbacks that it needs). The following pages will present the different modules from the bottom to the top.
+\item The modules (divided into 4 layers) are organized as presented in Figure \ref{fig:modules}. The lower layer contains all the methods and structure for basic manipulation (of images, files and scores). Then, the game object layer contains methods and structures that make sense in the game (map, monsters, bubbles, items and dragons). The following layer (game logic) gathers all the objects together and deals with how they interact with each other, as well as their responses to inputs (only for the dragon or the screens). Finally, the last layer (game) contains the interactions with GLUT (with all the callbacks needed). The following pages will present the different modules from the bottom to the top.
 \item The \cc{*_new()}  (and \cc{*_new_from_file()}) type functions will perform the necessary \cc{malloc()} and initialize the structure(s), while the \cc{*_delete()} type functions will perform the required \cc{free()}'s. 
-\item The \cc{*_copy()} type functions copy a structure to another, and take care to copy the element of the structure correctly (by using the corresponding copy functions if needed). This is needed since you need to be sure that the element is destroyed only when the structure is.
+\item The \cc{*_copy()} type functions copy a structure to another, and take care to copy the element of the structure correctly (by using the corresponding copy functions if needed). This ensure that a given structure contain a clean copy of a member object. Every \cc{*_new()} type function will perform corresponding \cc{*_copy()}'s.
 \item  The \cc{blit_*()} type functions simply ``blit" (draw\footnote{This term comes from another C graphic library, the SDL.}) the object on the screen, using a sprite or an animation (see below). 
 \item The program will log a certain number of informations in order to be able to detect and fix a crash.
 \item A chained list corresponds to the following representation:\begin{center}
@@ -273,7 +268,7 @@ The sentinel (blue in the scheme above) is always the first element of the list,
 \end{center}
 Each block represents information. Vertically aligned blocks are on the same line. If a block contains more than one value (which correspond generally to a structure), the block is colored, and its definition is given below (here for \texttt{Line}, in green, and \texttt{Type}, in blue). Ultimately, that represent values, separated from the next by a space (for example, each line of the file is actually represented by 4 values in this example). Above the end of each block, there is a counter of the number of values so far in the line.
 Here, the first blocks represent the file, with \texttt{n} lines (indicated by the arrow on the right). Note that \texttt{uint} will be used as the shorthand for \cc{unsigned int}.
-\item I will assume  a fixed framerate of 60 frames per second (since it is the vertical synchronization value of most of the modern screens). Every time length will therefore be expressed in a number of frames. 
+\item I assumed  a fixed framerate of 60 frames per second (since it is the vertical synchronization value of most of the modern screens). Every time length will therefore be expressed in a number of frames. 
 \item I used the Valgrind Memtest tool \cite{valgrind} to check for memory leaks in different cases (even when the program is exited in the middle of the game).
 \item The code does not contain any unit test. This is clearly bad, but as much as I like unit testing\footnote{I usually program in Python, where this kind of thing is easier to implement and manage}, it is clearly difficult to do in C\footnote{Of course there is a dedicated framework to do so (Google test, for example), but it goes beyond the scope of this project, I think}, especially with graphical interfaces.
 \end{itemize}

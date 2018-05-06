@@ -205,43 +205,66 @@ void game_loop() {
      * 3. Draw.
      * */
 
+    clock_t begin = clock();
+
     // KEY MANAGEMENT:
     keys_update_interval(game);
 
     if (game->key_pressed[E_QUIT])
         exit(EXIT_SUCCESS);
 
-    // clear color
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColor4f(1.0, 1.0, 1.0, 1.0);
-
+    // INPUTS
     if (!game->paused) {
         game_main_update_states(game);
         game_main_input_management(game);
+    }
+
+    else  {
+        switch (game->current_screen) {
+            case SCREEN_WELCOME:
+                game_welcome_screen_input_management(game);
+                break;
+            case SCREEN_WIN:
+            case SCREEN_GAME_OVER:
+                game_win_loose_screen_input_management(game);
+                break;
+            default:
+                game_simple_screen_input_management(game, game->main_started);
+        }
+    }
+
+    // DRAW
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+
+    if (!game->paused)
         game_main_draw(game);
-    }
 
-    else if(game->current_screen == SCREEN_WELCOME) {
-        game_welcome_screen_input_management(game);
-        game_welcome_screen_draw(game);
-    }
+    else  {
+        switch (game->current_screen) {
+            case SCREEN_WELCOME:
+                game_welcome_screen_draw(game);
+                break;
+            case SCREEN_WIN:
+            case SCREEN_GAME_OVER:
+                game_win_loose_screen_draw(game);
+                break;
+            case SCREEN_SCORE:
+                game_score_screen_draw(game);
+                break;
+            default:
+                game_simple_screen_draw(game);
 
-    else if(game->current_screen == SCREEN_WIN || game->current_screen == SCREEN_GAME_OVER) {
-        game_win_loose_screen_input_management(game);
-        game_win_loose_screen_draw(game);
-    }
-
-    else if(game->current_screen == SCREEN_SCORE) {
-        game_simple_screen_input_management(game, game->main_started);
-        game_score_screen_draw(game);
-    }
-
-    else {
-        game_simple_screen_input_management(game, game->main_started);
-        game_simple_screen_draw(game);
+        }
     }
 
     glutSwapBuffers();
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    if (time_spent < 1.0f / FPS)
+        usleep((useconds_t) ((1.0f / FPS - time_spent) * 1000));
 }
 
 

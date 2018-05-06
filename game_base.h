@@ -13,6 +13,7 @@
 
 #define WINDOW_WIDTH 512 // [pixels]
 #define WINDOW_HEIGHT 432 // [pixels]
+#define FPS 60 // [frames per second]
 
 enum {
     /* Define keys
