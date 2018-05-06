@@ -185,29 +185,22 @@ void counter_restart(Counter* counter, int nmax) {
      * */
 	if (nmax > 0)
 		counter->max = nmax;
-		
-	if (counter->decrement)
-		counter->value = counter->max - 1;
-	else
-		counter->value = 0;
+
+    counter->value = 0;
 }
 
 void counter_stop(Counter* counter) {
     /* Stop (set to its "maximum" position) a counter.
      * */
-	if (!counter->decrement)
-		counter->value = counter->max - 1;
-	else
-		counter->value = 0;
+
+    counter->value = counter->max - 1;
 }
 
 bool counter_stopped(Counter* counter) {
     /* Test if a counter value equals its "maximum".
      * */
-    if (!counter->decrement)
-        return counter->value == counter->max - 1;
-    else
-        return counter->value == 0;
+
+    return counter->value == counter->max - 1;
 }
 
 int counter_tick(Counter* counter) {
@@ -219,15 +212,17 @@ int counter_tick(Counter* counter) {
             counter_restart(counter, -1);
     }
 
-    else {
-        counter->value += 1 * (counter->decrement ? -1 : 1);
-	}
+    else
+        counter->value += 1;
 	
-	return counter->value;
+	return counter_value(counter);
 }
 
 int counter_value(Counter* counter) {
     /* Get the counter current value.
      * */
-	return counter->value;
+    if (!counter->decrement)
+	    return counter->value;
+    else
+        return counter->max - counter->value - 1;
 }

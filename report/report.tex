@@ -270,7 +270,7 @@ Each block represents information. Vertically aligned blocks are on the same lin
 Here, the first blocks represent the file, with \texttt{n} lines (indicated by the arrow on the right). Note that \texttt{uint} will be used as the shorthand for \cc{unsigned int}.
 \item I assumed  a fixed framerate of 60 frames per second (since it is the vertical synchronization value of most of the modern screens). Every time length will therefore be expressed in a number of frames. 
 \item I used the Valgrind Memtest tool \cite{valgrind} to check for memory leaks in different cases (even when the program is exited in the middle of the game).
-\item The code does not contain any unit test. This is clearly bad, but as much as I like unit testing\footnote{I usually program in Python, where this kind of thing is easier to implement and manage}, it is clearly difficult to do in C\footnote{Of course there is a dedicated framework to do so (Google test, for example), but it goes beyond the scope of this project, I think}, especially with graphical interfaces.
+\item The code does not contain any unit test. This is not a good practice, but as much as I like unit testing\footnote{I usually program in Python, where this kind of thing is easier to implement and manage}, it is more difficult to do in C\footnote{Of course there is a dedicated framework to do so (Google test, for example), but it goes beyond the scope of this project.}, especially with graphical interfaces.
 \end{itemize}
 
 \subsubsection{Misc (\texttt{utils.h})}
