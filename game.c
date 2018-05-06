@@ -30,6 +30,8 @@ Image* load_texture(const char* image_path) {
     return tex;
 }
 
+float missed_time = .0f;
+
 void game_init() {
     /* Init the game structure, and everything in it.
      * */
@@ -204,22 +206,31 @@ void game_loop() {
      * 2. Update states (do keys management) ;
      * 3. Draw.
      * */
-
+    
     clock_t begin = clock();
-
-    // KEY MANAGEMENT:
-    keys_update_interval(game);
+    double time_per_frame = 1.0f / FPS;
 
     if (game->key_pressed[E_QUIT])
         exit(EXIT_SUCCESS);
 
     // INPUTS
     if (!game->paused) {
-        game_main_update_states(game);
-        game_main_input_management(game);
+        int loop = 0;
+        while(loop < 1 || missed_time > time_per_frame) {
+            keys_update_interval(game);
+            game_main_update_states(game);
+            game_main_input_management(game);
+    
+            if (loop > 0)
+                missed_time -= time_per_frame;
+            loop++;
+        }
     }
 
     else  {
+        missed_time = .0;
+        
+        keys_update_interval(game);
         switch (game->current_screen) {
             case SCREEN_WELCOME:
                 game_welcome_screen_input_management(game);
@@ -254,17 +265,19 @@ void game_loop() {
                 break;
             default:
                 game_simple_screen_draw(game);
-
         }
     }
 
     glutSwapBuffers();
 
     clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
 
-    if (time_spent < 1.0f / FPS)
-        custom_usleep((int) ((1.0f / FPS - time_spent) * 1000.f));
+    if (time_spent < time_per_frame)
+        custom_usleep((int) ((time_per_frame - time_spent) * 1000.f));
+    else
+        missed_time += time_spent - time_per_frame;
+    
 }
 
 
